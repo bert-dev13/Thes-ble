@@ -65,8 +65,8 @@
         second: 'This further implies that the demographic profile reflects the composition of the study population.'
       },
       likert: {
-        first: 'This indicates that respondents perceive the measured construct as reflected in the qualitative description.',
-        second: 'This further implies that the findings align with the overall assessment of the theme.'
+        first: 'This indicates that respondents consistently rate the indicators within the dominant qualitative description as evident in practice.',
+        second: 'This further implies that the assessed construct is strongly reflected across the measured indicators based on the overall evaluation.'
       },
       executive: {
         first: 'This indicates that the leading domain or factor contributes most to the overall assessment.',

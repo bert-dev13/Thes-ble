@@ -886,6 +886,7 @@ body {
 }
 
 /* ========== Formal Interpretation section ========== */
+.la-interp-tabs { margin-bottom: var(--space-sm); }
 .la-interpretation-section {
   margin-top: var(--space-lg);
 }

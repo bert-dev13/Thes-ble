@@ -28,7 +28,6 @@
   var currentTableConfig = null;
   var activeProjectId = 'rp1'; // 'rp1' = Research Paper 1, 'rp2' = Research Paper 2
   var currentProject2Table = null;
-  var usePrewrittenInterpretation = false;
   var autoPercentTwoGroup = true;
   var computeTable9Percent = false;
   var SAMPLE_FLAG = 'profile-sample';
@@ -706,6 +705,21 @@
     return labels.slice(0, -1).join(', ') + ', and ' + labels[labels.length - 1];
   }
 
+  /** Format frequency and percentage per thesis spec: "[f] or [p] percent" (no parentheses). */
+  function formatFreqPercent(f, p) {
+    var pVal = typeof p === 'number' ? p : parseFloat(p) || 0;
+    return String(f) + ' or ' + pVal.toFixed(2) + ' percent';
+  }
+
+  /** Build two implication sentences for profile, contextual to dominant category. No "may". */
+  function buildProfileImplications(dominantLabels) {
+    if (!dominantLabels || dominantLabels.length === 0) return { first: '', second: '' };
+    var catPhrase = dominantLabels.length === 1 ? dominantLabels[0] : joinWithAnd(dominantLabels);
+    var first = 'This indicates that the respondent group is largely composed of ' + catPhrase.toLowerCase() + ' participants.';
+    var second = 'This further implies that the perspectives reflected in the study are shaped primarily by ' + catPhrase.toLowerCase() + ' respondents.';
+    return { first: first, second: second };
+  }
+
   function buildTwoGroupProfileInterpretation(table, variantIndex, lastOpener) {
     if (!table || !table.rows || !table.rows.length) return '';
     var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
@@ -734,7 +748,7 @@
       });
       var hPct = domH.length ? ((domH[0].heads && domH[0].heads.pct) || (maxH / sumH * 100)).toFixed(2) : '0.00';
       var hLabels = domH.map(function (r) { return '"' + r.category + '"'; });
-      parts.push('among school heads, ' + (hLabels.length === 1 ? hLabels[0] : joinWithAnd(hLabels)) + ' had the largest share (' + hPct + ' percent)');
+      parts.push('among school heads, ' + (hLabels.length === 1 ? hLabels[0] : joinWithAnd(hLabels)) + ' had the largest share at ' + hPct + ' percent');
     }
     if (sumT > 0) {
       var maxT = 0, domT = [];
@@ -744,7 +758,7 @@
       });
       var tPct = domT.length ? ((domT[0].teachers && domT[0].teachers.pct) || (maxT / sumT * 100)).toFixed(2) : '0.00';
       var tLabels = domT.map(function (r) { return '"' + r.category + '"'; });
-      parts.push('among teachers, ' + (tLabels.length === 1 ? tLabels[0] : joinWithAnd(tLabels)) + ' had the largest share (' + tPct + ' percent)');
+      parts.push('among teachers, ' + (tLabels.length === 1 ? tLabels[0] : joinWithAnd(tLabels)) + ' had the largest share at ' + tPct + ' percent');
     }
     if (!parts.length) return '';
 
@@ -782,64 +796,44 @@
       : (Utils ? Utils.getVariedOpener() : 'Regarding ');
     var subject = 'the distribution';
     if (tableTitle) {
-      var match = tableTitle.match(/Table \d+\.\s*(.+)/i);
-      subject = match ? match[1].toLowerCase() : tableTitle.toLowerCase().replace(/\.$/, '');
+      var asToMatch = tableTitle.match(/as to\s+(.+?)(?:\s*$|,)/i);
+      if (asToMatch) {
+        subject = 'the ' + asToMatch[1].toLowerCase().replace(/\.$/, '').trim() + ' of the respondents';
+      } else {
+        var tblMatch = tableTitle.match(/Table \d+\.\s*(.+)/i);
+        var raw = tblMatch ? tblMatch[1] : tableTitle;
+        subject = raw.toLowerCase().replace(/\.$/, '').trim();
+        if (subject && subject.indexOf('the ') !== 0) subject = 'the ' + subject;
+      }
     }
     var opening = opener + subject + ', ';
 
-    var hadVerb = Gen ? Gen.getSynonym('hadVerb', vi) : 'had';
-    var contributed = Gen ? Gen.getSynonym('contributed', vi + 1) : 'was contributed by';
-    var majorityWord = Gen ? Gen.getSynonym('majority', vi + 2) : 'majority';
-
-    var groups = [];
-    var currentGroup = null;
-    effectiveRows.forEach(function (r) {
-      if (!currentGroup || r.frequency !== currentGroup.frequency) {
-        currentGroup = { frequency: r.frequency, rows: [r] };
-        groups.push(currentGroup);
-      } else {
-        currentGroup.rows.push(r);
-      }
+    var distParts = effectiveRows.map(function (r) {
+      var pct = (r.frequency / total) * 100;
+      return formatFreqPercent(r.frequency, pct) + ' are ' + r.category.toLowerCase();
     });
-
-    var bodyParts = groups.map(function (group) {
-      var labels = group.rows.map(function (r) { return r.category; });
-      var freq = group.frequency;
-      var pct = (freq / total * 100).toFixed(2);
-      var labelText = joinWithAnd(labels);
-      if (group.rows.length === 1) {
-        return labelText + ' ' + hadVerb + ' ' + freq + ' (' + pct + ' percent)';
-      }
-      var tiePhrase = Gen ? Gen.getSynonym('tiePhrase', vi + group.rows.length) : 'both';
-      if (tiePhrase === 'the categories share the same frequency') {
-        return labelText + ' share the same frequency of ' + freq + ' (' + pct + ' percent)';
-      }
-      if (tiePhrase === 'the categories are tied') {
-        return labelText + ' are tied at ' + freq + ' (' + pct + ' percent)';
-      }
-      return labelText + ' each ' + hadVerb + ' ' + freq + ' (' + pct + ' percent)';
-    });
-
-    var sent1 = opening + bodyParts.join('; ') + '.';
+    var sent1;
+    if (distParts.length === 2) {
+      sent1 = opening + distParts[0] + ' while ' + distParts[1] + '.';
+    } else if (distParts.length >= 3) {
+      sent1 = opening + distParts.slice(0, -1).join(', ') + ', and ' + distParts[distParts.length - 1] + '.';
+    } else {
+      sent1 = opening + distParts[0] + '.';
+    }
 
     var maxFreq = 0;
     effectiveRows.forEach(function (r) {
       if (r.frequency > maxFreq) maxFreq = r.frequency;
     });
     var dominant = effectiveRows.filter(function (r) { return r.frequency === maxFreq; });
-    var dominantLabels = dominant.map(function (r) { return '"' + r.category + '"'; });
-    var sent2 = '';
-    if (dominantLabels.length === 1) {
-      sent2 = 'The ' + majorityWord + ' ' + contributed + ' ' + dominantLabels[0] + '.';
-    } else if (dominantLabels.length > 1) {
-      sent2 = 'The ' + majorityWord + ' was jointly contributed by ' + joinWithAnd(dominantLabels) + '.';
-    }
+    var dominantLabels = dominant.map(function (r) { return r.category; });
+    var sent2 = 'The majority of the respondents are ' + (dominantLabels.length === 1
+      ? dominantLabels[0].toLowerCase()
+      : joinWithAnd(dominantLabels).toLowerCase()) + '.';
 
-    var text = sent1 + (sent2 ? ' ' + sent2 : '');
+    var text = sent1 + ' ' + sent2;
     if (includeImplications) {
-      var impl = Gen
-        ? Gen.buildImplicationsWithVariant('profile', vi)
-        : (Utils ? Utils.buildImplications('profile') : { first: '', second: '' });
+      var impl = buildProfileImplications(dominantLabels);
       if (impl.first) text += ' ' + impl.first;
       if (impl.second) text += ' ' + impl.second;
     }
@@ -1783,9 +1777,6 @@
         advToggle.setAttribute('aria-expanded', open);
       });
     }
-
-    var usePrewrittenEl = document.getElementById('pa-use-prewritten');
-    if (usePrewrittenEl) usePrewrittenEl.addEventListener('change', function () { usePrewrittenInterpretation = this.checked; });
 
     var tableSelect = document.getElementById('pa-table-select');
     if (tableSelect) {

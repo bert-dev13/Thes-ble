@@ -155,8 +155,8 @@
         second: 'the demographic profile reflects the composition of the study population.'
       },
       likert: {
-        first: 'respondents perceive the measured construct as reflected in the qualitative description.',
-        second: 'the findings align with the overall assessment of the theme.'
+        first: 'respondents consistently rate the indicators within the dominant qualitative description as evident in practice.',
+        second: 'the assessed construct is strongly reflected across the measured indicators based on the overall evaluation.'
       },
       executive: {
         first: 'the leading domain or factor contributes most to the overall assessment.',

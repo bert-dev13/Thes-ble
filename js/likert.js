@@ -330,6 +330,9 @@
   var currentLikertConfig = null;
   var usingPredefinedTable = false;
   var useLoadedQd = true;
+  var laInterpretationSh = '';
+  var laInterpretationT = '';
+  var laInterpTwoGroup = false;
 
   // ---------- Research Paper 2 (Science 3, School Heads vs Teachers) ----------
   // Two-group weighted tables and T-test tables (Tables 10–22)
@@ -1128,21 +1131,30 @@
       scaleMapping: getScaleMapping()
     };
 
-    // Interpretation block shows prewritten text by default
-    var usePrewritten = document.getElementById('la-use-prewritten');
-    if (usePrewritten) usePrewritten.checked = true;
     var block = document.getElementById('la-interpretation-block');
+    var interpTabs = document.getElementById('la-interp-tabs');
+    laInterpTwoGroup = false;
+    if (interpTabs) interpTabs.hidden = true;
     if (block && config.prewritten) {
-      var prewrittenText = (config.prewritten.sh || '') + (config.prewritten.t ? ' ' + config.prewritten.t : '');
       var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
       var includeImplications = true;
       var implEl = document.getElementById('la-include-implications');
       if (implEl) includeImplications = implEl.checked;
-      if (includeImplications && Utils && prewrittenText) {
-        var impl = Utils.buildImplications(config.type === 'tTest' ? 'ttest' : 'executive');
-        prewrittenText += ' ' + impl.first + ' ' + impl.second;
+      var impl = Utils && includeImplications ? Utils.buildImplications(config.type === 'tTest' ? 'ttest' : 'executive') : null;
+      var implSuffix = impl ? ' ' + impl.first + ' ' + impl.second : '';
+      if (config.type !== 'tTest' && config.prewritten.sh && config.prewritten.t) {
+        laInterpTwoGroup = true;
+        laInterpretationSh = (config.prewritten.sh || '') + implSuffix;
+        laInterpretationT = (config.prewritten.t || '') + implSuffix;
+        if (block) block.textContent = laInterpretationSh;
+        if (interpTabs) interpTabs.hidden = false;
+      } else {
+        var prewrittenText = (config.prewritten.sh || '') + (config.prewritten.t ? ' ' + config.prewritten.t : '');
+        if (includeImplications && Utils && prewrittenText) {
+          prewrittenText += implSuffix;
+        }
+        if (block) block.textContent = prewrittenText;
       }
-      block.textContent = prewrittenText;
     }
 
     var copyBtn = document.getElementById('la-copy-interpretation');
@@ -1529,11 +1541,14 @@
       : 0;
     var awmDesc = getQualitativeDescription(awm, mapping);
 
+    var tableTitle = (document.getElementById('la-table-title') && document.getElementById('la-table-title').value || '').trim();
+    var themeFromTitle = tableTitle ? tableTitle.replace(/^Table\s+\d+\.\s*/i, '').trim() : '';
     computedData = {
       indicators: results,
       awm: awm,
       awmDesc: awmDesc,
-      tableTitle: (document.getElementById('la-table-title') && document.getElementById('la-table-title').value || '').trim(),
+      tableTitle: tableTitle,
+      theme: themeFromTitle ? (themeFromTitle.toLowerCase().indexOf('the ') === 0 ? themeFromTitle.toLowerCase() : 'the ' + themeFromTitle.toLowerCase()) : tableTitle,
       scaleMapping: mapping
     };
 
@@ -1577,6 +1592,13 @@
     }
   }
 
+  function joinWithAnd(labels) {
+    if (!labels.length) return '';
+    if (labels.length === 1) return labels[0];
+    if (labels.length === 2) return labels[0] + ' and ' + labels[1];
+    return labels.slice(0, -1).join(', ') + ', and ' + labels[labels.length - 1];
+  }
+
   function generateInterpretationWithVariant(variantIndex, lastOpener) {
     var data = computedData;
     if (!data.indicators.length) return '';
@@ -1594,61 +1616,35 @@
     if (!Gen && !Utils) openingIndex += 1;
 
     var theme = data.theme || data.tableTitle || 'the theme';
-    var assessedAs = Gen ? Gen.getSynonym('assessedAs', vi) : 'assessed as';
-    var includeVerb = Gen ? Gen.getSynonym('includeVerb', vi + 1) : 'include';
-    var signifiesVerb = Gen ? Gen.getSynonym('signifies', vi + 2) : 'signifies';
 
-    var groupsByQd = {};
-    data.indicators.forEach(function (r) {
-      var qd = (r.qualitativeDescription || '').trim();
-      if (!qd) return;
-      if (!groupsByQd[qd]) groupsByQd[qd] = [];
-      groupsByQd[qd].push(r);
+    var sorted = data.indicators.slice().sort(function (a, b) {
+      return b.weightedMean - a.weightedMean;
     });
 
-    var qdKeys = Object.keys(groupsByQd);
-    qdKeys.sort(function (a, b) {
-      return getQdPriority(b) - getQdPriority(a);
-    });
-
-    var sentences = [];
-
-    qdKeys.forEach(function (qd, idx) {
-      var rows = groupsByQd[qd].slice().sort(function (a, b) {
-        return b.weightedMean - a.weightedMean;
-      });
-
-      var clauses = [];
-      var i = 0;
-      while (i < rows.length) {
-        var j = i + 1;
-        while (j < rows.length && rows[j].weightedMean === rows[i].weightedMean) {
-          j++;
-        }
-        var group = rows.slice(i, j);
-        var labels = group.map(function (r) { return '"' + r.indicator + '"'; });
-        var wm = group[0].weightedMean.toFixed(2);
-        if (group.length === 1) {
-          clauses.push(labels[0] + ' with a weighted mean of ' + wm);
-        } else {
-          clauses.push(labels.join(', ') + ' each with a weighted mean of ' + wm);
-        }
-        i = j;
+    var clauses = [];
+    var i = 0;
+    while (i < sorted.length) {
+      var j = i + 1;
+      while (j < sorted.length && sorted[j].weightedMean === sorted[i].weightedMean) {
+        j++;
       }
-
-      var prefix = '';
-      if (idx === 0) {
-        prefix = opening + theme + ', the indicators ' + assessedAs + ' ' + qd.toLowerCase() + ' ' + includeVerb + ' ';
+      var group = sorted.slice(i, j);
+      var labels = group.map(function (r) { return '"' + r.indicator + '"'; });
+      var wm = group[0].weightedMean.toFixed(2);
+      if (group.length === 1) {
+        clauses.push(labels[0] + ' with a weighted mean of ' + wm);
       } else {
-        prefix = 'The indicators ' + assessedAs + ' ' + qd.toLowerCase() + ' ' + includeVerb + ' ';
+        clauses.push(joinWithAnd(labels) + ' each with a weighted mean of ' + wm);
       }
-      sentences.push(prefix + clauses.join('; '));
-    });
+      i = j;
+    }
 
+    var sent1 = opening + theme + ', ';
+    var sent2 = 'the indicators include ' + clauses.join('; ') + '.';
     var awmStr = data.awm.toFixed(2);
     var desc = (data.awmDesc || '—').toLowerCase();
-    var awmSentence = 'The average weighted mean of ' + awmStr + ' ' + signifiesVerb + ' that teachers view the ' + theme + ' as ' + desc + '.';
-    var text = sentences.join('. ') + '. ' + awmSentence;
+    var sent3 = 'The average weighted mean of ' + awmStr + ' signifies that teachers view ' + (theme.indexOf('the ') === 0 ? theme : 'the ' + theme) + ' as ' + desc + '.';
+    var text = sent1 + sent2 + ' ' + sent3;
     if (includeImplications) {
       var impl = Gen
         ? Gen.buildImplicationsWithVariant('likert', vi)
@@ -1746,8 +1742,12 @@
 
   function copyInterpretation() {
     var block = document.getElementById('la-interpretation-block');
-    if (!block || !block.textContent.trim()) return;
-    navigator.clipboard.writeText(block.textContent).then(function () {
+    if (!block) return;
+    var text = laInterpTwoGroup && laInterpretationSh && laInterpretationT
+      ? 'School Heads:\n\n' + laInterpretationSh + '\n\nTeachers:\n\n' + laInterpretationT
+      : block.textContent.trim();
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(function () {
       showToast('Copied!');
     }).catch(function () {
       showToast('Copy failed.', true);
@@ -1767,7 +1767,9 @@
 
   function saveToReport() {
     var interpretation = document.getElementById('la-interpretation-block');
-    var text = interpretation && interpretation.textContent ? interpretation.textContent.trim() : '';
+    var text = laInterpTwoGroup && laInterpretationSh && laInterpretationT
+      ? 'School Heads:\n\n' + laInterpretationSh + '\n\nTeachers:\n\n' + laInterpretationT
+      : (interpretation && interpretation.textContent ? interpretation.textContent.trim() : '');
     var tables = getLikertTables();
     var toSave = null;
 
@@ -1969,10 +1971,15 @@
     if (selectEl) selectEl.value = '';
     usingPredefinedTable = false;
     currentLikertConfig = null;
+    laInterpTwoGroup = false;
+    laInterpretationSh = '';
+    laInterpretationT = '';
     computedData = { indicators: [], awm: 0, awmDesc: '', tableTitle: '', theme: '', scaleMapping: [] };
     renderOutputPlaceholder();
     var block = document.getElementById('la-interpretation-block');
     if (block) block.textContent = '';
+    var interpTabs = document.getElementById('la-interp-tabs');
+    if (interpTabs) interpTabs.hidden = true;
     var copyBtn = document.getElementById('la-copy-interpretation');
     var saveBtn = document.getElementById('la-save-interpretation');
     var saveInputBtn = document.getElementById('la-save-input');
@@ -2094,13 +2101,18 @@
         if (activeProjectId === 'rp2' && currentLikertConfig && currentLikertConfig.prewritten) {
           var block = document.getElementById('la-interpretation-block');
           if (block) {
-            var prewrittenText = (currentLikertConfig.prewritten.sh || '') + (currentLikertConfig.prewritten.t ? ' ' + currentLikertConfig.prewritten.t : '');
             var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
-            if (this.checked && Utils && prewrittenText) {
-              var impl = Utils.buildImplications(currentLikertConfig.type === 'tTest' ? 'ttest' : 'executive');
-              prewrittenText += ' ' + impl.first + ' ' + impl.second;
+            var impl = this.checked && Utils ? Utils.buildImplications(currentLikertConfig.type === 'tTest' ? 'ttest' : 'executive') : null;
+            var implSuffix = impl ? ' ' + impl.first + ' ' + impl.second : '';
+            if (laInterpTwoGroup && currentLikertConfig.prewritten.sh && currentLikertConfig.prewritten.t) {
+              laInterpretationSh = (currentLikertConfig.prewritten.sh || '') + implSuffix;
+              laInterpretationT = (currentLikertConfig.prewritten.t || '') + implSuffix;
+              block.textContent = laInterpretationSh;
+            } else {
+              var prewrittenText = (currentLikertConfig.prewritten.sh || '') + (currentLikertConfig.prewritten.t ? ' ' + currentLikertConfig.prewritten.t : '');
+              if (impl) prewrittenText += implSuffix;
+              block.textContent = prewrittenText;
             }
-            block.textContent = prewrittenText;
           }
         } else if (activeProjectId === 'rp1' && computedData.indicators.length) {
           generateInterpretation();
@@ -2188,6 +2200,24 @@
     if (copyBtn) copyBtn.addEventListener('click', copyInterpretation);
     var interpToggleBtn = document.getElementById('la-interpretation-toggle');
     if (interpToggleBtn) interpToggleBtn.addEventListener('click', toggleInterpretationExpand);
+    var interpTabsEl = document.getElementById('la-interp-tabs');
+    if (interpTabsEl) {
+      interpTabsEl.querySelectorAll('[data-interp-tab]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var tab = btn.getAttribute('data-interp-tab');
+          interpTabsEl.querySelectorAll('.la-qd-toggle__btn').forEach(function (b) {
+            b.classList.remove('is-active');
+            b.setAttribute('aria-selected', 'false');
+          });
+          btn.classList.add('is-active');
+          btn.setAttribute('aria-selected', 'true');
+          var block = document.getElementById('la-interpretation-block');
+          if (block && laInterpTwoGroup) {
+            block.textContent = tab === 'sh' ? laInterpretationSh : laInterpretationT;
+          }
+        });
+      });
+    }
     var saveInterpretationBtn = document.getElementById('la-save-interpretation');
     if (saveInterpretationBtn) saveInterpretationBtn.addEventListener('click', saveToReport);
     var saveInputBtn = document.getElementById('la-save-input');
