@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thesis Interpretation Assistant — Likert Analyzer</title>
+  <link rel="stylesheet" href="css/likert.css">
+</head>
+<body>
+  <!-- Top Bar -->
+  <header class="la-top-bar">
+    <div class="la-top-bar__inner la-container--wide">
+      <a href="index.html" class="la-brand">
+        <span class="la-brand__icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 6h16M4 10h16M4 14h10M4 18h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <div class="la-brand__text">
+          <span class="la-brand__name">Thesis Interpretation Assistant</span>
+          <span class="la-brand__tagline">Tables & interpretation</span>
+        </div>
+      </a>
+      <nav class="la-top-bar__nav" aria-label="Main navigation">
+        <a href="index.html" class="la-top-bar__link">Dashboard</a>
+        <a href="profile-analyzer.html" class="la-top-bar__link">Profile Analyzer</a>
+        <a href="likert-analyzer.html" class="la-top-bar__link is-active">Likert Analyzer</a>
+        <a href="summary-generator.html" class="la-top-bar__link">Summary Generator</a>
+        <a href="report-export.html" class="la-top-bar__link">Report / Export</a>
+        <button type="button" class="la-btn la-btn--reset" id="la-btn-reset" aria-label="Reset session data">Reset Session</button>
+      </nav>
+      <button type="button" class="la-hamburger" id="la-hamburger" aria-label="Toggle menu" aria-expanded="false">
+        <span class="la-hamburger__line"></span>
+        <span class="la-hamburger__line"></span>
+        <span class="la-hamburger__line"></span>
+      </button>
+    </div>
+    <div class="la-nav-dropdown" id="la-nav-dropdown" aria-hidden="true">
+      <a href="index.html" class="la-nav-dropdown__link">Dashboard</a>
+      <a href="profile-analyzer.html" class="la-nav-dropdown__link">Profile Analyzer</a>
+      <a href="likert-analyzer.html" class="la-nav-dropdown__link">Likert Analyzer</a>
+      <a href="summary-generator.html" class="la-nav-dropdown__link">Summary Generator</a>
+      <a href="report-export.html" class="la-nav-dropdown__link">Report / Export</a>
+      <button type="button" class="la-btn la-btn--reset la-nav-dropdown__reset" id="la-btn-reset-mobile">Reset Session</button>
+    </div>
+  </header>
+
+  <main class="la-main">
+    <!-- Page Header -->
+    <section class="la-hero la-page-header" aria-labelledby="la-page-title">
+      <div class="la-container la-page-header__inner">
+        <h1 id="la-page-title" class="la-page-header__title">Likert / Weighted Mean Analyzer</h1>
+        <p class="la-page-header__subtitle">Manually enter your indicators and ratings. The system computes weighted means, ranks, qualitative descriptions, and thesis-ready interpretations.</p>
+      </div>
+    </section>
+
+    <!-- Main Content: 2-column layout -->
+    <section class="la-content">
+      <div class="la-content__inner">
+        <!-- Left Column: Main -->
+        <div class="la-main-col">
+          <!-- Input Card -->
+          <div class="la-card" id="la-input-card">
+            <h2 class="la-card__title">Enter Likert Table Data</h2>
+            <div class="la-card__body">
+              <!-- A) Manual table labels -->
+              <div class="la-form-group">
+                <label class="la-label" for="la-table-title">Table Title / Theme</label>
+                <input type="text" id="la-table-title" class="la-input" placeholder="e.g. Extent of Manifestation of ____" aria-describedby="la-table-title-error">
+                <p id="la-table-title-error" class="la-field-error" role="alert" aria-live="polite"></p>
+              </div>
+              <!-- B) Manual Likert scale setup -->
+              <div class="la-form-group la-scale-section">
+                <div class="la-scale-header">
+                  <label class="la-label">Likert Scale Mapping (5-point)</label>
+                  <button type="button" class="la-btn la-btn--ghost la-btn--sm" id="la-reset-scale">Reset Scale</button>
+                </div>
+                <p class="la-field-hint">Scale values: 5, 4, 3, 2, 1. Define range (min–max) and qualitative label for each.</p>
+                <div class="la-scale-grid" id="la-scale-grid">
+                  <div class="la-scale-row" data-scale-value="5">
+                    <span class="la-scale-value">5</span>
+                    <input type="number" class="la-input la-input--num" id="la-scale-5-min" step="0.01" min="0" max="5" placeholder="4.21" aria-label="Range min for 5">
+                    <span class="la-scale-sep">–</span>
+                    <input type="number" class="la-input la-input--num" id="la-scale-5-max" step="0.01" min="0" max="5" placeholder="5.00" aria-label="Range max for 5">
+                    <span class="la-scale-eq">=</span>
+                    <input type="text" class="la-input la-input--label" id="la-scale-5-label" placeholder="Label (e.g. Fully Manifested)" aria-label="Label for 5">
+                  </div>
+                  <div class="la-scale-row" data-scale-value="4">
+                    <span class="la-scale-value">4</span>
+                    <input type="number" class="la-input la-input--num" id="la-scale-4-min" step="0.01" min="0" max="5" placeholder="3.41" aria-label="Range min for 4">
+                    <span class="la-scale-sep">–</span>
+                    <input type="number" class="la-input la-input--num" id="la-scale-4-max" step="0.01" min="0" max="5" placeholder="4.20" aria-label="Range max for 4">
+                    <span class="la-scale-eq">=</span>
+                    <input type="text" class="la-input la-input--label" id="la-scale-4-label" placeholder="Label" aria-label="Label for 4">
+                  </div>
+                  <div class="la-scale-row" data-scale-value="3">
+                    <span class="la-scale-value">3</span>
+                    <input type="number" class="la-input la-input--num" id="la-scale-3-min" step="0.01" min="0" max="5" placeholder="2.61" aria-label="Range min for 3">
+                    <span class="la-scale-sep">–</span>
+                    <input type="number" class="la-input la-input--num" id="la-scale-3-max" step="0.01" min="0" max="5" placeholder="3.40" aria-label="Range max for 3">
+                    <span class="la-scale-eq">=</span>
+                    <input type="text" class="la-input la-input--label" id="la-scale-3-label" placeholder="Label" aria-label="Label for 3">
+                  </div>
+                  <div class="la-scale-row" data-scale-value="2">
+                    <span class="la-scale-value">2</span>
+                    <input type="number" class="la-input la-input--num" id="la-scale-2-min" step="0.01" min="0" max="5" placeholder="1.81" aria-label="Range min for 2">
+                    <span class="la-scale-sep">–</span>
+                    <input type="number" class="la-input la-input--num" id="la-scale-2-max" step="0.01" min="0" max="5" placeholder="2.60" aria-label="Range max for 2">
+                    <span class="la-scale-eq">=</span>
+                    <input type="text" class="la-input la-input--label" id="la-scale-2-label" placeholder="Label" aria-label="Label for 2">
+                  </div>
+                  <div class="la-scale-row" data-scale-value="1">
+                    <span class="la-scale-value">1</span>
+                    <input type="number" class="la-input la-input--num" id="la-scale-1-min" step="0.01" min="0" max="5" placeholder="1.00" aria-label="Range min for 1">
+                    <span class="la-scale-sep">–</span>
+                    <input type="number" class="la-input la-input--num" id="la-scale-1-max" step="0.01" min="0" max="5" placeholder="1.80" aria-label="Range max for 1">
+                    <span class="la-scale-eq">=</span>
+                    <input type="text" class="la-input la-input--label" id="la-scale-1-label" placeholder="Label" aria-label="Label for 1">
+                  </div>
+                </div>
+                <p id="la-scale-error" class="la-field-error" role="alert" aria-live="polite"></p>
+              </div>
+
+              <!-- C) Indicator rows -->
+              <div class="la-form-group">
+                <label class="la-label">Indicator Rows</label>
+                <div class="la-table-wrap">
+                  <table class="la-table" id="la-input-table">
+                    <thead>
+                      <tr>
+                        <th>Indicator / Particular</th>
+                        <th>5</th>
+                        <th>4</th>
+                        <th>3</th>
+                        <th>2</th>
+                        <th>1</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="la-input-tbody">
+                      <!-- Rows added by JS -->
+                    </tbody>
+                  </table>
+                </div>
+                <p id="la-indicators-error" class="la-field-error" role="alert" aria-live="polite"></p>
+                <div class="la-card-actions">
+                  <button type="button" class="la-btn la-btn--ghost" id="la-add-row">Add Row</button>
+                  <button type="button" class="la-btn la-btn--ghost" id="la-remove-row">Remove Row</button>
+                  <button type="button" class="la-btn la-btn--ghost" id="la-clear-inputs">Clear Inputs</button>
+                  <button type="button" class="la-btn la-btn--primary" id="la-compute" disabled>Compute</button>
+                  <button type="button" class="la-btn la-btn--secondary" id="la-save-input" disabled>Save to Report</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Output Card -->
+          <div class="la-card" id="la-output-card">
+            <h2 class="la-card__title">Computed Weighted Mean Results</h2>
+            <div class="la-card__body">
+              <div class="la-table-wrap la-output-table">
+                <table class="la-table" id="la-output-table">
+                  <thead>
+                    <tr>
+                      <th>Indicator / Particular</th>
+                      <th>Weighted Mean</th>
+                      <th>Qualitative Description</th>
+                      <th>Rank</th>
+                      <th>Total Respondents</th>
+                    </tr>
+                  </thead>
+                  <tbody id="la-output-tbody">
+                    <tr><td colspan="5" class="la-output-empty">Compute to see results.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="la-output-footer" id="la-output-footer" aria-live="polite" hidden>
+                <span>Average Weighted Mean: <strong id="la-awm-value">—</strong></span>
+                <span>AWM Description: <strong id="la-awm-desc">—</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Interpretation Card -->
+          <div class="la-card" id="la-interpretation-card">
+            <h2 class="la-card__title">Formal Interpretation</h2>
+            <div class="la-card__body">
+              <div class="la-interpretation-block" id="la-interpretation-block" role="status" aria-live="polite"></div>
+              <div class="la-interpretation-actions">
+                <button type="button" class="la-btn la-btn--primary" id="la-copy-interpretation" disabled>Copy Interpretation</button>
+                <button type="button" class="la-btn la-btn--secondary" id="la-save-interpretation" disabled>Save to Report</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Sidebar -->
+        <aside class="la-sidebar">
+          <!-- Scale Preview Panel -->
+          <div class="la-panel">
+            <h3 class="la-panel__title">Scale Preview</h3>
+            <ul class="la-panel__list" id="la-scale-preview">
+              <li class="la-scale-preview-empty">Define scale mapping above.</li>
+            </ul>
+          </div>
+          <!-- Live Stats -->
+          <div class="la-panel">
+            <h3 class="la-panel__title">Live Stats</h3>
+            <div class="la-live-stats">
+              <div class="la-live-stats__row">
+                <span class="la-live-stats__label">Indicators Entered</span>
+                <span class="la-live-stats__value" id="la-live-indicators">0</span>
+              </div>
+              <div class="la-live-stats__row">
+                <span class="la-live-stats__label">Computed AWM</span>
+                <span class="la-live-stats__value" id="la-live-awm">—</span>
+              </div>
+              <div class="la-live-stats__row">
+                <span class="la-live-stats__label">AWM Description</span>
+                <span class="la-live-stats__value la-live-stats__value--desc" id="la-live-awm-desc">—</span>
+              </div>
+            </div>
+          </div>
+          <!-- Session Counters -->
+          <div class="la-panel">
+            <h3 class="la-panel__title">Session Counters</h3>
+            <div class="la-session-stats">
+              <div class="la-session-stats__row">
+                <span class="la-session-stats__label">Tables Processed</span>
+                <span class="la-session-stats__value" id="la-session-tables">0</span>
+              </div>
+              <div class="la-session-stats__row">
+                <span class="la-session-stats__label">Interpretations Generated</span>
+                <span class="la-session-stats__value" id="la-session-interpretations">0</span>
+              </div>
+              <div class="la-session-stats__row">
+                <span class="la-session-stats__label">Reports Created</span>
+                <span class="la-session-stats__value" id="la-session-reports">0</span>
+              </div>
+            </div>
+          </div>
+          <!-- Recent Activity -->
+          <div class="la-panel">
+            <h3 class="la-panel__title">Recent Activity</h3>
+            <ul class="la-panel__list la-activity-list" id="la-activity-list">
+              <li class="la-activity-empty">No activity yet.</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <!-- Reset Session Modal -->
+  <div class="la-modal" id="la-reset-modal" role="dialog" aria-labelledby="la-reset-modal-title" aria-modal="true" hidden>
+    <div class="la-modal__backdrop" id="la-reset-backdrop"></div>
+    <div class="la-modal__panel">
+      <h2 id="la-reset-modal-title" class="la-modal__title">Reset session?</h2>
+      <p class="la-modal__text">Clear all Likert data, session counters, and recent activity. Cannot be undone.</p>
+      <div class="la-modal__actions">
+        <button type="button" class="la-btn la-btn--secondary" id="la-reset-cancel">Cancel</button>
+        <button type="button" class="la-btn la-btn--danger" id="la-reset-confirm">Reset Session</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clear Inputs Modal -->
+  <div class="la-modal" id="la-clear-modal" role="dialog" aria-labelledby="la-clear-modal-title" aria-modal="true" hidden>
+    <div class="la-modal__backdrop" id="la-clear-backdrop"></div>
+    <div class="la-modal__panel">
+      <h2 id="la-clear-modal-title" class="la-modal__title">Clear inputs?</h2>
+      <p class="la-modal__text">Remove all indicator rows and reset the table. This cannot be undone.</p>
+      <div class="la-modal__actions">
+        <button type="button" class="la-btn la-btn--secondary" id="la-clear-cancel">Cancel</button>
+        <button type="button" class="la-btn la-btn--danger" id="la-clear-confirm">Clear Inputs</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="la-toast-container" id="la-toast-container" aria-live="polite"></div>
+
+  <script src="js/likert.js"></script>
+</body>
+</html>

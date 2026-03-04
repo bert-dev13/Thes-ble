@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thesis Interpretation Assistant — Profile Analyzer</title>
+  <link rel="stylesheet" href="css/profile.css">
+</head>
+<body>
+  <!-- Top Bar -->
+  <header class="pa-top-bar">
+    <div class="pa-top-bar__inner pa-container--wide">
+      <a href="index.html" class="pa-brand">
+        <span class="pa-brand__icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 6h16M4 10h16M4 14h10M4 18h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <div class="pa-brand__text">
+          <span class="pa-brand__name">Thesis Interpretation Assistant</span>
+          <span class="pa-brand__tagline">Tables & interpretation</span>
+        </div>
+      </a>
+      <nav class="pa-top-bar__nav" aria-label="Main navigation">
+        <a href="index.html" class="pa-top-bar__link">Dashboard</a>
+        <a href="profile-analyzer.html" class="pa-top-bar__link is-active">Profile Analyzer</a>
+        <a href="likert-analyzer.html" class="pa-top-bar__link">Likert Analyzer</a>
+        <a href="summary-generator.html" class="pa-top-bar__link">Summary Generator</a>
+        <a href="report-export.html" class="pa-top-bar__link">Report / Export</a>
+        <button type="button" class="pa-btn pa-btn--reset" id="pa-btn-reset" aria-label="Reset session data">Reset Session</button>
+      </nav>
+      <button type="button" class="pa-hamburger" id="pa-hamburger" aria-label="Toggle menu" aria-expanded="false">
+        <span class="pa-hamburger__line"></span>
+        <span class="pa-hamburger__line"></span>
+        <span class="pa-hamburger__line"></span>
+      </button>
+    </div>
+    <div class="pa-nav-dropdown" id="pa-nav-dropdown" aria-hidden="true">
+      <a href="index.html" class="pa-nav-dropdown__link">Dashboard</a>
+      <a href="profile-analyzer.html" class="pa-nav-dropdown__link">Profile Analyzer</a>
+      <a href="likert-analyzer.html" class="pa-nav-dropdown__link">Likert Analyzer</a>
+      <a href="summary-generator.html" class="pa-nav-dropdown__link">Summary Generator</a>
+      <a href="report-export.html" class="pa-nav-dropdown__link">Report / Export</a>
+      <button type="button" class="pa-btn pa-btn--reset pa-nav-dropdown__reset" id="pa-btn-reset-mobile">Reset Session</button>
+    </div>
+  </header>
+
+  <main class="pa-main">
+    <!-- Page Header -->
+    <section class="pa-hero pa-page-header" aria-labelledby="pa-page-title">
+      <div class="pa-container pa-page-header__inner">
+        <h1 id="pa-page-title" class="pa-page-header__title">Profile Data Analyzer</h1>
+        <p class="pa-page-header__subtitle">Manually enter your table labels and frequencies. The system computes percentages, totals, ranks, and produces thesis-ready interpretation.</p>
+        <span class="pa-badge">Runs fully on your device</span>
+      </div>
+    </section>
+
+    <!-- Main Content Grid -->
+    <section class="pa-content">
+      <div class="pa-content__inner">
+        <!-- Input Card -->
+          <div class="pa-card" id="pa-input-card">
+            <h2 class="pa-card__title">Enter Table Data</h2>
+            <div class="pa-card__body">
+              <div class="pa-form-group">
+                <label class="pa-label" for="pa-table-title">Table Title / Variable Name</label>
+                <input type="text" id="pa-table-title" class="pa-input" placeholder="e.g. Age Stratification of Respondents" aria-describedby="pa-table-title-error">
+                <p id="pa-table-title-error" class="pa-field-error" role="alert" aria-live="polite"></p>
+              </div>
+              <div class="pa-form-group">
+                <label class="pa-label">Category Rows</label>
+                <div class="pa-table-wrap">
+                  <table class="pa-table" id="pa-input-table">
+                    <thead>
+                      <tr>
+                        <th>Category / Particular</th>
+                        <th>Frequency</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="pa-input-tbody">
+                      <!-- Rows added by JS -->
+                    </tbody>
+                  </table>
+                </div>
+                <p id="pa-table-error" class="pa-field-error" role="alert" aria-live="polite"></p>
+                <div class="pa-card-actions">
+                  <button type="button" class="pa-btn pa-btn--ghost" id="pa-add-row">Add Row</button>
+                  <button type="button" class="pa-btn pa-btn--ghost" id="pa-clear-inputs">Clear Inputs</button>
+                  <button type="button" class="pa-btn pa-btn--primary" id="pa-compute" disabled>Compute</button>
+                  <button type="button" class="pa-btn pa-btn--secondary" id="pa-save-to-report-input" disabled>Save to Report</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Output Card -->
+          <div class="pa-card" id="pa-output-card">
+            <h2 class="pa-card__title">Computed Results</h2>
+            <div class="pa-card__body">
+              <div class="pa-table-wrap pa-output-table">
+                <table class="pa-table" id="pa-output-table">
+                  <thead>
+                    <tr>
+                      <th>Category / Particular</th>
+                      <th>Frequency</th>
+                      <th>Percentage</th>
+                      <th>Rank</th>
+                    </tr>
+                  </thead>
+                  <tbody id="pa-output-tbody">
+                    <tr><td colspan="4" class="pa-output-empty">Compute to see results.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="pa-output-footer" id="pa-output-footer" aria-live="polite" hidden>
+                <span>Total Frequency: <strong id="pa-total-freq">0</strong></span>
+                <span>Total Percentage: <strong id="pa-total-pct">100.00</strong>%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Interpretation Card -->
+          <div class="pa-card" id="pa-interpretation-card">
+            <h2 class="pa-card__title">Academic Interpretation</h2>
+            <div class="pa-card__body">
+              <div class="pa-interpretation-block" id="pa-interpretation-block" role="status" aria-live="polite"></div>
+              <div class="pa-interpretation-actions">
+                <button type="button" class="pa-btn pa-btn--primary" id="pa-copy-interpretation" disabled>Copy Interpretation</button>
+                <button type="button" class="pa-btn pa-btn--secondary" id="pa-save-to-report" disabled>Save to Report</button>
+              </div>
+            </div>
+          </div>
+
+        <!-- Quick Rules -->
+        <div class="pa-panel">
+            <h3 class="pa-section-title">Quick Rules</h3>
+            <ul class="pa-panel__list">
+              <li>Percentages auto-computed to 2 decimals</li>
+              <li>Ties share ranks</li>
+              <li>Conclusion mentions only the top category</li>
+              <li>No data leaves your device</li>
+            </ul>
+        </div>
+        <div class="pa-panel">
+          <h3 class="pa-panel__title">Live Totals</h3>
+            <div class="pa-live-totals">
+              <div class="pa-live-totals__row">
+                <span class="pa-live-totals__label">Total Frequency</span>
+                <span class="pa-live-totals__value" id="pa-live-total-freq">0</span>
+              </div>
+              <div class="pa-live-totals__row">
+                <span class="pa-live-totals__label">Total Percentage</span>
+                <span class="pa-live-totals__value" id="pa-live-total-pct">0.00%</span>
+              </div>
+            </div>
+        </div>
+        <div class="pa-panel">
+          <h3 class="pa-panel__title">Session Counters</h3>
+            <div class="pa-session-stats">
+              <div class="pa-session-stats__row">
+                <span class="pa-session-stats__label">Tables Processed</span>
+                <span class="pa-session-stats__value" id="pa-session-tables">0</span>
+              </div>
+              <div class="pa-session-stats__row">
+                <span class="pa-session-stats__label">Respondents Encoded</span>
+                <span class="pa-session-stats__value" id="pa-session-respondents">0</span>
+              </div>
+              <div class="pa-session-stats__row">
+                <span class="pa-session-stats__label">Interpretations Generated</span>
+                <span class="pa-session-stats__value" id="pa-session-interpretations">0</span>
+              </div>
+            </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Reset Session Modal -->
+  <div class="pa-modal" id="pa-reset-modal" role="dialog" aria-labelledby="pa-reset-modal-title" aria-modal="true" hidden>
+    <div class="pa-modal__backdrop" id="pa-reset-backdrop"></div>
+    <div class="pa-modal__panel">
+      <h2 id="pa-reset-modal-title" class="pa-modal__title">Reset session?</h2>
+      <p class="pa-modal__text">Clear session counters and recent activity. Cannot be undone.</p>
+      <div class="pa-modal__actions">
+        <button type="button" class="pa-btn pa-btn--secondary" id="pa-reset-cancel">Cancel</button>
+        <button type="button" class="pa-btn pa-btn--danger" id="pa-reset-confirm">Reset Session</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clear Inputs Modal -->
+  <div class="pa-modal" id="pa-clear-modal" role="dialog" aria-labelledby="pa-clear-modal-title" aria-modal="true" hidden>
+    <div class="pa-modal__backdrop" id="pa-clear-backdrop"></div>
+    <div class="pa-modal__panel">
+      <h2 id="pa-clear-modal-title" class="pa-modal__title">Clear inputs?</h2>
+      <p class="pa-modal__text">Remove all rows and reset the table. This cannot be undone.</p>
+      <div class="pa-modal__actions">
+        <button type="button" class="pa-btn pa-btn--secondary" id="pa-clear-cancel">Cancel</button>
+        <button type="button" class="pa-btn pa-btn--danger" id="pa-clear-confirm">Clear Inputs</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="pa-toast-container" id="pa-toast-container" aria-live="polite"></div>
+
+  <script src="js/profile.js"></script>
+</body>
+</html>

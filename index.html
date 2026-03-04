@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thesis Interpretation Assistant — Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- ========== A) Top Bar (sticky) ========== -->
+  <header class="top-bar">
+    <div class="top-bar__inner container">
+      <a href="index.html" class="brand">
+        <span class="brand__icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 6h16M4 10h16M4 14h10M4 18h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <div class="brand__text">
+          <span class="brand__name">Thesis Interpretation Assistant</span>
+          <span class="brand__tagline">Tables & interpretation</span>
+        </div>
+      </a>
+      <nav class="top-bar__nav" aria-label="Main navigation">
+        <a href="index.html" class="top-bar__link">Dashboard</a>
+        <a href="profile-analyzer.html" class="top-bar__link">Profile Analyzer</a>
+        <a href="likert-analyzer.html" class="top-bar__link">Likert Analyzer</a>
+        <a href="summary-generator.html" class="top-bar__link">Summary Generator</a>
+        <a href="report-export.html" class="top-bar__link">Report / Export</a>
+        <button type="button" class="btn btn--reset" id="btn-reset-session" aria-label="Reset session data">Reset Session</button>
+      </nav>
+      <button type="button" class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+        <span class="hamburger__line"></span>
+        <span class="hamburger__line"></span>
+        <span class="hamburger__line"></span>
+      </button>
+    </div>
+    <div class="nav-dropdown" id="nav-dropdown" aria-hidden="true">
+      <a href="index.html" class="nav-dropdown__link">Dashboard</a>
+      <a href="profile-analyzer.html" class="nav-dropdown__link">Profile Analyzer</a>
+      <a href="likert-analyzer.html" class="nav-dropdown__link">Likert Analyzer</a>
+      <a href="summary-generator.html" class="nav-dropdown__link">Summary Generator</a>
+      <a href="report-export.html" class="nav-dropdown__link">Report / Export</a>
+      <button type="button" class="btn btn--reset nav-dropdown__reset" id="btn-reset-mobile">Reset Session</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- ========== B) Dashboard Header ========== -->
+    <section class="hero dashboard-header" aria-labelledby="hero-title">
+      <div class="container dashboard-header__inner">
+        <h1 id="hero-title" class="dashboard-header__title">Thesis Table Analysis</h1>
+        <p class="dashboard-header__subtitle">Automated computation and interpretation for research tables.</p>
+        <a href="profile-analyzer.html" class="btn btn--primary dashboard-header__cta">
+          <span class="dashboard-header__cta-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </span>
+          Start Analysis
+        </a>
+      </div>
+    </section>
+
+    <!-- ========== C) Statistics Cards ========== -->
+    <section class="kpi" aria-labelledby="kpi-heading">
+      <div class="container">
+        <h2 id="kpi-heading" class="visually-hidden">Session statistics</h2>
+        <div class="kpi__grid">
+          <article class="kpi-card" title="Reset with Reset Session">
+            <span class="kpi-card__icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            </span>
+            <span class="kpi-card__value" id="kpi-tables">0</span>
+            <span class="kpi-card__label">Tables Processed</span>
+          </article>
+          <article class="kpi-card" title="Reset with Reset Session">
+            <span class="kpi-card__icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </span>
+            <span class="kpi-card__value" id="kpi-respondents">0</span>
+            <span class="kpi-card__label">Respondents</span>
+          </article>
+          <article class="kpi-card" title="Reset with Reset Session">
+            <span class="kpi-card__icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+            </span>
+            <span class="kpi-card__value" id="kpi-interpretations">0</span>
+            <span class="kpi-card__label">Interpretations Generated</span>
+          </article>
+          <article class="kpi-card" title="Reset with Reset Session">
+            <span class="kpi-card__icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M11 13h6M11 17h6M7 13h.01M7 17h.01"/></svg>
+            </span>
+            <span class="kpi-card__value" id="kpi-reports">0</span>
+            <span class="kpi-card__label">Reports Created</span>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== D) Tools Grid (2x2) ========== -->
+    <section class="quick-actions" aria-labelledby="quick-actions-heading">
+      <div class="container">
+        <h2 id="quick-actions-heading" class="section-title">Tools</h2>
+        <div class="quick-actions__grid">
+          <article class="action-card">
+            <span class="action-card__icon" aria-hidden="true">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </span>
+            <h3 class="action-card__title">Profile Analyzer</h3>
+            <p class="action-card__desc">Analyze profile or demographic tables.</p>
+            <a href="profile-analyzer.html" class="btn btn--accent">Open</a>
+          </article>
+          <article class="action-card">
+            <span class="action-card__icon" aria-hidden="true">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+            </span>
+            <h3 class="action-card__title">Likert Analyzer</h3>
+            <p class="action-card__desc">Compute weighted means and qualitative descriptions.</p>
+            <a href="likert-analyzer.html" class="btn btn--accent">Open</a>
+          </article>
+          <article class="action-card">
+            <span class="action-card__icon" aria-hidden="true">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+            </span>
+            <h3 class="action-card__title">Summary Generator</h3>
+            <p class="action-card__desc">Automatically generate findings and recommendations.</p>
+            <a href="summary-generator.html" class="btn btn--accent">Open</a>
+          </article>
+          <article class="action-card">
+            <span class="action-card__icon" aria-hidden="true">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            </span>
+            <h3 class="action-card__title">Report / Export</h3>
+            <p class="action-card__desc">Copy, print, or download generated reports.</p>
+            <a href="report-export.html" class="btn btn--accent">Open</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== E) Workflow Steps ========== -->
+    <section class="workflow" aria-labelledby="workflow-heading">
+      <div class="container">
+        <h2 id="workflow-heading" class="section-title">Workflow</h2>
+        <div class="workflow__steps" role="list">
+          <div class="workflow__step" role="listitem" id="workflow-step-1">
+            <span class="workflow__icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </span>
+            <span class="workflow__mark" aria-hidden="true"></span>
+            <span class="workflow__label">Profile Analysis</span>
+          </div>
+          <div class="workflow__step" role="listitem" id="workflow-step-2">
+            <span class="workflow__icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+            </span>
+            <span class="workflow__mark" aria-hidden="true"></span>
+            <span class="workflow__label">Likert Analysis</span>
+          </div>
+          <div class="workflow__step" role="listitem" id="workflow-step-3">
+            <span class="workflow__icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+            </span>
+            <span class="workflow__mark" aria-hidden="true"></span>
+            <span class="workflow__label">Generate Summaries</span>
+          </div>
+          <div class="workflow__step workflow__step--last" role="listitem" id="workflow-step-4">
+            <span class="workflow__icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </span>
+            <span class="workflow__mark" aria-hidden="true"></span>
+            <span class="workflow__label">Export Report</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========== Reset Session Confirmation Modal ========== -->
+  <div class="modal" id="reset-modal" role="dialog" aria-labelledby="modal-title" aria-modal="true" hidden>
+    <div class="modal__backdrop" id="modal-backdrop"></div>
+    <div class="modal__panel">
+      <h2 id="modal-title" class="modal__title">Reset session?</h2>
+      <p class="modal__text">Clear session counters and recent activity. Cannot be undone.</p>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--secondary" id="modal-cancel">Cancel</button>
+        <button type="button" class="btn btn--danger" id="modal-confirm">Reset Session</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

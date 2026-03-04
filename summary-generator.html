@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thesis Interpretation Assistant — Summary Generator</title>
+  <link rel="stylesheet" href="css/summary.css">
+</head>
+<body>
+  <!-- Top Bar -->
+  <header class="sg-top-bar">
+    <div class="sg-top-bar__inner sg-container--wide">
+      <a href="index.html" class="sg-brand">
+        <span class="sg-brand__icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 6h16M4 10h16M4 14h10M4 18h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <div class="sg-brand__text">
+          <span class="sg-brand__name">Thesis Interpretation Assistant</span>
+          <span class="sg-brand__tagline">Tables & interpretation</span>
+        </div>
+      </a>
+      <nav class="sg-top-bar__nav" aria-label="Main navigation">
+        <a href="index.html" class="sg-top-bar__link">Dashboard</a>
+        <a href="profile-analyzer.html" class="sg-top-bar__link">Profile Analyzer</a>
+        <a href="likert-analyzer.html" class="sg-top-bar__link">Likert Analyzer</a>
+        <a href="summary-generator.html" class="sg-top-bar__link is-active">Summary Generator</a>
+        <a href="report-export.html" class="sg-top-bar__link">Report / Export</a>
+        <button type="button" class="sg-btn sg-btn--reset" id="sg-btn-reset" aria-label="Reset session data">Reset Session</button>
+      </nav>
+      <button type="button" class="sg-hamburger" id="sg-hamburger" aria-label="Toggle menu" aria-expanded="false">
+        <span class="sg-hamburger__line"></span>
+        <span class="sg-hamburger__line"></span>
+        <span class="sg-hamburger__line"></span>
+      </button>
+    </div>
+    <div class="sg-nav-dropdown" id="sg-nav-dropdown" aria-hidden="true">
+      <a href="index.html" class="sg-nav-dropdown__link">Dashboard</a>
+      <a href="profile-analyzer.html" class="sg-nav-dropdown__link">Profile Analyzer</a>
+      <a href="likert-analyzer.html" class="sg-nav-dropdown__link">Likert Analyzer</a>
+      <a href="summary-generator.html" class="sg-nav-dropdown__link">Summary Generator</a>
+      <a href="report-export.html" class="sg-nav-dropdown__link">Report / Export</a>
+      <button type="button" class="sg-btn sg-btn--reset sg-nav-dropdown__reset" id="sg-btn-reset-mobile">Reset Session</button>
+    </div>
+  </header>
+
+  <main class="sg-main">
+    <!-- Page Header -->
+    <section class="sg-hero sg-page-header" aria-labelledby="sg-page-title">
+      <div class="sg-container sg-page-header__inner">
+        <h1 id="sg-page-title" class="sg-page-header__title">Summary Generator</h1>
+        <p class="sg-page-header__subtitle">Generate respondent summary, findings, conclusions, and recommendations based on saved analyses.</p>
+        <span class="sg-badge">Uses saved data from this session</span>
+      </div>
+    </section>
+
+    <!-- Main Content: Vertical Row Sections Only -->
+    <section class="sg-content">
+      <div class="sg-content__inner">
+        <!-- Section 1: Data Source Preview -->
+        <article class="sg-row-card">
+          <h2 class="sg-row-card__title">Saved Data Overview</h2>
+          <div class="sg-row-card__body">
+            <div class="sg-data-overview" id="sg-data-overview">
+              <div class="sg-data-stats">
+                <div class="sg-data-stat">
+                  <span class="sg-data-stat__value" id="sg-profile-count">0</span>
+                  <span class="sg-data-stat__label">Profile tables</span>
+                </div>
+                <div class="sg-data-stat">
+                  <span class="sg-data-stat__value" id="sg-likert-count">0</span>
+                  <span class="sg-data-stat__label">Likert tables</span>
+                </div>
+                <div class="sg-data-stat">
+                  <span class="sg-data-stat__value" id="sg-last-saved">—</span>
+                  <span class="sg-data-stat__label">Last saved</span>
+                </div>
+              </div>
+              <div class="sg-row-card__actions">
+                <button type="button" class="sg-btn sg-btn--primary" id="sg-refresh-data">Refresh Data</button>
+                <button type="button" class="sg-btn sg-btn--ghost" id="sg-clear-summaries">Clear Saved Summaries</button>
+              </div>
+            </div>
+            <div class="sg-empty-state" id="sg-empty-data" hidden>
+              <p class="sg-empty-state__text">No saved data yet. Add profile and Likert tables from the analyzers first.</p>
+              <div class="sg-empty-state__actions">
+                <a href="profile-analyzer.html" class="sg-btn sg-btn--primary">Profile Analyzer</a>
+                <a href="likert-analyzer.html" class="sg-btn sg-btn--secondary">Likert Analyzer</a>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Section 2: Respondents Summary Generator -->
+        <article class="sg-row-card">
+          <h2 class="sg-row-card__title">Summary of Respondents</h2>
+          <div class="sg-row-card__body">
+            <p class="sg-row-card__hint">Generates one paragraph summarizing respondent profile based on saved profile tables. Mentions only highest frequency categories per table.</p>
+            <div class="sg-row-card__actions">
+              <button type="button" class="sg-btn sg-btn--primary" id="sg-generate-respondents">Generate Summary</button>
+            </div>
+            <div class="sg-output-area">
+              <textarea class="sg-output-textarea" id="sg-respondents-output" readonly placeholder="Click Generate Summary to produce output." rows="5"></textarea>
+              <div class="sg-output-actions">
+                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-copy-respondents">Copy</button>
+                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-save-respondents">Save to Report</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Section 3: Summary of Findings Generator -->
+        <article class="sg-row-card">
+          <h2 class="sg-row-card__title">Summary of Findings</h2>
+          <div class="sg-row-card__body">
+            <p class="sg-row-card__hint">Generates findings per saved table (profile + likert). Each paragraph uses varied formal openings and includes AWM sentence for Likert tables.</p>
+            <div class="sg-toggles">
+              <label class="sg-toggle">
+                <input type="checkbox" id="sg-toggle-implication" checked>
+                <span class="sg-toggle__label">Include one short implication sentence</span>
+              </label>
+              <label class="sg-toggle">
+                <input type="checkbox" id="sg-toggle-next-group">
+                <span class="sg-toggle__label">Include next qualitative group if none exist in top group</span>
+              </label>
+            </div>
+            <div class="sg-row-card__actions">
+              <button type="button" class="sg-btn sg-btn--primary" id="sg-generate-findings">Generate Findings</button>
+            </div>
+            <div class="sg-output-area">
+              <textarea class="sg-output-textarea" id="sg-findings-output" readonly placeholder="Click Generate Findings to produce output." rows="5"></textarea>
+              <div class="sg-output-actions">
+                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-copy-findings">Copy</button>
+                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-save-findings">Save to Report</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Section 4: Conclusions Generator -->
+        <article class="sg-row-card">
+          <h2 class="sg-row-card__title">Conclusions</h2>
+          <div class="sg-row-card__body">
+            <p class="sg-row-card__hint">Generates conclusions strictly based on the generated findings. No new ideas or recommendations.</p>
+            <div class="sg-row-card__actions">
+              <button type="button" class="sg-btn sg-btn--primary" id="sg-generate-conclusions">Generate Conclusions</button>
+            </div>
+            <div class="sg-output-area">
+              <textarea class="sg-output-textarea" id="sg-conclusions-output" readonly placeholder="Generate respondents summary and findings first, then click Generate Conclusions." rows="5"></textarea>
+              <div class="sg-output-actions">
+                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-copy-conclusions">Copy</button>
+                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-save-conclusions">Save to Report</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Section 5: Recommendations Generator -->
+        <article class="sg-row-card">
+          <h2 class="sg-row-card__title">Recommendations</h2>
+          <div class="sg-row-card__body">
+            <p class="sg-row-card__hint">Produces numbered recommendations linked to findings and conclusions.</p>
+            <div class="sg-form-group">
+              <label class="sg-label" for="sg-target-audience">Target audience (optional)</label>
+              <input type="text" id="sg-target-audience" class="sg-input" placeholder="e.g. teachers, administrators, future researchers">
+            </div>
+            <div class="sg-toggles">
+              <label class="sg-toggle">
+                <input type="checkbox" id="sg-toggle-recs-per-theme" checked>
+                <span class="sg-toggle__label">Generate 3–5 recommendations per theme (default 3)</span>
+              </label>
+            </div>
+            <div class="sg-row-card__actions">
+              <button type="button" class="sg-btn sg-btn--primary" id="sg-generate-recommendations">Generate Recommendations</button>
+            </div>
+            <div class="sg-output-area">
+              <textarea class="sg-output-textarea" id="sg-recommendations-output" readonly placeholder="Generate findings and conclusions first, then click Generate Recommendations." rows="5"></textarea>
+              <div class="sg-output-actions">
+                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-copy-recommendations">Copy</button>
+                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-save-recommendations">Save to Report</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Section 6: Save All to Report -->
+        <article class="sg-row-card">
+          <h2 class="sg-row-card__title">Finalize</h2>
+          <div class="sg-row-card__body">
+            <p class="sg-row-card__hint">Save all generated sections to the report and export.</p>
+            <div class="sg-row-card__actions">
+              <button type="button" class="sg-btn sg-btn--primary" id="sg-save-all">Save All Sections to Report</button>
+              <button type="button" class="sg-btn sg-btn--secondary" id="sg-copy-all">Copy All</button>
+              <a href="report-export.html" class="sg-btn sg-btn--accent">Go to Report / Export</a>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <!-- Reset Session Modal -->
+  <div class="sg-modal" id="sg-reset-modal" role="dialog" aria-labelledby="sg-reset-modal-title" aria-modal="true" hidden>
+    <div class="sg-modal__backdrop" id="sg-reset-backdrop"></div>
+    <div class="sg-modal__panel">
+      <h2 id="sg-reset-modal-title" class="sg-modal__title">Reset session?</h2>
+      <p class="sg-modal__text">Clear all session data, counters, and recent activity. Cannot be undone.</p>
+      <div class="sg-modal__actions">
+        <button type="button" class="sg-btn sg-btn--secondary" id="sg-reset-cancel">Cancel</button>
+        <button type="button" class="sg-btn sg-btn--danger" id="sg-reset-confirm">Reset Session</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clear Saved Summaries Modal -->
+  <div class="sg-modal" id="sg-clear-modal" role="dialog" aria-labelledby="sg-clear-modal-title" aria-modal="true" hidden>
+    <div class="sg-modal__backdrop" id="sg-clear-backdrop"></div>
+    <div class="sg-modal__panel">
+      <h2 id="sg-clear-modal-title" class="sg-modal__title">Clear saved summaries?</h2>
+      <p class="sg-modal__text">Remove all generated summaries from the report. This cannot be undone.</p>
+      <div class="sg-modal__actions">
+        <button type="button" class="sg-btn sg-btn--secondary" id="sg-clear-cancel">Cancel</button>
+        <button type="button" class="sg-btn sg-btn--danger" id="sg-clear-confirm">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="sg-toast-container" id="sg-toast-container" aria-live="polite"></div>
+
+  <script src="js/summary.js"></script>
+</body>
+</html>
