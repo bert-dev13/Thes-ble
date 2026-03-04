@@ -19,7 +19,7 @@
   };
   var MAX_ACTIVITY = 8;
 
-  var FINDINGS_OPENINGS = [
+  var OPENINGS_LEGACY = [
     'In terms of ',
     'Regarding ',
     'Considering ',
@@ -32,6 +32,11 @@
     'As to '
   ];
   var openingIndex = 0;
+
+  function getVariedOpener() {
+    var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    return Utils ? Utils.getVariedOpener() : OPENINGS_LEGACY[openingIndex % OPENINGS_LEGACY.length];
+  }
 
   function getNumber(key) {
     try {
@@ -101,6 +106,19 @@
     }, 2500);
   }
 
+  function autoResizeTextarea(ta) {
+    if (!ta || ta.nodeName !== 'TEXTAREA') return;
+    ta.style.height = 'auto';
+    ta.style.height = Math.max(140, ta.scrollHeight) + 'px';
+  }
+
+  function resizeAllOutputs() {
+    ['sg-respondents-output', 'sg-findings-output', 'sg-conclusions-output', 'sg-recommendations-output'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) autoResizeTextarea(el);
+    });
+  }
+
   function formatTimestamp(ts) {
     if (!ts) return '—';
     var d = new Date(ts);
@@ -138,6 +156,9 @@
     if (profileCount) profileCount.textContent = profile.length;
     if (likertCount) likertCount.textContent = likert.length;
     if (lastSaved) lastSaved.textContent = formatTimestamp(getLastSavedTimestamp());
+
+    resizeAllOutputs();
+    showToast('Data refreshed. ' + profile.length + ' profile table(s), ' + likert.length + ' Likert table(s) loaded.');
   }
 
   function clearSavedSummaries() {
@@ -156,10 +177,132 @@
   }
 
   // ---------- Section 2: Respondents Summary ----------
-  function getHighestCategories(rows) {
+  /** Get dominant categories for single-group (frequency) or two-group (heads.f + teachers.f) profile tables. */
+  function getHighestCategories(rows, tableType) {
     if (!rows || rows.length === 0) return [];
-    var maxFreq = Math.max.apply(null, rows.map(function (r) { return r.frequency || 0; }));
-    return rows.filter(function (r) { return (r.frequency || 0) === maxFreq; }).map(function (r) { return r.category; });
+    var getFreq = function (r) {
+      if (tableType === 'twoGroup') {
+        var h = (r.heads && r.heads.f) || 0;
+        var t = (r.teachers && r.teachers.f) || 0;
+        return h + t;
+      }
+      return r.frequency || 0;
+    };
+    var maxFreq = Math.max.apply(null, rows.map(getFreq));
+    if (maxFreq <= 0) return [];
+    return rows.filter(function (r) { return getFreq(r) === maxFreq; }).map(function (r) { return r.category; });
+  }
+
+  /** Map table title to slot order (1–8) for required sequence: Age, Gender, Civil Status, Education, Position, Rating, Years Service, In-Service. */
+  function getProfileTableSlot(title) {
+    if (!title) return 99;
+    var t = title.toLowerCase();
+    if (t.indexOf('age') !== -1 || t.indexOf('table 2') !== -1) return 1;
+    if (t.indexOf('gender') !== -1 || t.indexOf('table 3') !== -1) return 2;
+    if (t.indexOf('civil status') !== -1 || t.indexOf('table 4') !== -1) return 3;
+    if (t.indexOf('educational attainment') !== -1 || t.indexOf('education') !== -1 || t.indexOf('table 5') !== -1) return 4;
+    if (t.indexOf('present position') !== -1 || t.indexOf('position') !== -1 || t.indexOf('table 6') !== -1) return 5;
+    if (t.indexOf('performance rating') !== -1 || t.indexOf('rating') !== -1 || t.indexOf('table 7') !== -1) return 6;
+    if (t.indexOf('years in service') !== -1 || t.indexOf('years of service') !== -1 || t.indexOf('table 8') !== -1) return 7;
+    if (t.indexOf('in-service') !== -1 || t.indexOf('inservice') !== -1 || t.indexOf('table 9') !== -1) return 8;
+    return 99;
+  }
+
+  /** Get single dominant category (first if tie). No frequencies or percentages. */
+  function getDominantCategory(rows, tableType) {
+    var cats = getHighestCategories(rows || [], tableType);
+    return cats.length > 0 ? cats[0] : '';
+  }
+
+  /** Concluding phrases for "This indicates that the respondents are __________." */
+  var RESPONDENT_CONCLUSION_PHRASES = [
+    'experienced educators actively engaged in professional development',
+    'characterized by the demographic and professional profile reflected in the above categories',
+    'predominantly experienced professionals with established roles in the field'
+  ];
+
+  function generateRespondentsSummaryWithVariant(variantIndex, lastOpener) {
+    var profile = getProfileTables();
+    if (profile.length === 0) return '';
+
+    var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
+    var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    var includeImplication = document.getElementById('sg-toggle-implication') && document.getElementById('sg-toggle-implication').checked;
+    var vi = typeof variantIndex === 'number' ? variantIndex : 0;
+
+    var sorted = profile.slice().sort(function (a, b) {
+      return getProfileTableSlot(a.tableTitle) - getProfileTableSlot(b.tableTitle);
+    });
+
+    var data = {};
+    sorted.forEach(function (t) {
+      var slot = getProfileTableSlot(t.tableTitle);
+      if (slot >= 1 && slot <= 8) {
+        var tableType = t.type === 'twoGroup' ? 'twoGroup' : 'singleGroup';
+        var cat = getDominantCategory(t.rows, tableType);
+        if (cat) data[slot] = cat;
+      }
+    });
+
+    var age = data[1] || '';
+    var gender = data[2] || '';
+    var civilStatus = data[3] || '';
+    var education = data[4] || '';
+    var position = data[5] || '';
+    var rating = data[6] || '';
+    var yearsService = data[7] || '';
+    var inService = data[8] || '';
+
+    var parts = [];
+    if (age || gender) {
+      var agePart = age ? 'belong to the "' + age + '" age group' : '';
+      var genderPart = gender ? 'are "' + gender + '"' : '';
+      if (agePart && genderPart) {
+        parts.push('Most of the respondents ' + agePart + ' and ' + genderPart + '.');
+      } else if (agePart) {
+        parts.push('Most of the respondents ' + agePart + '.');
+      } else if (genderPart) {
+        parts.push('Most of the respondents ' + genderPart + '.');
+      }
+    }
+    if (civilStatus || education || position) {
+      var midParts = [];
+      if (civilStatus) midParts.push('are "' + civilStatus + '"');
+      if (education) midParts.push('have "' + education + '"');
+      if (position) midParts.push('occupy the position of "' + position + '"');
+      if (midParts.length > 0) {
+        var midText = midParts.length === 1 ? midParts[0] : midParts.slice(0, -1).join(', ') + ', and ' + midParts[midParts.length - 1];
+        parts.push('The majority ' + midText + '.');
+      }
+    }
+    if (rating || yearsService || inService) {
+      var endParts = [];
+      if (rating) {
+        var article = /^[aeiou]/i.test(rating) ? 'an' : 'a';
+        endParts.push('received ' + article + ' "' + rating + '" performance rating');
+      }
+      if (yearsService) endParts.push('have "' + yearsService + '" years of service');
+      if (inService) {
+        var inServiceLabel = inService.toLowerCase().indexOf('level') !== -1 ? inService : inService + ' level';
+        endParts.push('attended in-service trainings mostly at the "' + inServiceLabel + '"');
+      }
+      if (endParts.length > 0) {
+        var endText = endParts.length === 1 ? endParts[0] : endParts.slice(0, -1).join(', ') + ', and ' + endParts[endParts.length - 1];
+        parts.push('Most ' + endText + '.');
+      }
+    }
+
+    if (parts.length === 0) return '';
+
+    var conclusionPhrase = RESPONDENT_CONCLUSION_PHRASES[vi % RESPONDENT_CONCLUSION_PHRASES.length];
+    var text = parts.join(' ') + ' This indicates that the respondents are ' + conclusionPhrase + '.';
+
+    if (includeImplication) {
+      var impl = Gen ? Gen.buildImplicationsWithVariant('profile', vi) : (Utils ? Utils.buildImplications('profile') : { first: '', second: '' });
+      if (impl.first) text += ' ' + impl.first;
+      if (impl.second) text += ' ' + impl.second;
+    }
+    return text;
   }
 
   function generateRespondentsSummary() {
@@ -168,40 +311,49 @@
       showToast('No profile data. Save tables from Profile Analyzer first.', true);
       return '';
     }
+    return generateRespondentsSummaryWithVariant(0, '');
+  }
 
-    var parts = [];
-    profile.forEach(function (t) {
-      var topCats = getHighestCategories(t.rows);
-      if (topCats.length > 0) {
-        var quoted = topCats.map(function (c) { return '"' + c + '"'; });
-        var subject = (t.tableTitle || 'the variable').toLowerCase();
-        parts.push('For ' + subject + ', the dominant category was ' + (quoted.length === 1 ? quoted[0] : quoted.join(' and ')) + '.');
-      }
-    });
-
-    if (parts.length === 0) return '';
-
-    var body = parts.join(' ');
-    var conclusion = 'The respondent profile is characterized by the predominance of these categories across the analyzed dimensions.';
-    return body + ' ' + conclusion;
+  function regenerateRespondentsSummary() {
+    var profile = getProfileTables();
+    if (profile.length === 0) {
+      showToast('No profile data. Save tables from Profile Analyzer first.', true);
+      return;
+    }
+    var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
+    var out = document.getElementById('sg-respondents-output');
+    if (!out) return;
+    var text;
+    if (Gen) {
+      var result = Gen.generateWithVariation(generateRespondentsSummaryWithVariant, 'summary_respondents', 'respondents');
+      text = result.text;
+    } else {
+      text = generateRespondentsSummaryWithVariant(0, '');
+    }
+    out.value = text;
+    autoResizeTextarea(out);
+    showToast('Interpretation regenerated.');
   }
 
   // ---------- Section 3: Findings ----------
   function getNextOpening() {
-    var o = FINDINGS_OPENINGS[openingIndex % FINDINGS_OPENINGS.length];
-    openingIndex += 1;
+    var o = getVariedOpener();
+    if (typeof ThesisInterpretationUtils === 'undefined') openingIndex += 1;
     return o;
   }
 
   function getTopQualGroupIndicators(indicators, includeNext) {
     if (!indicators || indicators.length === 0) return [];
-    var sorted = indicators.slice().sort(function (a, b) { return (b.weightedMean || 0) - (a.weightedMean || 0); });
-    var topDesc = sorted[0].qualitativeDescription;
-    var topGroup = indicators.filter(function (i) { return i.qualitativeDescription === topDesc; });
+    var getWm = function (i) { return i.weightedMean != null ? i.weightedMean : (i.wm != null ? i.wm : 0); };
+    var getQd = function (i) { return i.qualitativeDescription || i.qd || ''; };
+    var sorted = indicators.slice().sort(function (a, b) { return getWm(b) - getWm(a); });
+    if (sorted.length === 0) return [];
+    var topDesc = getQd(sorted[0]);
+    var topGroup = indicators.filter(function (i) { return getQd(i) === topDesc; });
     if (topGroup.length > 0) return topGroup;
     if (includeNext && sorted.length > 1) {
-      var nextDesc = sorted[1].qualitativeDescription;
-      return indicators.filter(function (i) { return i.qualitativeDescription === nextDesc; });
+      var nextDesc = getQd(sorted[1]);
+      return indicators.filter(function (i) { return getQd(i) === nextDesc; });
     }
     return [];
   }
@@ -218,6 +370,95 @@
     return 'The average weighted mean is described as "' + desc + '," which signifies that ' + signifies;
   }
 
+  function generateFindingsWithVariant(variantIndex, lastOpener) {
+    var profile = getProfileTables();
+    var likert = getLikertTables();
+    if (profile.length === 0 && likert.length === 0) return '';
+
+    var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
+    var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    var includeImplication = document.getElementById('sg-toggle-implication') && document.getElementById('sg-toggle-implication').checked;
+    var includeNextGroup = document.getElementById('sg-toggle-next-group') && document.getElementById('sg-toggle-next-group').checked;
+    var vi = typeof variantIndex === 'number' ? variantIndex : 0;
+
+    var paragraphs = [];
+    var openerIdx = 0;
+
+    profile.forEach(function (t) {
+      var tableType = t.type === 'twoGroup' ? 'twoGroup' : 'singleGroup';
+      var topCats = getHighestCategories(t.rows || [], tableType);
+      if (topCats.length === 0) return;
+      var opening = Gen ? Gen.getOpenerForVariant(vi + openerIdx, openerIdx === 0 ? lastOpener : '') : getNextOpening();
+      openerIdx++;
+      var quoted = topCats.map(function (c) { return '"' + c + '"'; });
+      var subject = (t.tableTitle || 'the variable').toLowerCase();
+      var dominantWord = Gen ? Gen.getSynonym('majority', vi + openerIdx) : 'dominant';
+      var categoryPhrase = (dominantWord.indexOf('category') !== -1 ? dominantWord : dominantWord + ' category');
+      var p = opening + subject + ', the ' + categoryPhrase + ' was ' + (quoted.length === 1 ? quoted[0] : quoted.join(' and ')) + '.';
+      if (includeImplication) {
+        var impl = Gen ? Gen.buildImplicationsWithVariant('profile', vi + openerIdx) : (Utils ? Utils.buildImplications('profile') : { first: '', second: '' });
+        if (impl.first) p += ' ' + impl.first;
+        if (impl.second) p += ' ' + impl.second;
+      }
+      paragraphs.push(p);
+    });
+
+    likert.forEach(function (t) {
+      var isTwoGroup = t.type === 'twoGroup';
+      var isTTest = t.type === 'tTest';
+      var indicators = t.indicators || [];
+      var topGroup = getTopQualGroupIndicators(indicators, includeNextGroup);
+      var opening = Gen ? Gen.getOpenerForVariant(vi + openerIdx, openerIdx === 0 ? lastOpener : '') : getNextOpening();
+      openerIdx++;
+      var theme = (t.tableTitle || 'the theme').toLowerCase();
+
+      if (isTTest) {
+        var tTestP = opening + theme + ', the t-test results indicate significant or non-significant differences between the compared groups as reported in the table.';
+        if (includeImplication) {
+          var implT = Gen ? Gen.buildImplicationsWithVariant('likert', vi + openerIdx) : (Utils ? Utils.buildImplications('likert') : { first: '', second: '' });
+          if (implT.first) tTestP += ' ' + implT.first;
+          if (implT.second) tTestP += ' ' + implT.second;
+        }
+        paragraphs.push(tTestP);
+      } else if (isTwoGroup && t.awm && (t.awm.sh || t.awm.t)) {
+        var shDesc = (t.awm.sh && t.awm.sh.qd) ? t.awm.sh.qd : '';
+        var tDesc = (t.awm.t && t.awm.t.qd) ? t.awm.t.qd : '';
+        var awmParts = [];
+        if (shDesc) awmParts.push('school heads: ' + shDesc);
+        if (tDesc) awmParts.push('teachers: ' + tDesc);
+        var awmText = awmParts.length > 0 ? awmParts.join('; ') : 'as indicated by the average weighted means';
+        var p = opening + theme + ', the overall assessment shows ' + awmText + '. The findings reflect the perceptions of both respondent groups across the measured indicators.';
+        if (includeImplication) {
+          var impl2 = Gen ? Gen.buildImplicationsWithVariant('likert', vi + openerIdx) : (Utils ? Utils.buildImplications('likert') : { first: '', second: '' });
+          if (impl2.first) p += ' ' + impl2.first;
+          if (impl2.second) p += ' ' + impl2.second;
+        }
+        paragraphs.push(p);
+      } else if (topGroup.length > 0) {
+        var labels = topGroup.map(function (i) { return '"' + i.indicator + '"'; });
+        var p = opening + theme + ', the indicators under the dominant qualitative description group were ' + labels.join(', ') + '. ';
+        p += buildAwmSentence(t.awm, t.awmDesc, t.tableTitle);
+        if (includeImplication) {
+          var impl = Gen ? Gen.buildImplicationsWithVariant('likert', vi + openerIdx) : (Utils ? Utils.buildImplications('likert') : { first: '', second: '' });
+          if (impl.first) p += ' ' + impl.first;
+          if (impl.second) p += ' ' + impl.second;
+        }
+        paragraphs.push(p);
+      } else {
+        var p = opening + theme + ', ';
+        p += buildAwmSentence(t.awm, t.awmDesc, t.tableTitle);
+        if (includeImplication) {
+          var impl = Gen ? Gen.buildImplicationsWithVariant('likert', vi + openerIdx) : (Utils ? Utils.buildImplications('likert') : { first: '', second: '' });
+          if (impl.first) p += ' ' + impl.first;
+          if (impl.second) p += ' ' + impl.second;
+        }
+        paragraphs.push(p);
+      }
+    });
+
+    return paragraphs.join('\n\n');
+  }
+
   function generateFindings() {
     var profile = getProfileTables();
     var likert = getLikertTables();
@@ -225,85 +466,137 @@
       showToast('No saved data. Save tables from analyzers first.', true);
       return '';
     }
+    return generateFindingsWithVariant(0, '');
+  }
 
-    var includeImplication = document.getElementById('sg-toggle-implication') && document.getElementById('sg-toggle-implication').checked;
-    var includeNextGroup = document.getElementById('sg-toggle-next-group') && document.getElementById('sg-toggle-next-group').checked;
-
-    var paragraphs = [];
-
-    profile.forEach(function (t) {
-      var topCats = getHighestCategories(t.rows);
-      if (topCats.length === 0) return;
-      var opening = getNextOpening();
-      var quoted = topCats.map(function (c) { return '"' + c + '"'; });
-      var subject = (t.tableTitle || 'the variable').toLowerCase();
-      var p = opening + subject + ', the highest frequency category was ' + (quoted.length === 1 ? quoted[0] : quoted.join(' and ')) + '.';
-      if (includeImplication) {
-        p += ' This suggests a predominance of ' + (quoted.length === 1 ? quoted[0] : 'these categories') + ' among respondents.';
-      }
-      paragraphs.push(p);
-    });
-
-    likert.forEach(function (t) {
-      var indicators = t.indicators || [];
-      var topGroup = getTopQualGroupIndicators(indicators, includeNextGroup);
-      var opening = getNextOpening();
-      var theme = (t.tableTitle || 'the theme').toLowerCase();
-
-      if (topGroup.length > 0) {
-        var labels = topGroup.map(function (i) { return '"' + i.indicator + '"'; });
-        var p = opening + theme + ', the indicators under the highest qualitative description group were ' + labels.join(', ') + '. ';
-        p += buildAwmSentence(t.awm, t.awmDesc, t.tableTitle);
-        if (includeImplication && t.awmDesc) {
-          p += ' This indicates that respondents perceive the theme as ' + t.awmDesc + '.';
-        }
-        paragraphs.push(p);
-      } else {
-        var p = opening + theme + ', ';
-        p += buildAwmSentence(t.awm, t.awmDesc, t.tableTitle);
-        paragraphs.push(p);
-      }
-    });
-
-    return paragraphs.join('\n\n');
+  function regenerateFindings() {
+    var profile = getProfileTables();
+    var likert = getLikertTables();
+    if (profile.length === 0 && likert.length === 0) {
+      showToast('No saved data. Save tables from analyzers first.', true);
+      return;
+    }
+    var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
+    var out = document.getElementById('sg-findings-output');
+    if (!out) return;
+    var text;
+    if (Gen) {
+      var result = Gen.generateWithVariation(generateFindingsWithVariant, 'summary_findings', 'findings');
+      text = result.text;
+    } else {
+      text = generateFindingsWithVariant(0, '');
+    }
+    out.value = text;
+    autoResizeTextarea(out);
+    showToast('Interpretation regenerated.');
   }
 
   // ---------- Section 4: Conclusions ----------
-  function generateConclusions() {
-    var respondentsSummary = document.getElementById('sg-respondents-output') && document.getElementById('sg-respondents-output').value.trim();
-    var findingsSummary = document.getElementById('sg-findings-output') && document.getElementById('sg-findings-output').value.trim();
+  function generateConclusionsWithVariant(variantIndex, lastOpener) {
+    var profile = getProfileTables();
+    var likert = getLikertTables();
+    if (profile.length === 0 && likert.length === 0) return '';
 
-    if (!respondentsSummary && !findingsSummary) {
-      showToast('Generate respondents summary and findings first.', true);
-      return '';
-    }
+    var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
+    var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    var includeImplication = document.getElementById('sg-toggle-implication') && document.getElementById('sg-toggle-implication').checked;
+    var vi = typeof variantIndex === 'number' ? variantIndex : 0;
 
     var paragraphs = [];
     paragraphs.push('Based on the findings of the study, the following conclusions are made.');
 
-    if (respondentsSummary) {
-      paragraphs.push('With respect to the respondents\' profile, the data indicate a concentration of respondents in specific categories across the analyzed variables. The dominant categories reflect the general demographic and characteristic composition of the sample.');
-    }
+    var openerIdx = 0;
 
-    var likert = getLikertTables();
-    if (likert.length > 0 && findingsSummary) {
-      likert.forEach(function (t) {
-        var theme = t.tableTitle || 'the theme';
-        var desc = t.awmDesc || 'as indicated by the average weighted mean';
-        paragraphs.push('Regarding ' + theme + ', the overall assessment is ' + desc + '. The findings support the conclusion that respondents\' perceptions align with this qualitative description across the measured indicators.');
-      });
-    }
+    profile.forEach(function (t, idx) {
+      var tableType = t.type === 'twoGroup' ? 'twoGroup' : 'singleGroup';
+      var topCats = getHighestCategories(t.rows || [], tableType);
+      if (topCats.length === 0) return;
+      var theme = t.tableTitle || 'the variable';
+      var indicateWord = Gen ? Gen.getSynonym('shows', vi + openerIdx) : 'indicate';
+      var opener = Gen ? Gen.getOpenerForVariant(vi + openerIdx, openerIdx === 0 ? lastOpener : '') : 'Regarding ';
+      openerIdx++;
+      var quoted = topCats.map(function (c) { return '"' + c + '"'; });
+      var p = opener + theme + ', the data ' + indicateWord + ' a concentration of respondents in ' + (quoted.length === 1 ? quoted[0] : quoted.join(' and ')) + '. The dominant categories reflect the composition of the sample for this variable.';
+      if (includeImplication) {
+        var impl = Gen ? Gen.buildImplicationsWithVariant('conclusions', vi + idx) : (Utils ? Utils.buildImplications('conclusions') : { first: '', second: '' });
+        if (impl.first) p += ' ' + impl.first;
+        if (impl.second) p += ' ' + impl.second;
+      }
+      paragraphs.push(p);
+    });
+
+    likert.forEach(function (t, idx) {
+      var theme = t.tableTitle || 'the theme';
+      var desc;
+      if (t.type === 'twoGroup' && t.awm && (t.awm.sh || t.awm.t)) {
+        var shDesc = (t.awm.sh && t.awm.sh.qd) ? t.awm.sh.qd : '';
+        var tDesc = (t.awm.t && t.awm.t.qd) ? t.awm.t.qd : '';
+        var parts = [];
+        if (shDesc) parts.push('school heads: ' + shDesc);
+        if (tDesc) parts.push('teachers: ' + tDesc);
+        desc = parts.length > 0 ? parts.join('; ') : 'as indicated by the average weighted means';
+      } else if (t.type === 'tTest') {
+        desc = 'the t-test results indicate significant or non-significant differences between the compared groups';
+      } else {
+        desc = t.awmDesc || 'as indicated by the average weighted mean';
+      }
+      var opener = Gen ? Gen.getOpenerForVariant(vi + openerIdx, '') : 'Regarding ';
+      openerIdx++;
+      var p = opener + theme + ', the overall assessment is ' + desc + '. The findings support the conclusion that respondents\' perceptions align with this qualitative description across the measured indicators.';
+      if (includeImplication) {
+        var impl = Gen ? Gen.buildImplicationsWithVariant('conclusions', vi + idx) : (Utils ? Utils.buildImplications('conclusions') : { first: '', second: '' });
+        if (impl.first) p += ' ' + impl.first;
+        if (impl.second) p += ' ' + impl.second;
+      }
+      paragraphs.push(p);
+    });
 
     return paragraphs.join('\n\n');
   }
 
+  function generateConclusions() {
+    var profile = getProfileTables();
+    var likert = getLikertTables();
+    if (profile.length === 0 && likert.length === 0) {
+      showToast('No saved data. Save tables from analyzers first.', true);
+      return '';
+    }
+    return generateConclusionsWithVariant(0, '');
+  }
+
+  function regenerateConclusions() {
+    var profile = getProfileTables();
+    var likert = getLikertTables();
+    if (profile.length === 0 && likert.length === 0) {
+      showToast('No saved data. Save tables from analyzers first.', true);
+      return;
+    }
+    var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
+    var out = document.getElementById('sg-conclusions-output');
+    if (!out) return;
+    var text;
+    if (Gen) {
+      var result = Gen.generateWithVariation(generateConclusionsWithVariant, 'summary_conclusions', 'conclusions');
+      text = result.text;
+    } else {
+      text = generateConclusionsWithVariant(0, '');
+    }
+    out.value = text;
+    autoResizeTextarea(out);
+    showToast('Interpretation regenerated.');
+  }
+
   // ---------- Section 5: Recommendations ----------
   function generateRecommendations() {
+    var profile = getProfileTables();
+    var likert = getLikertTables();
     var findingsSummary = document.getElementById('sg-findings-output') && document.getElementById('sg-findings-output').value.trim();
     var conclusionsSummary = document.getElementById('sg-conclusions-output') && document.getElementById('sg-conclusions-output').value.trim();
 
-    if (!findingsSummary && !conclusionsSummary) {
-      showToast('Generate findings and conclusions first.', true);
+    var profile = getProfileTables();
+    var likert = getLikertTables();
+    if (profile.length === 0 && likert.length === 0) {
+      showToast('No saved data. Save tables from analyzers first.', true);
       return '';
     }
 
@@ -311,14 +604,12 @@
     var target = targetEl && targetEl.value ? targetEl.value.trim() : '';
     var use35 = document.getElementById('sg-toggle-recs-per-theme') && document.getElementById('sg-toggle-recs-per-theme').checked;
 
-    var profile = getProfileTables();
-    var likert = getLikertTables();
     var themes = [];
     profile.forEach(function (t) {
       if (t.tableTitle) themes.push({ type: 'profile', title: t.tableTitle });
     });
     likert.forEach(function (t) {
-      if (t.tableTitle) themes.push({ type: 'likert', title: t.tableTitle });
+      if (t.tableTitle) themes.push({ type: t.type === 'tTest' ? 'tTest' : 'likert', title: t.tableTitle });
     });
 
     if (themes.length === 0) themes.push({ type: 'general', title: 'the study' });
@@ -346,7 +637,7 @@
         if (theme.type === 'profile') {
           var tpl = profileRecTemplates[i % profileRecTemplates.length];
           rec = tpl + theme.title + audience + '.';
-        } else if (theme.type === 'likert') {
+        } else if (theme.type === 'likert' || theme.type === 'tTest') {
           var tpl2 = likertRecTemplates[i % likertRecTemplates.length];
           rec = tpl2 + theme.title + audience + '.';
         } else {
@@ -495,8 +786,14 @@
     document.getElementById('sg-generate-respondents').addEventListener('click', function () {
       var out = document.getElementById('sg-respondents-output');
       if (out) out.value = generateRespondentsSummary();
-      if (out && out.value) showToast('Summary generated.');
+      if (out && out.value) {
+        autoResizeTextarea(out);
+        showToast('Summary generated.');
+        var regen = document.getElementById('sg-regenerate-respondents');
+        if (regen) regen.disabled = false;
+      }
     });
+    document.getElementById('sg-regenerate-respondents').addEventListener('click', regenerateRespondentsSummary);
     document.getElementById('sg-copy-respondents').addEventListener('click', function () {
       var el = document.getElementById('sg-respondents-output');
       if (el && el.value) {
@@ -511,8 +808,14 @@
     document.getElementById('sg-generate-findings').addEventListener('click', function () {
       var out = document.getElementById('sg-findings-output');
       if (out) out.value = generateFindings();
-      if (out && out.value) showToast('Findings generated.');
+      if (out && out.value) {
+        autoResizeTextarea(out);
+        showToast('Findings generated.');
+        var regen = document.getElementById('sg-regenerate-findings');
+        if (regen) regen.disabled = false;
+      }
     });
+    document.getElementById('sg-regenerate-findings').addEventListener('click', regenerateFindings);
     document.getElementById('sg-copy-findings').addEventListener('click', function () {
       var el = document.getElementById('sg-findings-output');
       if (el && el.value) {
@@ -527,8 +830,14 @@
     document.getElementById('sg-generate-conclusions').addEventListener('click', function () {
       var out = document.getElementById('sg-conclusions-output');
       if (out) out.value = generateConclusions();
-      if (out && out.value) showToast('Conclusions generated.');
+      if (out && out.value) {
+        autoResizeTextarea(out);
+        showToast('Conclusions generated.');
+        var regen = document.getElementById('sg-regenerate-conclusions');
+        if (regen) regen.disabled = false;
+      }
     });
+    document.getElementById('sg-regenerate-conclusions').addEventListener('click', regenerateConclusions);
     document.getElementById('sg-copy-conclusions').addEventListener('click', function () {
       var el = document.getElementById('sg-conclusions-output');
       if (el && el.value) {
@@ -543,7 +852,10 @@
     document.getElementById('sg-generate-recommendations').addEventListener('click', function () {
       var out = document.getElementById('sg-recommendations-output');
       if (out) out.value = generateRecommendations();
-      if (out && out.value) showToast('Recommendations generated.');
+      if (out && out.value) {
+        autoResizeTextarea(out);
+        showToast('Recommendations generated.');
+      }
     });
     document.getElementById('sg-copy-recommendations').addEventListener('click', function () {
       var el = document.getElementById('sg-recommendations-output');
@@ -593,6 +905,7 @@
       if (f && saved.findingsSummary) f.value = saved.findingsSummary;
       if (c && saved.conclusions) c.value = saved.conclusions;
       if (rec && saved.recommendations) rec.value = saved.recommendations;
+      resizeAllOutputs();
     }
   }
 

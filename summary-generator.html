@@ -48,7 +48,7 @@
   <main class="sg-main">
     <!-- Page Header -->
     <section class="sg-hero sg-page-header" aria-labelledby="sg-page-title">
-      <div class="sg-container sg-page-header__inner">
+      <div class="sg-content__inner sg-page-header__inner">
         <h1 id="sg-page-title" class="sg-page-header__title">Summary Generator</h1>
         <p class="sg-page-header__subtitle">Generate respondent summary, findings, conclusions, and recommendations based on saved analyses.</p>
         <span class="sg-badge">Uses saved data from this session</span>
@@ -78,8 +78,14 @@
                 </div>
               </div>
               <div class="sg-row-card__actions">
-                <button type="button" class="sg-btn sg-btn--primary" id="sg-refresh-data">Refresh Data</button>
-                <button type="button" class="sg-btn sg-btn--ghost" id="sg-clear-summaries">Clear Saved Summaries</button>
+                <button type="button" class="sg-btn sg-btn--primary" id="sg-refresh-data">
+                  <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                  Refresh Data
+                </button>
+                <button type="button" class="sg-btn sg-btn--ghost" id="sg-clear-summaries">
+                  <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                  Clear Saved Summaries
+                </button>
               </div>
             </div>
             <div class="sg-empty-state" id="sg-empty-data" hidden>
@@ -92,72 +98,125 @@
           </div>
         </article>
 
-        <!-- Section 2: Respondents Summary Generator -->
+        <!-- Interpretation options (applies to all sections) -->
         <article class="sg-row-card">
+          <h2 class="sg-row-card__title">Interpretation Options</h2>
+          <div class="sg-row-card__body">
+            <label class="sg-toggle">
+              <input type="checkbox" id="sg-toggle-implication" checked>
+              <span class="sg-toggle__label">Include 2 Implication Sentences</span>
+            </label>
+            <p class="sg-row-card__hint">Applies to Summary of Respondents, Findings, and Conclusions. Recommendations do not include implication sentences.</p>
+          </div>
+        </article>
+
+        <!-- Section 2: Respondents Summary Generator -->
+        <article class="sg-row-card sg-row-card--output">
           <h2 class="sg-row-card__title">Summary of Respondents</h2>
           <div class="sg-row-card__body">
-            <p class="sg-row-card__hint">Generates one paragraph summarizing respondent profile based on saved profile tables. Mentions only highest frequency categories per table.</p>
-            <div class="sg-row-card__actions">
-              <button type="button" class="sg-btn sg-btn--primary" id="sg-generate-respondents">Generate Summary</button>
+            <p class="sg-row-card__hint">Generates one paragraph summarizing all saved profile tables (Age, Gender, Civil Status, Education, Position, Rating, Years in Service, In-Service). Combines dominant categories in the required sequence—no table numbers, frequencies, or multiple paragraphs.</p>
+            <div class="sg-action-row sg-action-row--primary">
+              <button type="button" class="sg-btn sg-btn--primary" id="sg-generate-respondents">
+                <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M3 12a9 9 0 0 1 18 0"/><path d="M3 12h18"/></svg>
+                Generate Summary
+              </button>
+              <button type="button" class="sg-btn sg-btn--primary" id="sg-regenerate-respondents" disabled>
+                <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                Regenerate
+              </button>
             </div>
             <div class="sg-output-area">
-              <textarea class="sg-output-textarea" id="sg-respondents-output" readonly placeholder="Click Generate Summary to produce output." rows="5"></textarea>
+              <div class="sg-output-wrapper">
+                <textarea class="sg-output-textarea" id="sg-respondents-output" readonly placeholder="Click Generate Summary to produce output." rows="4"></textarea>
+              </div>
               <div class="sg-output-actions">
-                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-copy-respondents">Copy</button>
-                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-save-respondents">Save to Report</button>
+                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-copy-respondents">
+                  <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  Copy
+                </button>
+                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-save-respondents">
+                  <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Save to Report
+                </button>
               </div>
             </div>
           </div>
         </article>
 
         <!-- Section 3: Summary of Findings Generator -->
-        <article class="sg-row-card">
+        <article class="sg-row-card sg-row-card--output">
           <h2 class="sg-row-card__title">Summary of Findings</h2>
           <div class="sg-row-card__body">
-            <p class="sg-row-card__hint">Generates findings per saved table (profile + likert). Each paragraph uses varied formal openings and includes AWM sentence for Likert tables.</p>
+            <p class="sg-row-card__hint">Generates findings for every saved table (all profile + all Likert tables). Each table gets its own paragraph with varied formal openings. Supports single-group, two-group, and t-test tables.</p>
             <div class="sg-toggles">
-              <label class="sg-toggle">
-                <input type="checkbox" id="sg-toggle-implication" checked>
-                <span class="sg-toggle__label">Include one short implication sentence</span>
-              </label>
               <label class="sg-toggle">
                 <input type="checkbox" id="sg-toggle-next-group">
                 <span class="sg-toggle__label">Include next qualitative group if none exist in top group</span>
               </label>
             </div>
-            <div class="sg-row-card__actions">
-              <button type="button" class="sg-btn sg-btn--primary" id="sg-generate-findings">Generate Findings</button>
+            <div class="sg-action-row sg-action-row--primary">
+              <button type="button" class="sg-btn sg-btn--primary" id="sg-generate-findings">
+                <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v18M3 12a9 9 0 0 1 18 0"/><path d="M3 12h18"/></svg>
+                Generate Findings
+              </button>
+              <button type="button" class="sg-btn sg-btn--primary" id="sg-regenerate-findings" disabled>
+                <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                Regenerate
+              </button>
             </div>
             <div class="sg-output-area">
-              <textarea class="sg-output-textarea" id="sg-findings-output" readonly placeholder="Click Generate Findings to produce output." rows="5"></textarea>
+              <div class="sg-output-wrapper">
+                <textarea class="sg-output-textarea" id="sg-findings-output" readonly placeholder="Click Generate Findings to produce output." rows="4"></textarea>
+              </div>
               <div class="sg-output-actions">
-                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-copy-findings">Copy</button>
-                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-save-findings">Save to Report</button>
+                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-copy-findings">
+                  <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  Copy
+                </button>
+                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-save-findings">
+                  <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Save to Report
+                </button>
               </div>
             </div>
           </div>
         </article>
 
         <!-- Section 4: Conclusions Generator -->
-        <article class="sg-row-card">
+        <article class="sg-row-card sg-row-card--output">
           <h2 class="sg-row-card__title">Conclusions</h2>
           <div class="sg-row-card__body">
             <p class="sg-row-card__hint">Generates conclusions strictly based on the generated findings. No new ideas or recommendations.</p>
-            <div class="sg-row-card__actions">
-              <button type="button" class="sg-btn sg-btn--primary" id="sg-generate-conclusions">Generate Conclusions</button>
+            <div class="sg-action-row sg-action-row--primary">
+              <button type="button" class="sg-btn sg-btn--primary" id="sg-generate-conclusions">
+                <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v18M3 12a9 9 0 0 1 18 0"/><path d="M3 12h18"/></svg>
+                Generate Conclusions
+              </button>
+              <button type="button" class="sg-btn sg-btn--primary" id="sg-regenerate-conclusions" disabled>
+                <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                Regenerate
+              </button>
             </div>
             <div class="sg-output-area">
-              <textarea class="sg-output-textarea" id="sg-conclusions-output" readonly placeholder="Generate respondents summary and findings first, then click Generate Conclusions." rows="5"></textarea>
+              <div class="sg-output-wrapper">
+                <textarea class="sg-output-textarea" id="sg-conclusions-output" readonly placeholder="Generate respondents summary and findings first, then click Generate Conclusions." rows="4"></textarea>
+              </div>
               <div class="sg-output-actions">
-                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-copy-conclusions">Copy</button>
-                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-save-conclusions">Save to Report</button>
+                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-copy-conclusions">
+                  <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  Copy
+                </button>
+                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-save-conclusions">
+                  <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Save to Report
+                </button>
               </div>
             </div>
           </div>
         </article>
 
         <!-- Section 5: Recommendations Generator -->
-        <article class="sg-row-card">
+        <article class="sg-row-card sg-row-card--output">
           <h2 class="sg-row-card__title">Recommendations</h2>
           <div class="sg-row-card__body">
             <p class="sg-row-card__hint">Produces numbered recommendations linked to findings and conclusions.</p>
@@ -171,14 +230,25 @@
                 <span class="sg-toggle__label">Generate 3–5 recommendations per theme (default 3)</span>
               </label>
             </div>
-            <div class="sg-row-card__actions">
-              <button type="button" class="sg-btn sg-btn--primary" id="sg-generate-recommendations">Generate Recommendations</button>
+            <div class="sg-action-row sg-action-row--primary">
+              <button type="button" class="sg-btn sg-btn--primary" id="sg-generate-recommendations">
+                <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v18M3 12a9 9 0 0 1 18 0"/><path d="M3 12h18"/></svg>
+                Generate Recommendations
+              </button>
             </div>
             <div class="sg-output-area">
-              <textarea class="sg-output-textarea" id="sg-recommendations-output" readonly placeholder="Generate findings and conclusions first, then click Generate Recommendations." rows="5"></textarea>
+              <div class="sg-output-wrapper">
+                <textarea class="sg-output-textarea" id="sg-recommendations-output" readonly placeholder="Generate findings and conclusions first, then click Generate Recommendations." rows="4"></textarea>
+              </div>
               <div class="sg-output-actions">
-                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-copy-recommendations">Copy</button>
-                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-save-recommendations">Save to Report</button>
+                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-copy-recommendations">
+                  <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  Copy
+                </button>
+                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-save-recommendations">
+                  <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Save to Report
+                </button>
               </div>
             </div>
           </div>
@@ -190,9 +260,18 @@
           <div class="sg-row-card__body">
             <p class="sg-row-card__hint">Save all generated sections to the report and export.</p>
             <div class="sg-row-card__actions">
-              <button type="button" class="sg-btn sg-btn--primary" id="sg-save-all">Save All Sections to Report</button>
-              <button type="button" class="sg-btn sg-btn--secondary" id="sg-copy-all">Copy All</button>
-              <a href="report-export.html" class="sg-btn sg-btn--accent">Go to Report / Export</a>
+              <button type="button" class="sg-btn sg-btn--primary" id="sg-save-all">
+                <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Save All to Report
+              </button>
+              <button type="button" class="sg-btn sg-btn--secondary" id="sg-copy-all">
+                <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copy All
+              </button>
+              <a href="report-export.html" class="sg-btn sg-btn--accent">
+                <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                Go to Report / Export
+              </a>
             </div>
           </div>
         </article>
@@ -229,6 +308,8 @@
   <!-- Toast container -->
   <div class="sg-toast-container" id="sg-toast-container" aria-live="polite"></div>
 
+  <script src="js/interpretation-utils.js"></script>
+  <script src="js/text-generator.js"></script>
   <script src="js/summary.js"></script>
 </body>
 </html>

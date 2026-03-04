@@ -48,102 +48,211 @@
   <main class="pa-main">
     <!-- Page Header -->
     <section class="pa-hero pa-page-header" aria-labelledby="pa-page-title">
-      <div class="pa-container pa-page-header__inner">
+      <div class="pa-content__inner pa-page-header__inner">
         <h1 id="pa-page-title" class="pa-page-header__title">Profile Data Analyzer</h1>
-        <p class="pa-page-header__subtitle">Manually enter your table labels and frequencies. The system computes percentages, totals, ranks, and produces thesis-ready interpretation.</p>
-        <span class="pa-badge">Runs fully on your device</span>
+        <p class="pa-page-header__subtitle">Enter your profile table labels and frequencies. The system computes percentages, totals, ranks, and produces thesis-ready interpretation.</p>
       </div>
     </section>
 
-    <!-- Main Content Grid -->
+    <!-- Main Content -->
     <section class="pa-content">
       <div class="pa-content__inner">
-        <!-- Input Card -->
-          <div class="pa-card" id="pa-input-card">
-            <h2 class="pa-card__title">Enter Table Data</h2>
+        <div class="pa-main-col">
+          <!-- Step 1: Select Project and Table -->
+          <div class="pa-card" id="pa-step1-card">
+            <h2 class="pa-card__title">Step 1: Select Project and Table</h2>
             <div class="pa-card__body">
+              <div class="pa-top-controls">
+                <div class="pa-top-controls__row">
+                  <div class="pa-form-group pa-form-group--inline">
+                    <label class="pa-label" for="pa-project-select">Research Project</label>
+                    <select id="pa-project-select" class="pa-select">
+                      <option value="rp1" selected>Research Paper 1 — Cooperative Learning (Math G5)</option>
+                      <option value="rp2">Research Paper 2 — Science 3 (School Heads vs Teachers)</option>
+                    </select>
+                  </div>
+                  <div class="pa-form-group pa-form-group--inline">
+                    <label class="pa-label" for="pa-table-select">Select Profile Table</label>
+                    <select id="pa-table-select" class="pa-select">
+                      <option value="" selected disabled>Select Tables 2–9</option>
+                      <option value="age">Table 2 — Age</option>
+                      <option value="gender">Table 3 — Gender</option>
+                      <option value="civilStatus">Table 4 — Civil Status</option>
+                      <option value="education">Table 5 — Highest Educational Attainment</option>
+                      <option value="position">Table 6 — Present Position</option>
+                      <option value="rating">Table 7 — Latest Performance Rating</option>
+                      <option value="yearsService">Table 8 — Years in Service</option>
+                      <option value="inServiceTraining">Table 9 — In-Service Training Attended</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="pa-top-controls__summary" aria-live="polite">
+                  <span class="pa-top-controls__summary-label">Loaded:</span>
+                  <span class="pa-top-controls__summary-pill" id="pa-loaded-summary">None selected</span>
+                </div>
+              </div>
+              <p class="pa-field-hint">Choose a project and table to auto-load categories and values.</p>
               <div class="pa-form-group">
                 <label class="pa-label" for="pa-table-title">Table Title / Variable Name</label>
-                <input type="text" id="pa-table-title" class="pa-input" placeholder="e.g. Age Stratification of Respondents" aria-describedby="pa-table-title-error">
+                <input type="text" id="pa-table-title" class="pa-input" placeholder="e.g. Age stratification of the respondents" aria-describedby="pa-table-title-error">
                 <p id="pa-table-title-error" class="pa-field-error" role="alert" aria-live="polite"></p>
               </div>
-              <div class="pa-form-group">
-                <label class="pa-label">Category Rows</label>
+            </div>
+          </div>
+
+          <!-- Step 2: Encode or Review Values -->
+          <div class="pa-card" id="pa-step2-card">
+            <h2 class="pa-card__title">Step 2: Encode or Review Values</h2>
+            <div class="pa-card__body">
+              <!-- Group mode toggle (shown only for RP1) -->
+              <div class="pa-form-group pa-group-toggle-wrap" id="pa-group-toggle-wrap">
+                <span class="pa-label">Group Mode</span>
+                <div class="pa-qd-toggle" id="pa-group-toggle" role="radiogroup" aria-label="Group mode">
+                  <button type="button" class="pa-qd-toggle__btn is-active" data-group-mode="single" aria-pressed="true">Single Group</button>
+                  <button type="button" class="pa-qd-toggle__btn" data-group-mode="two" aria-pressed="false">Two Groups</button>
+                </div>
+              </div>
+
+              <!-- Single-group input table (RP1) -->
+              <div class="pa-form-group" id="pa-input-single-group">
                 <div class="pa-table-wrap">
                   <table class="pa-table" id="pa-input-table">
                     <thead>
                       <tr>
-                        <th>Category / Particular</th>
-                        <th>Frequency</th>
+                        <th class="pa-thesis-table__th pa-thesis-table__th--particulars">Particulars</th>
+                        <th class="pa-thesis-table__th pa-thesis-table__th--f">f</th>
                         <th></th>
                       </tr>
                     </thead>
-                    <tbody id="pa-input-tbody">
-                      <!-- Rows added by JS -->
-                    </tbody>
+                    <tbody id="pa-input-tbody"></tbody>
                   </table>
                 </div>
                 <p id="pa-table-error" class="pa-field-error" role="alert" aria-live="polite"></p>
                 <div class="pa-card-actions">
                   <button type="button" class="pa-btn pa-btn--ghost" id="pa-add-row">Add Row</button>
                   <button type="button" class="pa-btn pa-btn--ghost" id="pa-clear-inputs">Clear Inputs</button>
+                </div>
+              </div>
+
+              <!-- Output table (computed results) -->
+              <div class="pa-form-group" id="pa-output-section">
+                <div class="pa-table-toolbar">
+                  <div class="pa-table-density" aria-label="Row density">
+                    <span class="pa-table-density__label">Rows</span>
+                    <button type="button" class="pa-chip pa-chip--active" data-row-density="comfortable">Comfortable</button>
+                    <button type="button" class="pa-chip" data-row-density="compact">Compact</button>
+                  </div>
+                </div>
+                <div class="pa-table-wrap pa-output-table pa-thesis-table" id="pa-table-wrap">
+                  <table class="pa-table pa-thesis-table__grid" id="pa-output-table" role="grid">
+                    <caption class="pa-thesis-table__caption visually-hidden">Profile table with frequency, percentage, and rank</caption>
+                    <thead id="pa-output-thead">
+                      <tr>
+                        <th class="pa-thesis-table__th pa-thesis-table__th--particulars">Particulars</th>
+                        <th class="pa-thesis-table__th pa-thesis-table__th--f">f</th>
+                        <th class="pa-thesis-table__th pa-thesis-table__th--pct">Percentage</th>
+                        <th class="pa-thesis-table__th pa-thesis-table__th--rank">Rank</th>
+                      </tr>
+                    </thead>
+                    <tbody id="pa-output-tbody">
+                      <tr><td colspan="4" class="pa-output-empty">Select a table and compute to see results.</td></tr>
+                    </tbody>
+                    <tfoot id="pa-output-tfoot">
+                      <tr class="pa-thesis-table__footer-row">
+                        <td class="pa-thesis-table__footer-label"><strong>TOTAL</strong></td>
+                        <td class="pa-thesis-table__footer-value"><strong id="pa-total-freq">0</strong></td>
+                        <td class="pa-thesis-table__footer-value"><strong id="pa-total-pct">100.00</strong></td>
+                        <td class="pa-thesis-table__footer-value"></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+                <div class="pa-totals-strip" id="pa-totals-strip">
+                  <span class="pa-totals-strip__item">Total frequency: <strong id="pa-totals-freq">0</strong></span>
+                  <span class="pa-totals-strip__item">Total Percentage: <strong id="pa-totals-pct">100.00</strong></span>
+                </div>
+                <div class="pa-card-actions pa-output-actions">
                   <button type="button" class="pa-btn pa-btn--primary" id="pa-compute" disabled>Compute</button>
+                  <button type="button" class="pa-btn pa-btn--ghost" id="pa-restore-original" disabled>Restore Original Values</button>
                   <button type="button" class="pa-btn pa-btn--secondary" id="pa-save-to-report-input" disabled>Save to Report</button>
+                </div>
+              </div>
+
+              <!-- Advanced Options (collapsed) -->
+              <div class="pa-advanced-section">
+                <button type="button" class="pa-advanced-toggle" id="pa-advanced-toggle" aria-expanded="false">
+                  <span class="pa-advanced-toggle__label">Advanced Options (Optional)</span>
+                  <span class="pa-advanced-toggle__chevron" aria-hidden="true"></span>
+                </button>
+                <div class="pa-advanced-body" id="pa-advanced-body">
+                  <label class="pa-toggle">
+                    <input type="checkbox" id="pa-auto-percent" checked>
+                    <span>Auto-recompute percentage from f</span>
+                  </label>
+                  <label class="pa-toggle" id="pa-table9-percent-wrap">
+                    <input type="checkbox" id="pa-table9-percent-toggle">
+                    <span>Compute percentage from mentions (Table 9)</span>
+                  </label>
+                  <p class="pa-field-hint pa-advanced-hint">Rank ties use dense ranking (e.g. 10,10,5 → 1,1,2).</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Output Card -->
-          <div class="pa-card" id="pa-output-card">
-            <h2 class="pa-card__title">Computed Results</h2>
+          <!-- Step 3: Interpretation -->
+          <div class="pa-card" id="pa-step3-card">
+            <h2 class="pa-card__title">Step 3: Interpretation</h2>
             <div class="pa-card__body">
-              <div class="pa-table-wrap pa-output-table">
-                <table class="pa-table" id="pa-output-table">
-                  <thead>
-                    <tr>
-                      <th>Category / Particular</th>
-                      <th>Frequency</th>
-                      <th>Percentage</th>
-                      <th>Rank</th>
-                    </tr>
-                  </thead>
-                  <tbody id="pa-output-tbody">
-                    <tr><td colspan="4" class="pa-output-empty">Compute to see results.</td></tr>
-                  </tbody>
-                </table>
+              <div class="pa-form-group">
+                <label class="pa-toggle">
+                  <input type="checkbox" id="pa-include-implications" checked>
+                  <span>Include 2 Implication Sentences</span>
+                </label>
               </div>
-              <div class="pa-output-footer" id="pa-output-footer" aria-live="polite" hidden>
-                <span>Total Frequency: <strong id="pa-total-freq">0</strong></span>
-                <span>Total Percentage: <strong id="pa-total-pct">100.00</strong>%</span>
+              <div class="pa-form-group" id="pa-interp-source-wrap">
+                <label class="pa-toggle">
+                  <input type="checkbox" id="pa-use-prewritten" disabled>
+                  <span>Use Prewritten Interpretation (if available)</span>
+                </label>
+              </div>
+              <!-- Two-group interpretation tabs -->
+              <div class="pa-interp-tabs" id="pa-interp-tabs" hidden>
+                <div class="pa-qd-toggle" role="tablist" aria-label="Interpretation view">
+                  <button type="button" class="pa-qd-toggle__btn is-active" data-interp-tab="sh" role="tab" aria-selected="true">School Heads</button>
+                  <button type="button" class="pa-qd-toggle__btn" data-interp-tab="teachers" role="tab" aria-selected="false">Teachers</button>
+                </div>
+              </div>
+              <div class="pa-interpretation-section">
+                <div class="pa-interpretation-block" id="pa-interpretation-block" role="status" aria-live="polite"></div>
+                <div class="pa-interpretation-toolbar">
+                  <button type="button" class="pa-interpretation-toggle" id="pa-interpretation-toggle" aria-expanded="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                    <span>Collapse</span>
+                  </button>
+                  <div class="pa-interpretation-actions">
+                    <button type="button" class="pa-btn pa-btn--primary" id="pa-regenerate-interpretation" disabled title="Generate a new interpretation">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                      <span>Regenerate</span>
+                    </button>
+                    <button type="button" class="pa-btn pa-btn--primary" id="pa-copy-interpretation" disabled title="Copy interpretation">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <span>Copy All</span>
+                    </button>
+                    <button type="button" class="pa-btn pa-btn--secondary" id="pa-save-to-report" disabled title="Save to report">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                      <span>Save to Report</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-
-          <!-- Interpretation Card -->
-          <div class="pa-card" id="pa-interpretation-card">
-            <h2 class="pa-card__title">Academic Interpretation</h2>
-            <div class="pa-card__body">
-              <div class="pa-interpretation-block" id="pa-interpretation-block" role="status" aria-live="polite"></div>
-              <div class="pa-interpretation-actions">
-                <button type="button" class="pa-btn pa-btn--primary" id="pa-copy-interpretation" disabled>Copy Interpretation</button>
-                <button type="button" class="pa-btn pa-btn--secondary" id="pa-save-to-report" disabled>Save to Report</button>
-              </div>
-            </div>
-          </div>
-
-        <!-- Quick Rules -->
-        <div class="pa-panel">
-            <h3 class="pa-section-title">Quick Rules</h3>
-            <ul class="pa-panel__list">
-              <li>Percentages auto-computed to 2 decimals</li>
-              <li>Ties share ranks</li>
-              <li>Conclusion mentions only the top category</li>
-              <li>No data leaves your device</li>
-            </ul>
         </div>
-        <div class="pa-panel">
-          <h3 class="pa-panel__title">Live Totals</h3>
+
+        <!-- Sidebar -->
+        <aside class="pa-sidebar">
+          <div class="pa-panel">
+            <h3 class="pa-panel__title">Live Totals</h3>
             <div class="pa-live-totals">
               <div class="pa-live-totals__row">
                 <span class="pa-live-totals__label">Total Frequency</span>
@@ -151,12 +260,12 @@
               </div>
               <div class="pa-live-totals__row">
                 <span class="pa-live-totals__label">Total Percentage</span>
-                <span class="pa-live-totals__value" id="pa-live-total-pct">0.00%</span>
+                <span class="pa-live-totals__value" id="pa-live-total-pct">0.00</span>
               </div>
             </div>
-        </div>
-        <div class="pa-panel">
-          <h3 class="pa-panel__title">Session Counters</h3>
+          </div>
+          <div class="pa-panel">
+            <h3 class="pa-panel__title">Session Counters</h3>
             <div class="pa-session-stats">
               <div class="pa-session-stats__row">
                 <span class="pa-session-stats__label">Tables Processed</span>
@@ -167,11 +276,17 @@
                 <span class="pa-session-stats__value" id="pa-session-respondents">0</span>
               </div>
               <div class="pa-session-stats__row">
-                <span class="pa-session-stats__label">Interpretations Generated</span>
+                <span class="pa-session-stats__label">Interpretations</span>
                 <span class="pa-session-stats__value" id="pa-session-interpretations">0</span>
               </div>
             </div>
-        </div>
+          </div>
+          <div class="pa-panel">
+            <h3 class="pa-panel__title">Saved Tables</h3>
+            <p class="pa-saved-empty" id="pa-saved-empty">No profile tables saved yet.</p>
+            <div class="pa-saved-list" id="pa-saved-list" aria-live="polite"></div>
+          </div>
+        </aside>
       </div>
     </section>
   </main>
@@ -202,9 +317,23 @@
     </div>
   </div>
 
-  <!-- Toast container -->
+  <!-- Clear Loaded Sample Modal -->
+  <div class="pa-modal" id="pa-clear-sample-modal" role="dialog" aria-labelledby="pa-clear-sample-modal-title" aria-modal="true" hidden>
+    <div class="pa-modal__backdrop" id="pa-clear-sample-backdrop"></div>
+    <div class="pa-modal__panel">
+      <h2 id="pa-clear-sample-modal-title" class="pa-modal__title">Clear loaded sample tables?</h2>
+      <p class="pa-modal__text">Remove loaded Tables 2–9 from Summary and Report. Session counters will be adjusted. Cannot be undone.</p>
+      <div class="pa-modal__actions">
+        <button type="button" class="pa-btn pa-btn--secondary" id="pa-clear-sample-cancel">Cancel</button>
+        <button type="button" class="pa-btn pa-btn--danger" id="pa-clear-sample-confirm">Clear Loaded Sample</button>
+      </div>
+    </div>
+  </div>
+
   <div class="pa-toast-container" id="pa-toast-container" aria-live="polite"></div>
 
+  <script src="js/interpretation-utils.js"></script>
+  <script src="js/text-generator.js"></script>
   <script src="js/profile.js"></script>
 </body>
 </html>

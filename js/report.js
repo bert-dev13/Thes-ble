@@ -198,7 +198,7 @@
         var tableText = (t.tableTitle || 'Profile Table') + '\n';
         tableText += 'Category\tFrequency\tPercentage\tRank\n';
         (t.rows || []).forEach(function (r) {
-          tableText += (r.category || '') + '\t' + (r.frequency || '') + '\t' + (r.percentage != null ? r.percentage.toFixed(2) + '%' : '') + '\t' + (r.rank || '') + '\n';
+          tableText += (r.category || '') + '\t' + (r.frequency || '') + '\t' + (r.percentage != null ? r.percentage.toFixed(2) : '') + '\t' + (r.rank || '') + '\n';
         });
         if (t.totals) tableText += 'Total: ' + (t.totals.totalFrequency || '') + '\n';
         if (includeInterpretations && t.interpretation) tableText += '\nInterpretation: ' + t.interpretation + '\n';
@@ -206,11 +206,26 @@
       });
       likert.forEach(function (t) {
         var tableText = (t.tableTitle || 'Likert Table') + '\n';
-        tableText += 'Indicator\tWeighted Mean\tQD\tRank\tTotal\n';
-        (t.indicators || []).forEach(function (r) {
-          tableText += (r.indicator || '') + '\t' + (r.weightedMean != null ? r.weightedMean.toFixed(2) : '') + '\t' + (r.qualitativeDescription || '') + '\t' + (r.rank != null ? (r.rank % 1 === 0 ? r.rank : r.rank.toFixed(1)) : '') + '\t' + (r.total || '') + '\n';
-        });
-        if (t.awm != null) tableText += 'AWM: ' + t.awm.toFixed(2) + ' (' + (t.awmDesc || '') + ')\n';
+        if (t.type === 'twoGroup' && t.rows) {
+          tableText += 'Indicator\tSH W.M.\tSH QD\tSH Rank\tT W.M.\tT QD\tT Rank\n';
+          (t.rows || []).forEach(function (r) {
+            tableText += (r.indicator || '') + '\t' + (r.sh && r.sh.wm != null ? r.sh.wm.toFixed(2) : '') + '\t' + ((r.sh && r.sh.qd) || '') + '\t' + (r.sh && r.sh.rank != null ? (r.sh.rank % 1 === 0 ? r.sh.rank : r.sh.rank.toFixed(1)) : '') + '\t' + (r.t && r.t.wm != null ? r.t.wm.toFixed(2) : '') + '\t' + ((r.t && r.t.qd) || '') + '\t' + (r.t && r.t.rank != null ? (r.t.rank % 1 === 0 ? r.t.rank : r.t.rank.toFixed(1)) : '') + '\n';
+          });
+          if (t.awm && (t.awm.sh || t.awm.t)) {
+            tableText += 'AWM: SH ' + (t.awm.sh && t.awm.sh.value != null ? t.awm.sh.value.toFixed(2) : '—') + ' (' + ((t.awm.sh && t.awm.sh.qd) || '') + '); T ' + (t.awm.t && t.awm.t.value != null ? t.awm.t.value.toFixed(2) : '—') + ' (' + ((t.awm.t && t.awm.t.qd) || '') + ')\n';
+          }
+        } else if (t.type === 'tTest' && t.rows) {
+          tableText += '#\tParticulars\tt-value\tt-critical\tp-value\tDecision\tDescription\n';
+          (t.rows || []).forEach(function (r, i) {
+            tableText += (i + 1) + '\t' + (r.label || '') + '\t' + (r.tValue || '') + '\t' + (r.tCritical || '') + '\t' + (r.pValue || '') + '\t' + (r.decision || '') + '\t' + (r.description || '') + '\n';
+          });
+        } else {
+          tableText += 'Indicator\tWeighted Mean\tQD\tRank\tTotal\n';
+          (t.indicators || []).forEach(function (r) {
+            tableText += (r.indicator || '') + '\t' + (r.weightedMean != null ? r.weightedMean.toFixed(2) : '') + '\t' + (r.qualitativeDescription || '') + '\t' + (r.rank != null ? (r.rank % 1 === 0 ? r.rank : r.rank.toFixed(1)) : '') + '\t' + (r.total || '') + '\n';
+          });
+          if (t.awm != null) tableText += 'AWM: ' + t.awm.toFixed(2) + ' (' + (t.awmDesc || '') + ')\n';
+        }
         if (includeInterpretations && t.interpretation) tableText += '\nInterpretation: ' + t.interpretation + '\n';
         parts.push(tableText);
       });
@@ -264,12 +279,12 @@
       var tbody = table.querySelector('tbody');
       (t.rows || []).forEach(function (r) {
         var tr = document.createElement('tr');
-        tr.innerHTML = '<td>' + escapeHtml(r.category || '') + '</td><td>' + (r.frequency || '') + '</td><td>' + (r.percentage != null ? r.percentage.toFixed(2) + '%' : '') + '</td><td>' + (r.rank != null ? (r.rank % 1 === 0 ? r.rank : r.rank.toFixed(1)) : '') + '</td>';
+        tr.innerHTML = '<td>' + escapeHtml(r.category || '') + '</td><td>' + (r.frequency || '') + '</td><td>' + (r.percentage != null ? r.percentage.toFixed(2) : '') + '</td><td>' + (r.rank != null ? (r.rank % 1 === 0 ? r.rank : r.rank.toFixed(1)) : '') + '</td>';
         tbody.appendChild(tr);
       });
       if (t.totals) {
         var footerTr = document.createElement('tr');
-        footerTr.innerHTML = '<td><strong>Total</strong></td><td><strong>' + (t.totals.totalFrequency || '') + '</strong></td><td><strong>' + (t.totals.totalPercentage != null ? t.totals.totalPercentage + '%' : '') + '</strong></td><td></td>';
+        footerTr.innerHTML = '<td><strong>Total</strong></td><td><strong>' + (t.totals.totalFrequency || '') + '</strong></td><td><strong>' + (t.totals.totalPercentage != null ? (typeof t.totals.totalPercentage === 'number' ? t.totals.totalPercentage.toFixed(2) : t.totals.totalPercentage) : '') + '</strong></td><td></td>';
         tbody.appendChild(footerTr);
       }
       tableWrap.appendChild(table);
@@ -296,7 +311,7 @@
       copyBtn.addEventListener('click', function () {
         var text = (t.tableTitle || '') + '\n\n';
         (t.rows || []).forEach(function (r) {
-          text += (r.category || '') + '\t' + (r.frequency || '') + '\t' + (r.percentage != null ? r.percentage.toFixed(2) + '%' : '') + '\t' + (r.rank != null ? r.rank : '') + '\n';
+          text += (r.category || '') + '\t' + (r.frequency || '') + '\t' + (r.percentage != null ? r.percentage.toFixed(2) : '') + '\t' + (r.rank != null ? r.rank : '') + '\n';
         });
         if (t.interpretation) text += '\n' + t.interpretation;
         navigator.clipboard.writeText(text).then(function () { showToast('Copied!'); }).catch(function () { showToast('Copy failed.', true); });
@@ -354,17 +369,43 @@
       tableWrap.className = 're-table-wrap';
       var table = document.createElement('table');
       table.className = 're-table';
-      table.innerHTML = '<thead><tr><th>Indicator</th><th>Weighted Mean</th><th>QD</th><th>Rank</th><th>Total</th></tr></thead><tbody></tbody>';
-      var tbody = table.querySelector('tbody');
-      (t.indicators || []).forEach(function (r) {
-        var tr = document.createElement('tr');
-        tr.innerHTML = '<td>' + escapeHtml(r.indicator || '') + '</td><td>' + (r.weightedMean != null ? r.weightedMean.toFixed(2) : '') + '</td><td>' + escapeHtml(r.qualitativeDescription || '') + '</td><td>' + (r.rank != null ? (r.rank % 1 === 0 ? r.rank : r.rank.toFixed(1)) : '') + '</td><td>' + (r.total || '') + '</td>';
-        tbody.appendChild(tr);
-      });
-      if (t.awm != null) {
-        var footerTr = document.createElement('tr');
-        footerTr.innerHTML = '<td><strong>AWM</strong></td><td><strong>' + t.awm.toFixed(2) + '</strong></td><td><strong>' + escapeHtml(t.awmDesc || '') + '</strong></td><td></td><td></td>';
-        tbody.appendChild(footerTr);
+
+      if (t.type === 'twoGroup' && t.rows) {
+        table.innerHTML = '<thead><tr><th>Indicator</th><th colspan="3">School Heads</th><th colspan="3">Teachers</th></tr><tr><th></th><th>W.M.</th><th>QD</th><th>Rank</th><th>W.M.</th><th>QD</th><th>Rank</th></tr></thead><tbody></tbody>';
+        var tbody = table.querySelector('tbody');
+        t.rows.forEach(function (r) {
+          var tr = document.createElement('tr');
+          tr.innerHTML = '<td>' + escapeHtml(r.indicator || '') + '</td><td>' + (r.sh && r.sh.wm != null ? r.sh.wm.toFixed(2) : '') + '</td><td>' + escapeHtml((r.sh && r.sh.qd) || '') + '</td><td>' + (r.sh && r.sh.rank != null ? (r.sh.rank % 1 === 0 ? r.sh.rank : r.sh.rank.toFixed(1)) : '') + '</td><td>' + (r.t && r.t.wm != null ? r.t.wm.toFixed(2) : '') + '</td><td>' + escapeHtml((r.t && r.t.qd) || '') + '</td><td>' + (r.t && r.t.rank != null ? (r.t.rank % 1 === 0 ? r.t.rank : r.t.rank.toFixed(1)) : '') + '</td>';
+          tbody.appendChild(tr);
+        });
+        if (t.awm && (t.awm.sh || t.awm.t)) {
+          var footerTr = document.createElement('tr');
+          var shVal = t.awm.sh && t.awm.sh.value != null ? t.awm.sh.value.toFixed(2) : '—';
+          var tVal = t.awm.t && t.awm.t.value != null ? t.awm.t.value.toFixed(2) : '—';
+          footerTr.innerHTML = '<td><strong>AWM</strong></td><td><strong>' + shVal + '</strong></td><td><strong>' + escapeHtml((t.awm.sh && t.awm.sh.qd) || '') + '</strong></td><td></td><td><strong>' + tVal + '</strong></td><td><strong>' + escapeHtml((t.awm.t && t.awm.t.qd) || '') + '</strong></td><td></td>';
+          tbody.appendChild(footerTr);
+        }
+      } else if (t.type === 'tTest' && t.rows) {
+        table.innerHTML = '<thead><tr><th>#</th><th>Particulars</th><th>t-value</th><th>t-critical</th><th>p-value</th><th>Decision</th><th>Description</th></tr></thead><tbody></tbody>';
+        var tbody = table.querySelector('tbody');
+        t.rows.forEach(function (r, i) {
+          var tr = document.createElement('tr');
+          tr.innerHTML = '<td>' + (i + 1) + '</td><td>' + escapeHtml(r.label || '') + '</td><td>' + escapeHtml(String(r.tValue || '')) + '</td><td>' + escapeHtml(String(r.tCritical || '')) + '</td><td>' + escapeHtml(String(r.pValue || '')) + '</td><td>' + escapeHtml(String(r.decision || '')) + '</td><td>' + escapeHtml(String(r.description || '')) + '</td>';
+          tbody.appendChild(tr);
+        });
+      } else {
+        table.innerHTML = '<thead><tr><th>Indicator</th><th>Weighted Mean</th><th>QD</th><th>Rank</th><th>Total</th></tr></thead><tbody></tbody>';
+        var tbody = table.querySelector('tbody');
+        (t.indicators || []).forEach(function (r) {
+          var tr = document.createElement('tr');
+          tr.innerHTML = '<td>' + escapeHtml(r.indicator || '') + '</td><td>' + (r.weightedMean != null ? r.weightedMean.toFixed(2) : '') + '</td><td>' + escapeHtml(r.qualitativeDescription || '') + '</td><td>' + (r.rank != null ? (r.rank % 1 === 0 ? r.rank : r.rank.toFixed(1)) : '') + '</td><td>' + (r.total || '') + '</td>';
+          tbody.appendChild(tr);
+        });
+        if (t.awm != null) {
+          var footerTr = document.createElement('tr');
+          footerTr.innerHTML = '<td><strong>AWM</strong></td><td><strong>' + t.awm.toFixed(2) + '</strong></td><td><strong>' + escapeHtml(t.awmDesc || '') + '</strong></td><td></td><td></td>';
+          tbody.appendChild(footerTr);
+        }
       }
       tableWrap.appendChild(table);
       body.appendChild(tableWrap);
@@ -389,10 +430,25 @@
 
       copyBtn.addEventListener('click', function () {
         var text = (t.tableTitle || '') + '\n\n';
-        (t.indicators || []).forEach(function (r) {
-          text += (r.indicator || '') + '\t' + (r.weightedMean != null ? r.weightedMean.toFixed(2) : '') + '\t' + (r.qualitativeDescription || '') + '\t' + (r.rank != null ? (r.rank % 1 === 0 ? r.rank : r.rank.toFixed(1)) : '') + '\t' + (r.total || '') + '\n';
-        });
-        if (t.awm != null) text += 'AWM: ' + t.awm.toFixed(2) + ' (' + (t.awmDesc || '') + ')\n';
+        if (t.type === 'twoGroup' && t.rows) {
+          text += 'Indicator\tSH W.M.\tSH QD\tSH Rank\tT W.M.\tT QD\tT Rank\n';
+          t.rows.forEach(function (r) {
+            text += (r.indicator || '') + '\t' + (r.sh && r.sh.wm != null ? r.sh.wm.toFixed(2) : '') + '\t' + ((r.sh && r.sh.qd) || '') + '\t' + (r.sh && r.sh.rank != null ? (r.sh.rank % 1 === 0 ? r.sh.rank : r.sh.rank.toFixed(1)) : '') + '\t' + (r.t && r.t.wm != null ? r.t.wm.toFixed(2) : '') + '\t' + ((r.t && r.t.qd) || '') + '\t' + (r.t && r.t.rank != null ? (r.t.rank % 1 === 0 ? r.t.rank : r.t.rank.toFixed(1)) : '') + '\n';
+          });
+          if (t.awm && (t.awm.sh || t.awm.t)) {
+            text += 'AWM: SH ' + (t.awm.sh && t.awm.sh.value != null ? t.awm.sh.value.toFixed(2) : '—') + ' (' + ((t.awm.sh && t.awm.sh.qd) || '') + '); T ' + (t.awm.t && t.awm.t.value != null ? t.awm.t.value.toFixed(2) : '—') + ' (' + ((t.awm.t && t.awm.t.qd) || '') + ')\n';
+          }
+        } else if (t.type === 'tTest' && t.rows) {
+          text += '#\tParticulars\tt-value\tt-critical\tp-value\tDecision\tDescription\n';
+          t.rows.forEach(function (r, i) {
+            text += (i + 1) + '\t' + (r.label || '') + '\t' + (r.tValue || '') + '\t' + (r.tCritical || '') + '\t' + (r.pValue || '') + '\t' + (r.decision || '') + '\t' + (r.description || '') + '\n';
+          });
+        } else {
+          (t.indicators || []).forEach(function (r) {
+            text += (r.indicator || '') + '\t' + (r.weightedMean != null ? r.weightedMean.toFixed(2) : '') + '\t' + (r.qualitativeDescription || '') + '\t' + (r.rank != null ? (r.rank % 1 === 0 ? r.rank : r.rank.toFixed(1)) : '') + '\t' + (r.total || '') + '\n';
+          });
+          if (t.awm != null) text += 'AWM: ' + t.awm.toFixed(2) + ' (' + (t.awmDesc || '') + ')\n';
+        }
         if (t.interpretation) text += '\n' + t.interpretation;
         navigator.clipboard.writeText(text).then(function () { showToast('Copied!'); }).catch(function () { showToast('Copy failed.', true); });
       });

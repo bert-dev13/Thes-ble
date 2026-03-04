@@ -1,13 +1,9 @@
 /**
  * Thesis Interpretation Assistant — Dashboard
- * Vanilla JS: loads session counters from localStorage, renders recent activity,
- * workflow step states, and handles Reset Session confirmation modal.
+ * Vanilla JS: computes session statistics from actual stored data (profileTables, likertTables),
+ * renders recent activity, workflow step states, and handles Reset Session confirmation modal.
  *
- * Integration: Other pages (Profile Analyzer, Likert Analyzer, etc.) can update
- * the dashboard by writing to localStorage:
- *   - tablesProcessed, respondentsEncoded, interpretationsGenerated, reportsCreated (numbers)
- *   - recentActivity: JSON array of { text: "Description", timestamp: Date.now() }, max 10 items
- *   - profileDataSaved, likertDataSaved, summaryDataSaved, reportDataSaved ("true") for workflow checkmarks
+ * Statistics are derived from stored data so the dashboard always reflects current state.
  */
 
 (function () {
@@ -15,9 +11,8 @@
 
   // ---------- Storage keys (shared with other pages) ----------
   var KEYS = {
-    tablesProcessed: 'tablesProcessed',
-    respondentsEncoded: 'respondentsEncoded',
-    interpretationsGenerated: 'interpretationsGenerated',
+    profileTables: 'profileTables',
+    likertTables: 'likertTables',
     reportsCreated: 'reportsCreated',
     recentActivity: 'recentActivity',
     profileDataSaved: 'profileDataSaved',
@@ -27,8 +22,31 @@
   };
 
   var MAX_ACTIVITY = 10;
+  var SAMPLE_FLAG = 'profile-sample';
 
-  // ---------- Helpers: read from localStorage ----------
+  // ---------- Read actual stored data ----------
+  function getProfileTables() {
+    try {
+      var raw = localStorage.getItem(KEYS.profileTables);
+      if (!raw) return [];
+      var arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function getLikertTables() {
+    try {
+      var raw = localStorage.getItem(KEYS.likertTables);
+      if (!raw) return [];
+      var arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
   function getNumber(key) {
     try {
       var val = localStorage.getItem(key);
@@ -49,11 +67,51 @@
     }
   }
 
+  // ---------- Compute statistics from stored data ----------
+  function getTablesCount() {
+    var profile = getProfileTables();
+    var likert = getLikertTables();
+    var profileCount = profile.filter(function (t) {
+      return !(t && t.isSample && t.sampleFlag === SAMPLE_FLAG);
+    }).length;
+    return profileCount + likert.length;
+  }
+
+  function getRespondentsCount() {
+    var profile = getProfileTables();
+    var total = 0;
+    profile.forEach(function (t) {
+      if (t && t.isSample && t.sampleFlag === SAMPLE_FLAG) return;
+      if (t.totals) {
+        if (t.totals.totalFrequency != null) {
+          total += t.totals.totalFrequency;
+        } else if (t.totals.heads != null || t.totals.teachers != null) {
+          total += (t.totals.heads || 0) + (t.totals.teachers || 0);
+        }
+      }
+    });
+    return total;
+  }
+
+  function getInterpretationsCount() {
+    var profile = getProfileTables();
+    var likert = getLikertTables();
+    var count = 0;
+    profile.forEach(function (t) {
+      if (t && t.isSample && t.sampleFlag === SAMPLE_FLAG) return;
+      if (t.interpretation && t.interpretation.trim()) count++;
+    });
+    likert.forEach(function (t) {
+      if (t.interpretation && t.interpretation.trim()) count++;
+    });
+    return count;
+  }
+
   function hasProfileData() {
-    return getNumber(KEYS.tablesProcessed) > 0 || localStorage.getItem(KEYS.profileDataSaved) === 'true';
+    return getProfileTables().length > 0 || localStorage.getItem(KEYS.profileDataSaved) === 'true';
   }
   function hasLikertData() {
-    return getNumber(KEYS.interpretationsGenerated) > 0 || localStorage.getItem(KEYS.likertDataSaved) === 'true';
+    return getLikertTables().length > 0 || localStorage.getItem(KEYS.likertDataSaved) === 'true';
   }
   function hasSummaryData() {
     return localStorage.getItem(KEYS.summaryDataSaved) === 'true';
@@ -62,15 +120,15 @@
     return getNumber(KEYS.reportsCreated) > 0 || localStorage.getItem(KEYS.reportDataSaved) === 'true';
   }
 
-  // ---------- Update KPI cards ----------
+  // ---------- Update KPI cards (from actual stored data) ----------
   function updateKpis() {
     var tables = document.getElementById('kpi-tables');
     var respondents = document.getElementById('kpi-respondents');
     var interpretations = document.getElementById('kpi-interpretations');
     var reports = document.getElementById('kpi-reports');
-    if (tables) tables.textContent = getNumber(KEYS.tablesProcessed);
-    if (respondents) respondents.textContent = getNumber(KEYS.respondentsEncoded);
-    if (interpretations) interpretations.textContent = getNumber(KEYS.interpretationsGenerated);
+    if (tables) tables.textContent = getTablesCount();
+    if (respondents) respondents.textContent = getRespondentsCount();
+    if (interpretations) interpretations.textContent = getInterpretationsCount();
     if (reports) reports.textContent = getNumber(KEYS.reportsCreated);
   }
 
@@ -136,15 +194,18 @@
   // ---------- Reset session: clear storage and reload ----------
   function resetSession() {
     try {
-      localStorage.removeItem(KEYS.tablesProcessed);
-      localStorage.removeItem(KEYS.respondentsEncoded);
-      localStorage.removeItem(KEYS.interpretationsGenerated);
+      localStorage.removeItem(KEYS.profileTables);
+      localStorage.removeItem(KEYS.likertTables);
       localStorage.removeItem(KEYS.reportsCreated);
       localStorage.removeItem(KEYS.recentActivity);
       localStorage.removeItem(KEYS.profileDataSaved);
       localStorage.removeItem(KEYS.likertDataSaved);
       localStorage.removeItem(KEYS.summaryDataSaved);
       localStorage.removeItem(KEYS.reportDataSaved);
+      localStorage.removeItem('tablesProcessed');
+      localStorage.removeItem('respondentsEncoded');
+      localStorage.removeItem('interpretationsGenerated');
+      localStorage.removeItem('generatedSummaries');
     } catch (e) {
       console.warn('Reset session: could not clear some keys', e);
     }
@@ -202,13 +263,22 @@
     });
   }
 
-  // ---------- Init on DOM ready ----------
-  function init() {
+  // ---------- Refresh when returning to dashboard ----------
+  function refreshDashboard() {
     updateKpis();
     updateWorkflowSteps();
     renderRecentActivity();
+  }
+
+  // ---------- Init on DOM ready ----------
+  function init() {
+    refreshDashboard();
     initModal();
     initHamburger();
+
+    // Refresh when user navigates back (e.g. back button) or tab becomes visible
+    window.addEventListener('pageshow', refreshDashboard);
+    window.addEventListener('focus', refreshDashboard);
   }
 
   if (document.readyState === 'loading') {

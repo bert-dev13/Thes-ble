@@ -48,7 +48,7 @@
   <main class="la-main">
     <!-- Page Header -->
     <section class="la-hero la-page-header" aria-labelledby="la-page-title">
-      <div class="la-container la-page-header__inner">
+      <div class="la-content__inner la-page-header__inner">
         <h1 id="la-page-title" class="la-page-header__title">Likert / Weighted Mean Analyzer</h1>
         <p class="la-page-header__subtitle">Manually enter your indicators and ratings. The system computes weighted means, ranks, qualitative descriptions, and thesis-ready interpretations.</p>
       </div>
@@ -61,94 +61,142 @@
         <div class="la-main-col">
           <!-- Input Card -->
           <div class="la-card" id="la-input-card">
-            <h2 class="la-card__title">Enter Likert Table Data</h2>
+            <h2 class="la-card__title">Select Likert Table</h2>
             <div class="la-card__body">
-              <!-- A) Manual table labels -->
-              <div class="la-form-group">
-                <label class="la-label" for="la-table-title">Table Title / Theme</label>
-                <input type="text" id="la-table-title" class="la-input" placeholder="e.g. Extent of Manifestation of ____" aria-describedby="la-table-title-error">
-                <p id="la-table-title-error" class="la-field-error" role="alert" aria-live="polite"></p>
-              </div>
-              <!-- B) Manual Likert scale setup -->
-              <div class="la-form-group la-scale-section">
-                <div class="la-scale-header">
-                  <label class="la-label">Likert Scale Mapping (5-point)</label>
-                  <button type="button" class="la-btn la-btn--ghost la-btn--sm" id="la-reset-scale">Reset Scale</button>
-                </div>
-                <p class="la-field-hint">Scale values: 5, 4, 3, 2, 1. Define range (min–max) and qualitative label for each.</p>
-                <div class="la-scale-grid" id="la-scale-grid">
-                  <div class="la-scale-row" data-scale-value="5">
-                    <span class="la-scale-value">5</span>
-                    <input type="number" class="la-input la-input--num" id="la-scale-5-min" step="0.01" min="0" max="5" placeholder="4.21" aria-label="Range min for 5">
-                    <span class="la-scale-sep">–</span>
-                    <input type="number" class="la-input la-input--num" id="la-scale-5-max" step="0.01" min="0" max="5" placeholder="5.00" aria-label="Range max for 5">
-                    <span class="la-scale-eq">=</span>
-                    <input type="text" class="la-input la-input--label" id="la-scale-5-label" placeholder="Label (e.g. Fully Manifested)" aria-label="Label for 5">
+              <!-- A) Project + table selectors in one row -->
+              <div class="la-top-controls">
+                <div class="la-top-controls__row">
+                  <div class="la-form-group la-form-group--inline">
+                    <label class="la-label" for="la-project-select">Research Project</label>
+                    <select id="la-project-select" class="la-select">
+                      <option value="rp1" selected>Research Paper 1 — Cooperative Learning (Math G5)</option>
+                      <option value="rp2">Research Paper 2 — Science 3 (School Heads vs Teachers)</option>
+                    </select>
+                    <p class="la-field-hint">Choose a project, then pick a table to auto-load all indicators and values.</p>
                   </div>
-                  <div class="la-scale-row" data-scale-value="4">
-                    <span class="la-scale-value">4</span>
-                    <input type="number" class="la-input la-input--num" id="la-scale-4-min" step="0.01" min="0" max="5" placeholder="3.41" aria-label="Range min for 4">
-                    <span class="la-scale-sep">–</span>
-                    <input type="number" class="la-input la-input--num" id="la-scale-4-max" step="0.01" min="0" max="5" placeholder="4.20" aria-label="Range max for 4">
-                    <span class="la-scale-eq">=</span>
-                    <input type="text" class="la-input la-input--label" id="la-scale-4-label" placeholder="Label" aria-label="Label for 4">
-                  </div>
-                  <div class="la-scale-row" data-scale-value="3">
-                    <span class="la-scale-value">3</span>
-                    <input type="number" class="la-input la-input--num" id="la-scale-3-min" step="0.01" min="0" max="5" placeholder="2.61" aria-label="Range min for 3">
-                    <span class="la-scale-sep">–</span>
-                    <input type="number" class="la-input la-input--num" id="la-scale-3-max" step="0.01" min="0" max="5" placeholder="3.40" aria-label="Range max for 3">
-                    <span class="la-scale-eq">=</span>
-                    <input type="text" class="la-input la-input--label" id="la-scale-3-label" placeholder="Label" aria-label="Label for 3">
-                  </div>
-                  <div class="la-scale-row" data-scale-value="2">
-                    <span class="la-scale-value">2</span>
-                    <input type="number" class="la-input la-input--num" id="la-scale-2-min" step="0.01" min="0" max="5" placeholder="1.81" aria-label="Range min for 2">
-                    <span class="la-scale-sep">–</span>
-                    <input type="number" class="la-input la-input--num" id="la-scale-2-max" step="0.01" min="0" max="5" placeholder="2.60" aria-label="Range max for 2">
-                    <span class="la-scale-eq">=</span>
-                    <input type="text" class="la-input la-input--label" id="la-scale-2-label" placeholder="Label" aria-label="Label for 2">
-                  </div>
-                  <div class="la-scale-row" data-scale-value="1">
-                    <span class="la-scale-value">1</span>
-                    <input type="number" class="la-input la-input--num" id="la-scale-1-min" step="0.01" min="0" max="5" placeholder="1.00" aria-label="Range min for 1">
-                    <span class="la-scale-sep">–</span>
-                    <input type="number" class="la-input la-input--num" id="la-scale-1-max" step="0.01" min="0" max="5" placeholder="1.80" aria-label="Range max for 1">
-                    <span class="la-scale-eq">=</span>
-                    <input type="text" class="la-input la-input--label" id="la-scale-1-label" placeholder="Label" aria-label="Label for 1">
+                  <div class="la-form-group la-form-group--inline">
+                    <label class="la-label" for="la-table-select">Select Likert Table</label>
+                    <select id="la-table-select" class="la-select">
+                      <option value="" selected disabled>Select Tables 10–22</option>
+                      <option value="t10">Table 10 — Curiosity</option>
+                      <option value="t11">Table 11 — Creativity</option>
+                      <option value="t12">Table 12 — Communication</option>
+                      <option value="t13">Table 13 — Collaboration</option>
+                      <option value="t14">Table 14 — Executive Summary (Abilities)</option>
+                      <option value="t15">Table 15 — Constraints: Comprehension of Concepts</option>
+                      <option value="t16">Table 16 — Constraints: Readiness for Inquiry-Based Tasks</option>
+                      <option value="t17">Table 17 — Constraints: Availability of Resources</option>
+                      <option value="t18">Table 18 — Constraints: Support from Learning Environment</option>
+                      <option value="t19">Table 19 — Executive Summary (Constraints)</option>
+                      <option value="t20">Table 20 — Challenges in Science 3 Instruction</option>
+                      <option value="t21">Table 21 — T-test: Constraints perceptions</option>
+                      <option value="t22">Table 22 — T-test: Challenges perceptions</option>
+                    </select>
+                    <p class="la-field-hint">Selecting a table loads a fully filled indicators table (W.M., Q.D., Rank, AWM or t-test values).</p>
                   </div>
                 </div>
-                <p id="la-scale-error" class="la-field-error" role="alert" aria-live="polite"></p>
+                <div class="la-top-controls__summary" aria-live="polite">
+                  <span class="la-top-controls__summary-label">Selected table:</span>
+                  <span class="la-top-controls__summary-pill" id="la-selected-table-pill">None selected</span>
+                </div>
               </div>
 
-              <!-- C) Indicator rows -->
+              <!-- B) Table title (auto-filled but editable) -->
               <div class="la-form-group">
-                <label class="la-label">Indicator Rows</label>
-                <div class="la-table-wrap">
-                  <table class="la-table" id="la-input-table">
-                    <thead>
-                      <tr>
-                        <th>Indicator / Particular</th>
-                        <th>5</th>
-                        <th>4</th>
-                        <th>3</th>
-                        <th>2</th>
-                        <th>1</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody id="la-input-tbody">
-                      <!-- Rows added by JS -->
-                    </tbody>
-                  </table>
+                <label class="la-label" for="la-table-title">Table Title / Theme</label>
+                <input type="text" id="la-table-title" class="la-input" placeholder="e.g. Level of abilities in Science..." aria-describedby="la-table-title-error">
+                <p class="la-field-hint">You may shorten or refine the loaded title for reporting, but the values remain the same.</p>
+                <p id="la-table-title-error" class="la-field-error" role="alert" aria-live="polite"></p>
+              </div>
+
+              <!-- C) Q.D. / Rank mode segmented control -->
+              <div class="la-form-group">
+                <span class="la-label">Q.D. and Rank Mode</span>
+                <div class="la-qd-toggle" id="la-qd-toggle" role="radiogroup" aria-label="Q.D. and rank mode">
+                  <button type="button" class="la-qd-toggle__btn is-active" data-qd-mode="loaded" aria-pressed="true">
+                    Use Loaded Q.D. &amp; Rank
+                  </button>
+                  <button type="button" class="la-qd-toggle__btn" data-qd-mode="auto-rank" aria-pressed="false">
+                    Auto Rank
+                  </button>
+                  <button type="button" class="la-qd-toggle__btn" data-qd-mode="auto-qd" aria-pressed="false">
+                    Auto Q.D. from Scale
+                  </button>
                 </div>
-                <p id="la-indicators-error" class="la-field-error" role="alert" aria-live="polite"></p>
-                <div class="la-card-actions">
-                  <button type="button" class="la-btn la-btn--ghost" id="la-add-row">Add Row</button>
-                  <button type="button" class="la-btn la-btn--ghost" id="la-remove-row">Remove Row</button>
-                  <button type="button" class="la-btn la-btn--ghost" id="la-clear-inputs">Clear Inputs</button>
-                  <button type="button" class="la-btn la-btn--primary" id="la-compute" disabled>Compute</button>
-                  <button type="button" class="la-btn la-btn--secondary" id="la-save-input" disabled>Save to Report</button>
+                <!-- Legacy checkboxes kept for logic; visually hidden -->
+                <div class="la-qd-modes la-qd-modes--legacy" aria-hidden="true">
+                  <label class="la-qd-mode">
+                    <input type="checkbox" id="la-use-loaded-qd-rank" checked>
+                    <span>Use Loaded Q.D. and Rank</span>
+                  </label>
+                  <label class="la-qd-mode">
+                    <input type="checkbox" id="la-auto-rank">
+                    <span>Auto-recompute Rank from W.M.</span>
+                  </label>
+                  <label class="la-qd-mode">
+                    <input type="checkbox" id="la-qd-mode-auto">
+                    <span>Auto Compute Q.D. from Scale</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- D) Likert scale setup (used when Auto Q.D. is enabled) -->
+              <div class="la-form-group la-scale-section la-scale-section--hidden" id="la-scale-section">
+                <div class="la-scale-header">
+                  <button type="button" class="la-scale-toggle" id="la-scale-toggle" aria-expanded="false">
+                    <span class="la-scale-toggle__label">Scale Mapping (5-point)</span>
+                    <span class="la-scale-toggle__chevron" aria-hidden="true"></span>
+                  </button>
+                  <div class="la-scale-header__actions">
+                    <button type="button" class="la-btn la-btn--ghost la-btn--sm" id="la-save-scale">Save Scale</button>
+                    <button type="button" class="la-btn la-btn--ghost la-btn--sm" id="la-reset-scale">Reset Scale</button>
+                  </div>
+                </div>
+                <div class="la-scale-body" id="la-scale-body">
+                  <p class="la-field-hint">Define ranges and labels to map weighted means to qualitative descriptions when Auto Q.D. is selected.</p>
+                  <div class="la-scale-grid" id="la-scale-grid">
+                    <div class="la-scale-row" data-scale-value="5">
+                      <span class="la-scale-value">5</span>
+                      <input type="number" class="la-input la-input--num" id="la-scale-5-min" step="0.01" min="0" max="5" placeholder="4.21" aria-label="Range min for 5">
+                      <span class="la-scale-sep">–</span>
+                      <input type="number" class="la-input la-input--num" id="la-scale-5-max" step="0.01" min="0" max="5" placeholder="5.00" aria-label="Range max for 5">
+                      <span class="la-scale-eq">=</span>
+                      <input type="text" class="la-input la-input--label" id="la-scale-5-label" placeholder="Label (e.g. Fully Manifested)" aria-label="Label for 5">
+                    </div>
+                    <div class="la-scale-row" data-scale-value="4">
+                      <span class="la-scale-value">4</span>
+                      <input type="number" class="la-input la-input--num" id="la-scale-4-min" step="0.01" min="0" max="5" placeholder="3.41" aria-label="Range min for 4">
+                      <span class="la-scale-sep">–</span>
+                      <input type="number" class="la-input la-input--num" id="la-scale-4-max" step="0.01" min="0" max="5" placeholder="4.20" aria-label="Range max for 4">
+                      <span class="la-scale-eq">=</span>
+                      <input type="text" class="la-input la-input--label" id="la-scale-4-label" placeholder="Label" aria-label="Label for 4">
+                    </div>
+                    <div class="la-scale-row" data-scale-value="3">
+                      <span class="la-scale-value">3</span>
+                      <input type="number" class="la-input la-input--num" id="la-scale-3-min" step="0.01" min="0" max="5" placeholder="2.61" aria-label="Range min for 3">
+                      <span class="la-scale-sep">–</span>
+                      <input type="number" class="la-input la-input--num" id="la-scale-3-max" step="0.01" min="0" max="5" placeholder="3.40" aria-label="Range max for 3">
+                      <span class="la-scale-eq">=</span>
+                      <input type="text" class="la-input la-input--label" id="la-scale-3-label" placeholder="Label" aria-label="Label for 3">
+                    </div>
+                    <div class="la-scale-row" data-scale-value="2">
+                      <span class="la-scale-value">2</span>
+                      <input type="number" class="la-input la-input--num" id="la-scale-2-min" step="0.01" min="0" max="5" placeholder="1.81" aria-label="Range min for 2">
+                      <span class="la-scale-sep">–</span>
+                      <input type="number" class="la-input la-input--num" id="la-scale-2-max" step="0.01" min="0" max="5" placeholder="2.60" aria-label="Range max for 2">
+                      <span class="la-scale-eq">=</span>
+                      <input type="text" class="la-input la-input--label" id="la-scale-2-label" placeholder="Label" aria-label="Label for 2">
+                    </div>
+                    <div class="la-scale-row" data-scale-value="1">
+                      <span class="la-scale-value">1</span>
+                      <input type="number" class="la-input la-input--num" id="la-scale-1-min" step="0.01" min="0" max="5" placeholder="1.00" aria-label="Range min for 1">
+                      <span class="la-scale-sep">–</span>
+                      <input type="number" class="la-input la-input--num" id="la-scale-1-max" step="0.01" min="0" max="5" placeholder="1.80" aria-label="Range max for 1">
+                      <span class="la-scale-eq">=</span>
+                      <input type="text" class="la-input la-input--label" id="la-scale-1-label" placeholder="Label" aria-label="Label for 1">
+                    </div>
+                  </div>
+                  <p id="la-scale-error" class="la-field-error" role="alert" aria-live="polite"></p>
                 </div>
               </div>
             </div>
@@ -156,27 +204,43 @@
 
           <!-- Output Card -->
           <div class="la-card" id="la-output-card">
-            <h2 class="la-card__title">Computed Weighted Mean Results</h2>
+            <h2 class="la-card__title">Indicators and Weighted Means</h2>
             <div class="la-card__body">
-              <div class="la-table-wrap la-output-table">
-                <table class="la-table" id="la-output-table">
-                  <thead>
+              <div class="la-table-toolbar">
+                <div class="la-table-density" aria-label="Row density">
+                  <span class="la-table-density__label">Rows</span>
+                  <button type="button" class="la-chip la-chip--active" data-row-density="comfortable">Comfortable</button>
+                  <button type="button" class="la-chip" data-row-density="compact">Compact</button>
+                </div>
+              </div>
+              <div class="la-table-wrap la-output-table la-thesis-table" id="la-table-wrap">
+                <table class="la-table la-thesis-table__grid" id="la-output-table" role="grid">
+                  <caption class="la-thesis-table__caption visually-hidden">Indicators with weighted means, qualitative descriptions, and ranks</caption>
+                  <thead id="la-output-thead">
                     <tr>
-                      <th>Indicator / Particular</th>
-                      <th>Weighted Mean</th>
-                      <th>Qualitative Description</th>
-                      <th>Rank</th>
-                      <th>Total Respondents</th>
+                      <th class="la-thesis-table__th la-thesis-table__th--particulars">Particulars</th>
+                      <th class="la-thesis-table__th la-thesis-table__th--num">W.M.</th>
+                      <th class="la-thesis-table__th la-thesis-table__th--qd">Q.D.</th>
+                      <th class="la-thesis-table__th la-thesis-table__th--rank">Rank</th>
                     </tr>
                   </thead>
                   <tbody id="la-output-tbody">
-                    <tr><td colspan="5" class="la-output-empty">Compute to see results.</td></tr>
+                    <tr><td colspan="4" class="la-output-empty">Select a table above to load indicators and values.</td></tr>
                   </tbody>
+                  <tfoot id="la-output-tfoot">
+                    <tr class="la-thesis-table__footer-row">
+                      <td class="la-thesis-table__footer-label"><strong>AVERAGE WEIGHTED MEAN</strong></td>
+                      <td class="la-thesis-table__footer-value"><strong id="la-awm-value">—</strong></td>
+                      <td class="la-thesis-table__footer-value"><strong id="la-awm-desc">—</strong></td>
+                      <td class="la-thesis-table__footer-value"></td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
-              <div class="la-output-footer" id="la-output-footer" aria-live="polite" hidden>
-                <span>Average Weighted Mean: <strong id="la-awm-value">—</strong></span>
-                <span>AWM Description: <strong id="la-awm-desc">—</strong></span>
+              <div class="la-card-actions la-output-actions">
+                <button type="button" class="la-btn la-btn--primary" id="la-recompute" disabled>Recompute</button>
+                <button type="button" class="la-btn la-btn--ghost" id="la-restore-original" disabled>Restore Original Values</button>
+                <button type="button" class="la-btn la-btn--secondary" id="la-save-input" disabled>Save to Report</button>
               </div>
             </div>
           </div>
@@ -185,10 +249,41 @@
           <div class="la-card" id="la-interpretation-card">
             <h2 class="la-card__title">Formal Interpretation</h2>
             <div class="la-card__body">
-              <div class="la-interpretation-block" id="la-interpretation-block" role="status" aria-live="polite"></div>
-              <div class="la-interpretation-actions">
-                <button type="button" class="la-btn la-btn--primary" id="la-copy-interpretation" disabled>Copy Interpretation</button>
-                <button type="button" class="la-btn la-btn--secondary" id="la-save-interpretation" disabled>Save to Report</button>
+              <div class="la-form-group">
+                <span class="la-label">Interpretation Mode</span>
+                <div class="la-qd-modes">
+                  <label class="la-qd-mode">
+                    <input type="checkbox" id="la-use-prewritten" checked>
+                    <span>Use Prewritten Interpretation</span>
+                  </label>
+                  <label class="la-qd-mode">
+                    <input type="checkbox" id="la-include-implications" checked>
+                    <span>Include 2 Implication Sentences</span>
+                  </label>
+                </div>
+              </div>
+              <div class="la-interpretation-section">
+                <div class="la-interpretation-block" id="la-interpretation-block" role="status" aria-live="polite"></div>
+                <div class="la-interpretation-toolbar">
+                  <button type="button" class="la-interpretation-toggle" id="la-interpretation-toggle" aria-expanded="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                    <span>Collapse</span>
+                  </button>
+                  <div class="la-interpretation-actions">
+                    <button type="button" class="la-btn la-btn--primary" id="la-regenerate-interpretation" disabled title="Generate a new interpretation">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                      <span>Regenerate</span>
+                    </button>
+                    <button type="button" class="la-btn la-btn--primary" id="la-copy-interpretation" disabled title="Copy interpretation">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <span>Copy All</span>
+                    </button>
+                    <button type="button" class="la-btn la-btn--secondary" id="la-save-interpretation" disabled title="Save to report">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                      <span>Save to Report</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -196,13 +291,6 @@
 
         <!-- Right Column: Sidebar -->
         <aside class="la-sidebar">
-          <!-- Scale Preview Panel -->
-          <div class="la-panel">
-            <h3 class="la-panel__title">Scale Preview</h3>
-            <ul class="la-panel__list" id="la-scale-preview">
-              <li class="la-scale-preview-empty">Define scale mapping above.</li>
-            </ul>
-          </div>
           <!-- Live Stats -->
           <div class="la-panel">
             <h3 class="la-panel__title">Live Stats</h3>
@@ -280,6 +368,8 @@
   <!-- Toast container -->
   <div class="la-toast-container" id="la-toast-container" aria-live="polite"></div>
 
+  <script src="js/interpretation-utils.js"></script>
+  <script src="js/text-generator.js"></script>
   <script src="js/likert.js"></script>
 </body>
 </html>
