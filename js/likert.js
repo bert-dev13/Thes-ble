@@ -333,6 +333,7 @@
   var laInterpretationSh = '';
   var laInterpretationT = '';
   var laInterpTwoGroup = false;
+  var currentTwoGroupData = null;
 
   // ---------- Research Paper 2 (Science 3, School Heads vs Teachers) ----------
   // Two-group weighted tables and T-test tables (Tables 10–22)
@@ -1108,6 +1109,7 @@
     activeTableData = config;
     usingPredefinedTable = true;
     currentLikertConfig = JSON.parse(JSON.stringify(config));
+    currentTwoGroupData = null;
 
     if (typeof console !== 'undefined' && console.log) {
       var rowCount = (config.rows || []).length;
@@ -1135,25 +1137,22 @@
     var interpTabs = document.getElementById('la-interp-tabs');
     laInterpTwoGroup = false;
     if (interpTabs) interpTabs.hidden = true;
-    if (block && config.prewritten) {
-      var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
-      var includeImplications = true;
-      var implEl = document.getElementById('la-include-implications');
-      if (implEl) includeImplications = implEl.checked;
-      var impl = Utils && includeImplications ? Utils.buildImplications(config.type === 'tTest' ? 'ttest' : 'executive') : null;
-      var implSuffix = impl ? ' ' + impl.first + ' ' + impl.second : '';
-      if (config.type !== 'tTest' && config.prewritten.sh && config.prewritten.t) {
+    if (block) {
+      if (config.type !== 'tTest' && config.rows && config.rows.length) {
+        generateTwoGroupInterpretations(0, '');
         laInterpTwoGroup = true;
-        laInterpretationSh = (config.prewritten.sh || '') + implSuffix;
-        laInterpretationT = (config.prewritten.t || '') + implSuffix;
         if (block) block.textContent = laInterpretationSh;
         if (interpTabs) interpTabs.hidden = false;
-      } else {
+      } else if (config.prewritten) {
+        var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+        var includeImplications = true;
+        var implEl = document.getElementById('la-include-implications');
+        if (implEl) includeImplications = implEl.checked;
+        var impl = Utils && includeImplications ? Utils.buildImplications(config.type === 'tTest' ? 'ttest' : 'executive') : null;
+        var implSuffix = impl ? ' ' + impl.first + ' ' + impl.second : '';
         var prewrittenText = (config.prewritten.sh || '') + (config.prewritten.t ? ' ' + config.prewritten.t : '');
-        if (includeImplications && Utils && prewrittenText) {
-          prewrittenText += implSuffix;
-        }
-        if (block) block.textContent = prewrittenText;
+        if (includeImplications && Utils && prewrittenText) prewrittenText += implSuffix;
+        block.textContent = prewrittenText;
       }
     }
 
@@ -1486,14 +1485,30 @@
     if (awmTValEl) awmTValEl.textContent = awmT.toFixed(2);
     if (awmTDescEl) awmTDescEl.textContent = awmTDesc || '—';
 
+    currentTwoGroupData = {
+      rowsSh: rowsSh,
+      rowsT: rowsT,
+      awmSh: awmSh,
+      awmT: awmT,
+      awmShDesc: awmShDesc,
+      awmTDesc: awmTDesc,
+      themeSh: currentLikertConfig.themeHeads || currentLikertConfig.theme || currentLikertConfig.title || 'the theme',
+      themeT: currentLikertConfig.themeTeachers || currentLikertConfig.theme || currentLikertConfig.title || 'the theme'
+    };
     computedData = {
-      indicators: [], // For RP2 we focus on group-wise sentences using currentLikertConfig + rowsSh/rowsT
+      indicators: [],
       awm: 0,
       awmDesc: '',
       tableTitle: (document.getElementById('la-table-title') && document.getElementById('la-table-title').value || '').trim(),
       theme: '',
       scaleMapping: mapping2
     };
+    generateTwoGroupInterpretations(0, '');
+    laInterpTwoGroup = true;
+    var block = document.getElementById('la-interpretation-block');
+    var interpTabs = document.getElementById('la-interp-tabs');
+    if (block) block.textContent = laInterpretationSh;
+    if (interpTabs) interpTabs.hidden = false;
   }
 
   function onInputChange() {
@@ -1599,10 +1614,9 @@
     return labels.slice(0, -1).join(', ') + ', and ' + labels[labels.length - 1];
   }
 
-  function generateInterpretationWithVariant(variantIndex, lastOpener) {
-    var data = computedData;
-    if (!data.indicators.length) return '';
-
+  /** Build one interpretation for a group: opener + enumeration + AWM + implications. No rank, no Q.D. grouping. */
+  function buildOneGroupInterpretation(rows, awm, awmDesc, theme, groupLabel, variantIndex, lastOpener) {
+    if (!rows || !rows.length) return '';
     var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
     var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
     var includeImplications = true;
@@ -1615,9 +1629,7 @@
       : getOpener();
     if (!Gen && !Utils) openingIndex += 1;
 
-    var theme = data.theme || data.tableTitle || 'the theme';
-
-    var sorted = data.indicators.slice().sort(function (a, b) {
+    var sorted = rows.slice().sort(function (a, b) {
       return b.weightedMean - a.weightedMean;
     });
 
@@ -1641,9 +1653,10 @@
 
     var sent1 = opening + theme + ', ';
     var sent2 = 'the indicators include ' + clauses.join('; ') + '.';
-    var awmStr = data.awm.toFixed(2);
-    var desc = (data.awmDesc || '—').toLowerCase();
-    var sent3 = 'The average weighted mean of ' + awmStr + ' signifies that teachers view ' + (theme.indexOf('the ') === 0 ? theme : 'the ' + theme) + ' as ' + desc + '.';
+    var awmStr = awm.toFixed(2);
+    var desc = (awmDesc || '—').toLowerCase();
+    var themeForAwm = theme.indexOf('the ') === 0 ? theme : 'the ' + theme;
+    var sent3 = 'The average weighted mean of ' + awmStr + ' signifies that ' + groupLabel + ' view ' + themeForAwm + ' as ' + desc + '.';
     var text = sent1 + sent2 + ' ' + sent3;
     if (includeImplications) {
       var impl = Gen
@@ -1653,6 +1666,72 @@
       if (impl.second) text += ' ' + impl.second;
     }
     return text;
+  }
+
+  function generateInterpretationWithVariant(variantIndex, lastOpener) {
+    var data = computedData;
+    if (!data.indicators.length) return '';
+    var theme = data.theme || data.tableTitle || 'the theme';
+    return buildOneGroupInterpretation(
+      data.indicators,
+      data.awm,
+      data.awmDesc,
+      theme,
+      'teachers',
+      variantIndex,
+      lastOpener
+    );
+  }
+
+  /** Generate two interpretations for two-group tables. Uses different openers for each group. */
+  function generateTwoGroupInterpretations(variantIndex, lastOpener) {
+    if (!currentLikertConfig || currentLikertConfig.type === 'tTest') return;
+    var rowsSh, rowsT, awmSh, awmT, awmShDesc, awmTDesc, themeSh, themeT;
+    if (currentTwoGroupData) {
+      rowsSh = currentTwoGroupData.rowsSh;
+      rowsT = currentTwoGroupData.rowsT;
+      awmSh = currentTwoGroupData.awmSh;
+      awmT = currentTwoGroupData.awmT;
+      awmShDesc = currentTwoGroupData.awmShDesc;
+      awmTDesc = currentTwoGroupData.awmTDesc;
+      themeSh = currentTwoGroupData.themeSh;
+      themeT = currentTwoGroupData.themeT;
+    } else {
+      var rows = currentLikertConfig.rows || [];
+      if (!rows.length) return;
+      rowsSh = rows.map(function (r) {
+        return { indicator: r.indicator, weightedMean: r.sh && typeof r.sh.wm === 'number' ? r.sh.wm : 0 };
+      });
+      rowsT = rows.map(function (r) {
+        return { indicator: r.indicator, weightedMean: r.t && typeof r.t.wm === 'number' ? r.t.wm : 0 };
+      });
+      awmSh = currentLikertConfig.awm && currentLikertConfig.awm.sh ? currentLikertConfig.awm.sh.value : 0;
+      awmT = currentLikertConfig.awm && currentLikertConfig.awm.t ? currentLikertConfig.awm.t.value : 0;
+      awmShDesc = currentLikertConfig.awm && currentLikertConfig.awm.sh ? currentLikertConfig.awm.sh.qd : '—';
+      awmTDesc = currentLikertConfig.awm && currentLikertConfig.awm.t ? currentLikertConfig.awm.t.qd : '—';
+      themeSh = currentLikertConfig.themeHeads || currentLikertConfig.theme || currentLikertConfig.title || 'the theme';
+      themeT = currentLikertConfig.themeTeachers || currentLikertConfig.theme || currentLikertConfig.title || 'the theme';
+    }
+    var vi = typeof variantIndex === 'number' ? variantIndex : 0;
+    laInterpretationSh = buildOneGroupInterpretation(rowsSh, awmSh, awmShDesc, themeSh, 'school heads', vi, lastOpener);
+    var firstOpener = '';
+    if (typeof ThesisInterpretationUtils !== 'undefined' && ThesisInterpretationUtils.OPENER_POOL) {
+      for (var k = 0; k < ThesisInterpretationUtils.OPENER_POOL.length; k++) {
+        if (laInterpretationSh.indexOf(ThesisInterpretationUtils.OPENER_POOL[k]) === 0) {
+          firstOpener = ThesisInterpretationUtils.OPENER_POOL[k];
+          break;
+        }
+      }
+    }
+    if (!firstOpener && typeof ThesisTextGenerator !== 'undefined' && ThesisTextGenerator.OPENER_POOL) {
+      for (var k = 0; k < ThesisTextGenerator.OPENER_POOL.length; k++) {
+        if (laInterpretationSh.indexOf(ThesisTextGenerator.OPENER_POOL[k]) === 0) {
+          firstOpener = ThesisTextGenerator.OPENER_POOL[k];
+          break;
+        }
+      }
+    }
+    laInterpretationT = buildOneGroupInterpretation(rowsT, awmT, awmTDesc, themeT, 'teachers', vi + 1, firstOpener);
   }
 
   function generateInterpretation() {
@@ -1677,35 +1756,32 @@
       block.textContent = (text || '').trim();
     }
 
-    if (activeProjectId === 'rp2' && currentLikertConfig && currentLikertConfig.prewritten) {
-      if (!Gen) {
-        var prewrittenText = (currentLikertConfig.prewritten.sh || '') + (currentLikertConfig.prewritten.t ? ' ' + currentLikertConfig.prewritten.t : '');
-        var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
-        var implEl = document.getElementById('la-include-implications');
-        if (implEl && implEl.checked && Utils && prewrittenText) {
-          var impl = Utils.buildImplications(currentLikertConfig.type === 'tTest' ? 'ttest' : 'executive');
-          prewrittenText += ' ' + impl.first + ' ' + impl.second;
-        }
-        setFullInterpretation(prewrittenText);
-        showToast('Interpretation regenerated.');
-        return;
-      }
+    if (activeProjectId === 'rp2' && currentLikertConfig && currentLikertConfig.type !== 'tTest' && (currentLikertConfig.rows || currentTwoGroupData)) {
       var tableId = (currentLikertConfig.id || currentLikertConfig.title || 'likert').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
       var generator = function (vi, lastOpener) {
-        var sh = currentLikertConfig.prewritten.sh || '';
-        var t = currentLikertConfig.prewritten.t || '';
-        var base = Gen.applyRp2PrewrittenVariation
-          ? Gen.applyRp2PrewrittenVariation(sh, t, vi)
-          : (sh + (t ? ' ' + t : ''));
-        var implEl = document.getElementById('la-include-implications');
-        if (implEl && implEl.checked) {
-          var impl = Gen.buildImplicationsWithVariant(currentLikertConfig.type === 'tTest' ? 'ttest' : 'executive', vi + 7);
-          base += ' ' + impl.first + ' ' + impl.second;
-        }
-        return base;
+        generateTwoGroupInterpretations(vi, lastOpener);
+        return laInterpretationSh + '\n\n' + laInterpretationT;
       };
-      var result = Gen.generateWithVariation(generator, 'likert_rp2', tableId);
-      setFullInterpretation(result.text);
+      if (Gen) {
+        Gen.generateWithVariation(generator, 'likert_rp2', tableId);
+      } else {
+        generateTwoGroupInterpretations(0, '');
+      }
+      if (block) block.textContent = laInterpretationSh;
+      var interpTabs = document.getElementById('la-interp-tabs');
+      if (interpTabs) interpTabs.hidden = false;
+      showToast('Interpretation regenerated.');
+      return;
+    }
+    if (activeProjectId === 'rp2' && currentLikertConfig && currentLikertConfig.prewritten && currentLikertConfig.type === 'tTest') {
+      var prewrittenText = (currentLikertConfig.prewritten.sh || '') + (currentLikertConfig.prewritten.t ? ' ' + currentLikertConfig.prewritten.t : '');
+      var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+      var implEl = document.getElementById('la-include-implications');
+      if (implEl && implEl.checked && Utils && prewrittenText) {
+        var impl = Utils.buildImplications('ttest');
+        prewrittenText += ' ' + impl.first + ' ' + impl.second;
+      }
+      setFullInterpretation(prewrittenText);
       showToast('Interpretation regenerated.');
       return;
     }
@@ -1971,6 +2047,7 @@
     if (selectEl) selectEl.value = '';
     usingPredefinedTable = false;
     currentLikertConfig = null;
+    currentTwoGroupData = null;
     laInterpTwoGroup = false;
     laInterpretationSh = '';
     laInterpretationT = '';
@@ -2098,19 +2175,20 @@
     var implToggle = document.getElementById('la-include-implications');
     if (implToggle) {
       implToggle.addEventListener('change', function () {
-        if (activeProjectId === 'rp2' && currentLikertConfig && currentLikertConfig.prewritten) {
-          var block = document.getElementById('la-interpretation-block');
-          if (block) {
-            var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
-            var impl = this.checked && Utils ? Utils.buildImplications(currentLikertConfig.type === 'tTest' ? 'ttest' : 'executive') : null;
-            var implSuffix = impl ? ' ' + impl.first + ' ' + impl.second : '';
-            if (laInterpTwoGroup && currentLikertConfig.prewritten.sh && currentLikertConfig.prewritten.t) {
-              laInterpretationSh = (currentLikertConfig.prewritten.sh || '') + implSuffix;
-              laInterpretationT = (currentLikertConfig.prewritten.t || '') + implSuffix;
-              block.textContent = laInterpretationSh;
-            } else {
+        if (activeProjectId === 'rp2' && currentLikertConfig) {
+          if (currentLikertConfig.type !== 'tTest' && (currentLikertConfig.rows || currentTwoGroupData)) {
+            generateTwoGroupInterpretations(0, '');
+            var block = document.getElementById('la-interpretation-block');
+            if (block) block.textContent = laInterpretationSh;
+          } else if (currentLikertConfig.type === 'tTest' && currentLikertConfig.prewritten) {
+            var block = document.getElementById('la-interpretation-block');
+            if (block) {
+              var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
               var prewrittenText = (currentLikertConfig.prewritten.sh || '') + (currentLikertConfig.prewritten.t ? ' ' + currentLikertConfig.prewritten.t : '');
-              if (impl) prewrittenText += implSuffix;
+              if (this.checked && Utils && prewrittenText) {
+                var impl = Utils.buildImplications('ttest');
+                prewrittenText += ' ' + impl.first + ' ' + impl.second;
+              }
               block.textContent = prewrittenText;
             }
           }
