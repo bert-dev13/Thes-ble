@@ -21,14 +21,17 @@
           <span class="pa-brand__tagline">Tables & interpretation</span>
         </div>
       </a>
-      <nav class="pa-top-bar__nav" aria-label="Main navigation">
-        <a href="index.html" class="pa-top-bar__link">Dashboard</a>
-        <a href="profile-analyzer.html" class="pa-top-bar__link is-active">Profile Analyzer</a>
-        <a href="likert-analyzer.html" class="pa-top-bar__link">Likert Analyzer</a>
-        <a href="summary-generator.html" class="pa-top-bar__link">Summary Generator</a>
-        <a href="report-export.html" class="pa-top-bar__link">Report / Export</a>
-        <button type="button" class="pa-btn pa-btn--reset" id="pa-btn-reset" aria-label="Reset session data">Reset Session</button>
-      </nav>
+      <div class="pa-top-bar__right">
+        <nav class="pa-top-bar__nav" aria-label="Main navigation">
+          <a href="index.html" class="pa-top-bar__link">Dashboard</a>
+          <a href="profile-analyzer.html" class="pa-top-bar__link is-active">Profile</a>
+          <a href="likert-analyzer.html" class="pa-top-bar__link">Likert</a>
+          <a href="summary-generator.html" class="pa-top-bar__link">Summary</a>
+        </nav>
+        <div class="pa-top-bar__actions">
+          <button type="button" class="pa-btn pa-btn--reset pa-btn--sm" id="pa-btn-reset" aria-label="Reset session data">Reset</button>
+        </div>
+      </div>
       <button type="button" class="pa-hamburger" id="pa-hamburger" aria-label="Toggle menu" aria-expanded="false">
         <span class="pa-hamburger__line"></span>
         <span class="pa-hamburger__line"></span>
@@ -37,11 +40,10 @@
     </div>
     <div class="pa-nav-dropdown" id="pa-nav-dropdown" aria-hidden="true">
       <a href="index.html" class="pa-nav-dropdown__link">Dashboard</a>
-      <a href="profile-analyzer.html" class="pa-nav-dropdown__link">Profile Analyzer</a>
-      <a href="likert-analyzer.html" class="pa-nav-dropdown__link">Likert Analyzer</a>
-      <a href="summary-generator.html" class="pa-nav-dropdown__link">Summary Generator</a>
-      <a href="report-export.html" class="pa-nav-dropdown__link">Report / Export</a>
-      <button type="button" class="pa-btn pa-btn--reset pa-nav-dropdown__reset" id="pa-btn-reset-mobile">Reset Session</button>
+      <a href="profile-analyzer.html" class="pa-nav-dropdown__link">Profile</a>
+      <a href="likert-analyzer.html" class="pa-nav-dropdown__link">Likert</a>
+      <a href="summary-generator.html" class="pa-nav-dropdown__link">Summary</a>
+      <button type="button" class="pa-btn pa-btn--reset pa-nav-dropdown__reset" id="pa-btn-reset-mobile">Reset</button>
     </div>
   </header>
 
@@ -58,10 +60,11 @@
     <section class="pa-content">
       <div class="pa-content__inner">
         <div class="pa-main-col">
-          <!-- Step 1: Select Project and Table -->
+          <!-- Step 1: Encode values -->
           <div class="pa-card" id="pa-step1-card">
-            <h2 class="pa-card__title">Step 1: Select Project and Table</h2>
+            <h2 class="pa-card__title">Step 1: Encode Values</h2>
             <div class="pa-card__body">
+              <!-- Row 1: Research Project + Select Profile Table (2-column grid) -->
               <div class="pa-top-controls">
                 <div class="pa-top-controls__row">
                   <div class="pa-form-group pa-form-group--inline">
@@ -70,138 +73,112 @@
                       <option value="rp1" selected>Research Paper 1 — Cooperative Learning (Math G5)</option>
                       <option value="rp2">Research Paper 2 — Science 3 (School Heads vs Teachers)</option>
                     </select>
+                    <p class="pa-field-hint">Choose a project, then pick a table to auto-load all categories and values.</p>
                   </div>
                   <div class="pa-form-group pa-form-group--inline">
                     <label class="pa-label" for="pa-table-select">Select Profile Table</label>
                     <select id="pa-table-select" class="pa-select">
-                      <option value="">Select a table…</option>
-                      <option value="age" selected>Table 2 — Age</option>
+                      <option value="" selected disabled>Select Profile Table</option>
+                      <option value="age">Table 2 — Age</option>
                       <option value="gender">Table 3 — Gender</option>
                       <option value="civilStatus">Table 4 — Civil Status</option>
-                      <option value="education">Table 5 — Highest Educational Attainment</option>
+                      <option value="education">Table 5 — Educational Attainment</option>
                       <option value="position">Table 6 — Present Position</option>
-                      <option value="rating">Table 7 — Latest Performance Rating</option>
+                      <option value="rating">Table 7 — Performance Rating</option>
                       <option value="yearsService">Table 8 — Years in Service</option>
-                      <option value="inServiceTraining">Table 9 — In-Service Training Attended</option>
+                      <option value="inServiceTraining">Table 9 — In-Service Training</option>
                     </select>
+                    <p class="pa-field-hint">Selecting a table loads categories and sample frequencies (f, Percentage, Rank).</p>
                   </div>
                 </div>
                 <div class="pa-top-controls__summary" aria-live="polite">
-                  <span class="pa-top-controls__summary-label">Loaded:</span>
+                  <span class="pa-top-controls__summary-label">Selected table:</span>
                   <span class="pa-top-controls__summary-pill" id="pa-loaded-summary">None selected</span>
                 </div>
               </div>
-              <p class="pa-field-hint">Choose a project and table to auto-load categories and values.</p>
+
+              <!-- Row 2: Table Title / Variable Name -->
               <div class="pa-form-group">
                 <label class="pa-label" for="pa-table-title">Table Title / Variable Name</label>
-                <input type="text" id="pa-table-title" class="pa-input" placeholder="e.g. Age stratification of the respondents" aria-describedby="pa-table-title-error">
+                <input type="text" id="pa-table-title" class="pa-input" placeholder="e.g. Age stratification of the respondents" aria-describedby="pa-table-title-error" disabled>
+                <p class="pa-field-hint">You may shorten or refine the loaded title for reporting, but the values remain the same.</p>
                 <p id="pa-table-title-error" class="pa-field-error" role="alert" aria-live="polite"></p>
               </div>
-            </div>
-          </div>
 
-          <!-- Step 2: Encode or Review Values -->
-          <div class="pa-card" id="pa-step2-card">
-            <h2 class="pa-card__title">Step 2: Encode or Review Values</h2>
-            <div class="pa-card__body">
-              <!-- Group mode toggle (shown only for RP1) -->
-              <div class="pa-form-group pa-group-toggle-wrap" id="pa-group-toggle-wrap">
-                <span class="pa-label">Group Mode</span>
-                <div class="pa-qd-toggle" id="pa-group-toggle" role="radiogroup" aria-label="Group mode">
-                  <button type="button" class="pa-qd-toggle__btn is-active" data-group-mode="single" aria-pressed="true">Single Group</button>
-                  <button type="button" class="pa-qd-toggle__btn" data-group-mode="two" aria-pressed="false">Two Groups</button>
+              <!-- Row 3: Percentage and Rank Mode -->
+              <div class="pa-form-group">
+                <span class="pa-label">Percentage and Rank Mode</span>
+                <div class="pa-qd-toggle" id="pa-percent-rank-toggle" role="radiogroup" aria-label="Percentage and rank mode">
+                  <button type="button" class="pa-qd-toggle__btn is-active" data-pa-mode="auto" aria-pressed="true">Auto Compute</button>
+                  <button type="button" class="pa-qd-toggle__btn" data-pa-mode="loaded" aria-pressed="false">Use Loaded Values</button>
                 </div>
+                <p class="pa-field-hint">Percentage and Rank are computed from frequency when you click Compute.</p>
               </div>
 
-              <!-- Single-group input table (RP1) -->
-              <div class="pa-form-group" id="pa-input-single-group">
-                <div class="pa-table-wrap">
-                  <table class="pa-table" id="pa-input-table">
+              <!-- Empty state: shown when no table selected -->
+              <div class="pa-encode-empty" id="pa-encode-empty">
+                <p class="pa-encode-empty__text">Select a profile table to begin encoding values.</p>
+              </div>
+
+              <!-- Single-group encoding table: shown when rp1 table selected -->
+              <div class="pa-table-card" id="pa-table-card" hidden>
+                <div class="pa-table-wrap" id="pa-table-wrap">
+                  <table class="pa-profile-table" id="pa-unified-table" role="grid">
                     <thead>
                       <tr>
-                        <th class="pa-thesis-table__th pa-thesis-table__th--particulars">Particulars</th>
-                        <th class="pa-thesis-table__th pa-thesis-table__th--f">f</th>
-                        <th></th>
+                        <th class="pa-profile-table__th pa-profile-table__th--particulars">Particulars</th>
+                        <th class="pa-profile-table__th pa-profile-table__th--f">Frequency (f)</th>
+                        <th class="pa-profile-table__th pa-profile-table__th--pct">Percentage</th>
+                        <th class="pa-profile-table__th pa-profile-table__th--rank">Rank</th>
+                        <th class="pa-profile-table__th pa-profile-table__th--action">Remove</th>
                       </tr>
                     </thead>
-                    <tbody id="pa-input-tbody"></tbody>
+                    <tbody id="pa-table-tbody"></tbody>
+                    <tfoot id="pa-table-tfoot">
+                      <tr class="pa-profile-table__footer-row">
+                        <td class="pa-profile-table__footer-label"><strong>TOTAL</strong></td>
+                        <td class="pa-profile-table__footer-value"><strong id="pa-total-freq">0</strong></td>
+                        <td class="pa-profile-table__footer-value"><strong id="pa-total-pct">100.00</strong></td>
+                        <td class="pa-profile-table__footer-value"></td>
+                        <td class="pa-profile-table__footer-value"></td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
                 <p id="pa-table-error" class="pa-field-error" role="alert" aria-live="polite"></p>
                 <div class="pa-card-actions">
                   <button type="button" class="pa-btn pa-btn--ghost" id="pa-add-row">Add Row</button>
                   <button type="button" class="pa-btn pa-btn--ghost" id="pa-clear-inputs">Clear Inputs</button>
-                </div>
-              </div>
-
-              <!-- Output table (computed results) -->
-              <div class="pa-form-group" id="pa-output-section">
-                <div class="pa-table-toolbar">
-                  <div class="pa-table-density" aria-label="Row density">
-                    <span class="pa-table-density__label">Rows</span>
-                    <button type="button" class="pa-chip pa-chip--active" data-row-density="comfortable">Comfortable</button>
-                    <button type="button" class="pa-chip" data-row-density="compact">Compact</button>
-                  </div>
-                </div>
-                <div class="pa-table-wrap pa-output-table pa-thesis-table" id="pa-table-wrap">
-                  <table class="pa-table pa-thesis-table__grid" id="pa-output-table" role="grid">
-                    <caption class="pa-thesis-table__caption visually-hidden">Profile table with frequency, percentage, and rank</caption>
-                    <thead id="pa-output-thead">
-                      <tr>
-                        <th class="pa-thesis-table__th pa-thesis-table__th--particulars">Particulars</th>
-                        <th class="pa-thesis-table__th pa-thesis-table__th--f">f</th>
-                        <th class="pa-thesis-table__th pa-thesis-table__th--pct">Percentage</th>
-                        <th class="pa-thesis-table__th pa-thesis-table__th--rank">Rank</th>
-                      </tr>
-                    </thead>
-                    <tbody id="pa-output-tbody">
-                      <tr><td colspan="4" class="pa-output-empty">Select a table and compute to see results.</td></tr>
-                    </tbody>
-                    <tfoot id="pa-output-tfoot">
-                      <tr class="pa-thesis-table__footer-row">
-                        <td class="pa-thesis-table__footer-label"><strong>TOTAL</strong></td>
-                        <td class="pa-thesis-table__footer-value"><strong id="pa-total-freq">0</strong></td>
-                        <td class="pa-thesis-table__footer-value"><strong id="pa-total-pct">100.00</strong></td>
-                        <td class="pa-thesis-table__footer-value"></td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-                <div class="pa-totals-strip" id="pa-totals-strip">
-                  <span class="pa-totals-strip__item">Total frequency: <strong id="pa-totals-freq">0</strong></span>
-                  <span class="pa-totals-strip__item">Total Percentage: <strong id="pa-totals-pct">100.00</strong></span>
-                </div>
-                <div class="pa-card-actions pa-output-actions">
                   <button type="button" class="pa-btn pa-btn--primary" id="pa-compute" disabled>Compute</button>
                   <button type="button" class="pa-btn pa-btn--ghost" id="pa-restore-original" disabled>Restore Original Values</button>
-                  <button type="button" class="pa-btn pa-btn--secondary" id="pa-save-to-report-input" disabled>Save to Report</button>
+                  <button type="button" class="pa-btn pa-btn--primary" id="pa-save-table" disabled>Save Table</button>
                 </div>
               </div>
 
-              <!-- Advanced Options (collapsed) -->
-              <div class="pa-advanced-section">
-                <button type="button" class="pa-advanced-toggle" id="pa-advanced-toggle" aria-expanded="false">
-                  <span class="pa-advanced-toggle__label">Advanced Options (Optional)</span>
-                  <span class="pa-advanced-toggle__chevron" aria-hidden="true"></span>
-                </button>
-                <div class="pa-advanced-body" id="pa-advanced-body">
-                  <label class="pa-toggle">
-                    <input type="checkbox" id="pa-auto-percent" checked>
-                    <span>Auto-recompute percentage from f</span>
-                  </label>
-                  <label class="pa-toggle" id="pa-table9-percent-wrap">
-                    <input type="checkbox" id="pa-table9-percent-toggle">
-                    <span>Compute percentage from mentions (Table 9)</span>
-                  </label>
-                  <p class="pa-field-hint pa-advanced-hint">Rank ties use dense ranking (e.g. 10,10,5 → 1,1,2).</p>
+              <!-- Two-group table (rp2): shown when Research Paper 2 table selected -->
+              <div class="pa-form-group" id="pa-output-section" hidden>
+                <div class="pa-table-wrap pa-thesis-table pa-thesis-table--two-group" id="pa-two-group-wrap">
+                  <table class="pa-table pa-thesis-table__grid" id="pa-two-group-table">
+                    <thead id="pa-output-thead"></thead>
+                    <tbody id="pa-output-tbody"></tbody>
+                    <tfoot id="pa-output-tfoot"></tfoot>
+                  </table>
+                </div>
+                <div class="pa-card-actions" id="pa-two-group-actions">
+                  <button type="button" class="pa-btn pa-btn--ghost" id="pa-add-row-two">Add Row</button>
+                  <button type="button" class="pa-btn pa-btn--ghost" id="pa-clear-inputs-two">Clear Inputs</button>
+                  <button type="button" class="pa-btn pa-btn--primary" id="pa-compute-two">Compute</button>
+                  <button type="button" class="pa-btn pa-btn--ghost" id="pa-restore-original-two" disabled>Restore Original Values</button>
+                  <button type="button" class="pa-btn pa-btn--primary" id="pa-save-table-two" disabled>Save Table</button>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Step 3: Interpretation -->
+          <!-- Step 2: Compute results (via Compute button) | Step 3: Save table (via Save Table button) -->
+          <!-- Interpretation -->
           <div class="pa-card" id="pa-step3-card">
-            <h2 class="pa-card__title">Step 3: Interpretation</h2>
+            <h2 class="pa-card__title">Interpretation</h2>
             <div class="pa-card__body">
               <div class="pa-form-group">
                 <label class="pa-toggle">
@@ -231,10 +208,6 @@
                     <button type="button" class="pa-btn pa-btn--primary" id="pa-copy-interpretation" disabled title="Copy interpretation">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                       <span>Copy All</span>
-                    </button>
-                    <button type="button" class="pa-btn pa-btn--secondary" id="pa-save-to-report" disabled title="Save to report">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                      <span>Save to Report</span>
                     </button>
                   </div>
                 </div>

@@ -21,14 +21,17 @@
           <span class="sg-brand__tagline">Tables & interpretation</span>
         </div>
       </a>
-      <nav class="sg-top-bar__nav" aria-label="Main navigation">
-        <a href="index.html" class="sg-top-bar__link">Dashboard</a>
-        <a href="profile-analyzer.html" class="sg-top-bar__link">Profile Analyzer</a>
-        <a href="likert-analyzer.html" class="sg-top-bar__link">Likert Analyzer</a>
-        <a href="summary-generator.html" class="sg-top-bar__link is-active">Summary Generator</a>
-        <a href="report-export.html" class="sg-top-bar__link">Report / Export</a>
-        <button type="button" class="sg-btn sg-btn--reset" id="sg-btn-reset" aria-label="Reset session data">Reset Session</button>
-      </nav>
+      <div class="sg-top-bar__right">
+        <nav class="sg-top-bar__nav" aria-label="Main navigation">
+          <a href="index.html" class="sg-top-bar__link">Dashboard</a>
+          <a href="profile-analyzer.html" class="sg-top-bar__link">Profile</a>
+          <a href="likert-analyzer.html" class="sg-top-bar__link">Likert</a>
+          <a href="summary-generator.html" class="sg-top-bar__link is-active">Summary</a>
+        </nav>
+        <div class="sg-top-bar__actions">
+          <button type="button" class="sg-btn sg-btn--reset sg-btn--sm" id="sg-btn-reset" aria-label="Reset session data">Reset</button>
+        </div>
+      </div>
       <button type="button" class="sg-hamburger" id="sg-hamburger" aria-label="Toggle menu" aria-expanded="false">
         <span class="sg-hamburger__line"></span>
         <span class="sg-hamburger__line"></span>
@@ -37,11 +40,10 @@
     </div>
     <div class="sg-nav-dropdown" id="sg-nav-dropdown" aria-hidden="true">
       <a href="index.html" class="sg-nav-dropdown__link">Dashboard</a>
-      <a href="profile-analyzer.html" class="sg-nav-dropdown__link">Profile Analyzer</a>
-      <a href="likert-analyzer.html" class="sg-nav-dropdown__link">Likert Analyzer</a>
-      <a href="summary-generator.html" class="sg-nav-dropdown__link">Summary Generator</a>
-      <a href="report-export.html" class="sg-nav-dropdown__link">Report / Export</a>
-      <button type="button" class="sg-btn sg-btn--reset sg-nav-dropdown__reset" id="sg-btn-reset-mobile">Reset Session</button>
+      <a href="profile-analyzer.html" class="sg-nav-dropdown__link">Profile</a>
+      <a href="likert-analyzer.html" class="sg-nav-dropdown__link">Likert</a>
+      <a href="summary-generator.html" class="sg-nav-dropdown__link">Summary</a>
+      <button type="button" class="sg-btn sg-btn--reset sg-nav-dropdown__reset" id="sg-btn-reset-mobile">Reset</button>
     </div>
   </header>
 
@@ -58,41 +60,39 @@
     <!-- Main Content: Vertical Row Sections Only -->
     <section class="sg-content">
       <div class="sg-content__inner">
-        <!-- Section 1: Data Source Preview -->
-        <article class="sg-row-card">
+        <!-- Section 1: Saved Data Overview -->
+        <article class="sg-row-card sg-overview-card">
           <h2 class="sg-row-card__title">Saved Data Overview</h2>
           <div class="sg-row-card__body">
             <div class="sg-data-overview" id="sg-data-overview">
-              <div class="sg-data-stats">
-                <div class="sg-data-stat">
-                  <span class="sg-data-stat__value" id="sg-profile-count">0</span>
-                  <span class="sg-data-stat__label">Profile tables</span>
+              <div class="sg-overview-header">
+                <p class="sg-overview-summary" id="sg-overview-summary">0 Profile Tables • 0 Likert Tables</p>
+                <p class="sg-overview-last-saved">Last saved: <span id="sg-last-saved">—</span></p>
+              </div>
+              <div class="sg-saved-tables-sections">
+                <div class="sg-saved-section">
+                  <h3 class="sg-saved-section__title">Profile Tables</h3>
+                  <ul class="sg-saved-table-list" id="sg-profile-list" aria-label="Saved profile tables"></ul>
                 </div>
-                <div class="sg-data-stat">
-                  <span class="sg-data-stat__value" id="sg-likert-count">0</span>
-                  <span class="sg-data-stat__label">Likert tables</span>
-                </div>
-                <div class="sg-data-stat">
-                  <span class="sg-data-stat__value" id="sg-last-saved">—</span>
-                  <span class="sg-data-stat__label">Last saved</span>
+                <div class="sg-saved-section">
+                  <h3 class="sg-saved-section__title">Likert Tables</h3>
+                  <ul class="sg-saved-table-list" id="sg-likert-list" aria-label="Saved Likert tables"></ul>
                 </div>
               </div>
-              <div class="sg-row-card__actions">
-                <button type="button" class="sg-btn sg-btn--primary" id="sg-refresh-data">
-                  <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                  Refresh Data
-                </button>
-                <button type="button" class="sg-btn sg-btn--ghost" id="sg-clear-summaries">
-                  <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                  Clear Saved Summaries
-                </button>
+              <div class="sg-overview-actions">
+                <button type="button" class="sg-btn sg-btn--ghost sg-btn--sm" id="sg-refresh-data">Refresh Data</button>
+                <a href="profile-analyzer.html" class="sg-btn sg-btn--ghost sg-btn--sm">Profile Analyzer</a>
+                <a href="likert-analyzer.html" class="sg-btn sg-btn--ghost sg-btn--sm">Likert Analyzer</a>
+                <button type="button" class="sg-btn sg-btn--ghost sg-btn--sm" id="sg-clear-summaries">Clear Saved Summaries</button>
               </div>
             </div>
             <div class="sg-empty-state" id="sg-empty-data" hidden>
-              <p class="sg-empty-state__text">No saved data yet. Add profile and Likert tables from the analyzers first.</p>
-              <div class="sg-empty-state__actions">
-                <a href="profile-analyzer.html" class="sg-btn sg-btn--primary">Profile Analyzer</a>
-                <a href="likert-analyzer.html" class="sg-btn sg-btn--secondary">Likert Analyzer</a>
+              <p class="sg-empty-state__text">No saved data yet. Add profile and Likert tables first.</p>
+              <div class="sg-overview-actions">
+                <button type="button" class="sg-btn sg-btn--ghost sg-btn--sm" id="sg-refresh-data-empty">Refresh Data</button>
+                <a href="profile-analyzer.html" class="sg-btn sg-btn--primary sg-btn--sm">Profile Analyzer</a>
+                <a href="likert-analyzer.html" class="sg-btn sg-btn--secondary sg-btn--sm">Likert Analyzer</a>
+                <button type="button" class="sg-btn sg-btn--ghost sg-btn--sm" id="sg-clear-summaries-empty">Clear Saved Summaries</button>
               </div>
             </div>
           </div>
@@ -102,6 +102,12 @@
         <article class="sg-row-card">
           <h2 class="sg-row-card__title">Interpretation Options</h2>
           <div class="sg-row-card__body">
+            <div class="sg-action-row sg-action-row--primary" style="margin-bottom: 1rem;">
+              <button type="button" class="sg-btn sg-btn--primary" id="sg-auto-generate-all">
+                <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v18M3 12a9 9 0 0 1 18 0"/><path d="M3 12h18"/></svg>
+                Auto Generate All Sections
+              </button>
+            </div>
             <label class="sg-toggle">
               <input type="checkbox" id="sg-toggle-implication" checked>
               <span class="sg-toggle__label">Include 2 Implication Sentences</span>
@@ -134,10 +140,6 @@
                   <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   Copy
                 </button>
-                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-save-respondents">
-                  <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  Save to Report
-                </button>
               </div>
             </div>
           </div>
@@ -147,7 +149,7 @@
         <article class="sg-row-card sg-row-card--output">
           <h2 class="sg-row-card__title">Summary of Findings</h2>
           <div class="sg-row-card__body">
-            <p class="sg-row-card__hint">Generates findings for every saved table (all profile + all Likert tables). Each table gets its own paragraph with varied formal openings. Supports single-group, two-group, and t-test tables.</p>
+            <p class="sg-row-card__hint">Automatically generates findings from saved profile tables, Likert tables, executive summaries, and statistical tests. Profile: dominant categories per respondent group. Likert: indicators under highest qualitative description (e.g., Very High, Fully Manifested). Executive summaries: domains by QD in descending order. T-tests: formal finding comparing computed vs critical value. Uses varied academic openings and quotation marks for indicators.</p>
             <div class="sg-toggles">
               <label class="sg-toggle">
                 <input type="checkbox" id="sg-toggle-next-group">
@@ -172,10 +174,6 @@
                 <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-copy-findings">
                   <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   Copy
-                </button>
-                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-save-findings">
-                  <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  Save to Report
                 </button>
               </div>
             </div>
@@ -206,10 +204,6 @@
                   <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   Copy
                 </button>
-                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-save-conclusions">
-                  <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  Save to Report
-                </button>
               </div>
             </div>
           </div>
@@ -219,17 +213,7 @@
         <article class="sg-row-card sg-row-card--output">
           <h2 class="sg-row-card__title">Recommendations</h2>
           <div class="sg-row-card__body">
-            <p class="sg-row-card__hint">Produces numbered recommendations linked to findings and conclusions.</p>
-            <div class="sg-form-group">
-              <label class="sg-label" for="sg-target-audience">Target audience (optional)</label>
-              <input type="text" id="sg-target-audience" class="sg-input" placeholder="e.g. teachers, administrators, future researchers">
-            </div>
-            <div class="sg-toggles">
-              <label class="sg-toggle">
-                <input type="checkbox" id="sg-toggle-recs-per-theme" checked>
-                <span class="sg-toggle__label">Generate 3–5 recommendations per theme (default 3)</span>
-              </label>
-            </div>
+            <p class="sg-row-card__hint">Recommendations are derived directly from the generated Summary of Findings and Conclusions. Generate those sections first for recommendations that address abilities, constraints, instructional practices, support, and future research. Each recommendation is directed toward teachers, school administrators, schools, or future researchers and suggests a practical, feasible action.</p>
             <div class="sg-action-row sg-action-row--primary">
               <button type="button" class="sg-btn sg-btn--primary" id="sg-generate-recommendations">
                 <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v18M3 12a9 9 0 0 1 18 0"/><path d="M3 12h18"/></svg>
@@ -245,33 +229,21 @@
                   <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   Copy
                 </button>
-                <button type="button" class="sg-btn sg-btn--secondary sg-btn--sm" id="sg-save-recommendations">
-                  <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  Save to Report
-                </button>
               </div>
             </div>
           </div>
         </article>
 
-        <!-- Section 6: Save All to Report -->
+        <!-- Section 6: Copy All -->
         <article class="sg-row-card">
           <h2 class="sg-row-card__title">Finalize</h2>
           <div class="sg-row-card__body">
-            <p class="sg-row-card__hint">Save all generated sections to the report and export.</p>
+            <p class="sg-row-card__hint">Copy all generated sections to paste into your document.</p>
             <div class="sg-row-card__actions">
-              <button type="button" class="sg-btn sg-btn--primary" id="sg-save-all">
-                <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Save All to Report
-              </button>
-              <button type="button" class="sg-btn sg-btn--secondary" id="sg-copy-all">
+              <button type="button" class="sg-btn sg-btn--primary" id="sg-copy-all">
                 <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 Copy All
               </button>
-              <a href="report-export.html" class="sg-btn sg-btn--accent">
-                <svg class="sg-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                Go to Report / Export
-              </a>
             </div>
           </div>
         </article>
@@ -296,8 +268,8 @@
   <div class="sg-modal" id="sg-clear-modal" role="dialog" aria-labelledby="sg-clear-modal-title" aria-modal="true" hidden>
     <div class="sg-modal__backdrop" id="sg-clear-backdrop"></div>
     <div class="sg-modal__panel">
-      <h2 id="sg-clear-modal-title" class="sg-modal__title">Clear saved summaries?</h2>
-      <p class="sg-modal__text">Remove all generated summaries from the report. This cannot be undone.</p>
+      <h2 id="sg-clear-modal-title" class="sg-modal__title">Clear saved data?</h2>
+      <p class="sg-modal__text">Remove all saved profile tables, Likert tables, and generated summaries. This cannot be undone.</p>
       <div class="sg-modal__actions">
         <button type="button" class="sg-btn sg-btn--secondary" id="sg-clear-cancel">Cancel</button>
         <button type="button" class="sg-btn sg-btn--danger" id="sg-clear-confirm">Clear</button>

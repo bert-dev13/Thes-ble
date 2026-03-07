@@ -21,14 +21,17 @@
           <span class="brand__tagline">Tables & interpretation</span>
         </div>
       </a>
-      <nav class="top-bar__nav" aria-label="Main navigation">
-        <a href="index.html" class="top-bar__link">Dashboard</a>
-        <a href="profile-analyzer.html" class="top-bar__link">Profile Analyzer</a>
-        <a href="likert-analyzer.html" class="top-bar__link">Likert Analyzer</a>
-        <a href="summary-generator.html" class="top-bar__link">Summary Generator</a>
-        <a href="report-export.html" class="top-bar__link">Report / Export</a>
-        <button type="button" class="btn btn--reset" id="btn-reset-session" aria-label="Reset session data">Reset Session</button>
-      </nav>
+      <div class="top-bar__right">
+        <nav class="top-bar__nav" aria-label="Main navigation">
+          <a href="index.html" class="top-bar__link is-active">Dashboard</a>
+          <a href="profile-analyzer.html" class="top-bar__link">Profile</a>
+          <a href="likert-analyzer.html" class="top-bar__link">Likert</a>
+          <a href="summary-generator.html" class="top-bar__link">Summary</a>
+        </nav>
+        <div class="top-bar__actions">
+          <button type="button" class="btn btn--reset btn--sm" id="btn-reset-session" aria-label="Reset session data">Reset</button>
+        </div>
+      </div>
       <button type="button" class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
         <span class="hamburger__line"></span>
         <span class="hamburger__line"></span>
@@ -37,11 +40,10 @@
     </div>
     <div class="nav-dropdown" id="nav-dropdown" aria-hidden="true">
       <a href="index.html" class="nav-dropdown__link">Dashboard</a>
-      <a href="profile-analyzer.html" class="nav-dropdown__link">Profile Analyzer</a>
-      <a href="likert-analyzer.html" class="nav-dropdown__link">Likert Analyzer</a>
-      <a href="summary-generator.html" class="nav-dropdown__link">Summary Generator</a>
-      <a href="report-export.html" class="nav-dropdown__link">Report / Export</a>
-      <button type="button" class="btn btn--reset nav-dropdown__reset" id="btn-reset-mobile">Reset Session</button>
+      <a href="profile-analyzer.html" class="nav-dropdown__link">Profile</a>
+      <a href="likert-analyzer.html" class="nav-dropdown__link">Likert</a>
+      <a href="summary-generator.html" class="nav-dropdown__link">Summary</a>
+      <button type="button" class="btn btn--reset nav-dropdown__reset" id="btn-reset-mobile">Reset</button>
     </div>
   </header>
 
@@ -49,7 +51,7 @@
     <!-- ========== B) Dashboard Header ========== -->
     <section class="hero dashboard-header" aria-labelledby="hero-title">
       <div class="container dashboard-header__inner">
-        <h1 id="hero-title" class="dashboard-header__title">Thesis Table Analysis</h1>
+        <h1 id="hero-title" class="dashboard-header__title">Research Table Analysis System</h1>
         <p class="dashboard-header__subtitle">Automated computation and interpretation for research tables.</p>
         <a href="profile-analyzer.html" class="btn btn--primary dashboard-header__cta">
           <span class="dashboard-header__cta-icon" aria-hidden="true">
@@ -60,10 +62,10 @@
       </div>
     </section>
 
-    <!-- ========== C) Statistics Cards ========== -->
+    <!-- ========== C) Session Statistics ========== -->
     <section class="kpi" aria-labelledby="kpi-heading">
       <div class="container">
-        <h2 id="kpi-heading" class="visually-hidden">Session statistics</h2>
+        <h2 id="kpi-heading" class="kpi__title">Session Statistics</h2>
         <div class="kpi__grid">
           <article class="kpi-card" title="Reset with Reset Session">
             <span class="kpi-card__icon" aria-hidden="true">
@@ -86,21 +88,14 @@
             <span class="kpi-card__value" id="kpi-interpretations">0</span>
             <span class="kpi-card__label">Interpretations Generated</span>
           </article>
-          <article class="kpi-card" title="Reset with Reset Session">
-            <span class="kpi-card__icon" aria-hidden="true">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M11 13h6M11 17h6M7 13h.01M7 17h.01"/></svg>
-            </span>
-            <span class="kpi-card__value" id="kpi-reports">0</span>
-            <span class="kpi-card__label">Reports Created</span>
-          </article>
         </div>
       </div>
     </section>
 
-    <!-- ========== D) Tools Grid (2x2) ========== -->
+    <!-- ========== D) Tools ========== -->
     <section class="quick-actions" aria-labelledby="quick-actions-heading">
       <div class="container">
-        <h2 id="quick-actions-heading" class="section-title">Tools</h2>
+        <h2 id="quick-actions-heading" class="quick-actions__title">Tools</h2>
         <div class="quick-actions__grid">
           <article class="action-card">
             <span class="action-card__icon" aria-hidden="true">
@@ -123,53 +118,31 @@
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
             </span>
             <h3 class="action-card__title">Summary Generator</h3>
-            <p class="action-card__desc">Automatically generate findings and recommendations.</p>
+            <p class="action-card__desc">Automatically generate findings, conclusions, and recommendations.</p>
             <a href="summary-generator.html" class="btn btn--accent">Open</a>
-          </article>
-          <article class="action-card">
-            <span class="action-card__icon" aria-hidden="true">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-            </span>
-            <h3 class="action-card__title">Report / Export</h3>
-            <p class="action-card__desc">Copy, print, or download generated reports.</p>
-            <a href="report-export.html" class="btn btn--accent">Open</a>
           </article>
         </div>
       </div>
     </section>
 
-    <!-- ========== E) Workflow Steps ========== -->
+    <!-- ========== E) Workflow ========== -->
     <section class="workflow" aria-labelledby="workflow-heading">
       <div class="container">
-        <h2 id="workflow-heading" class="section-title">Workflow</h2>
+        <h2 id="workflow-heading" class="workflow__title">Workflow</h2>
         <div class="workflow__steps" role="list">
           <div class="workflow__step" role="listitem" id="workflow-step-1">
-            <span class="workflow__icon" aria-hidden="true">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </span>
-            <span class="workflow__mark" aria-hidden="true"></span>
+            <span class="workflow__num" aria-hidden="true">1</span>
             <span class="workflow__label">Profile Analysis</span>
           </div>
+          <span class="workflow__connector" aria-hidden="true"></span>
           <div class="workflow__step" role="listitem" id="workflow-step-2">
-            <span class="workflow__icon" aria-hidden="true">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
-            </span>
-            <span class="workflow__mark" aria-hidden="true"></span>
+            <span class="workflow__num" aria-hidden="true">2</span>
             <span class="workflow__label">Likert Analysis</span>
           </div>
-          <div class="workflow__step" role="listitem" id="workflow-step-3">
-            <span class="workflow__icon" aria-hidden="true">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
-            </span>
-            <span class="workflow__mark" aria-hidden="true"></span>
+          <span class="workflow__connector" aria-hidden="true"></span>
+          <div class="workflow__step workflow__step--last" role="listitem" id="workflow-step-3">
+            <span class="workflow__num" aria-hidden="true">3</span>
             <span class="workflow__label">Generate Summaries</span>
-          </div>
-          <div class="workflow__step workflow__step--last" role="listitem" id="workflow-step-4">
-            <span class="workflow__icon" aria-hidden="true">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            </span>
-            <span class="workflow__mark" aria-hidden="true"></span>
-            <span class="workflow__label">Export Report</span>
           </div>
         </div>
       </div>

@@ -2,7 +2,7 @@
  * Thesis Interpretation Assistant — Summary Generator
  * Vanilla JS: generates thesis-ready summaries from saved profileTables and likertTables.
  * Uses vertical row sections only. No grid layouts.
- * localStorage: profileTables, likertTables, generatedSummaries, interpretationsGenerated, reportsCreated, recentActivity
+ * localStorage: profileTables, likertTables, generatedSummaries, interpretationsGenerated, recentActivity
  */
 
 (function () {
@@ -13,7 +13,6 @@
     likertTables: 'likertTables',
     generatedSummaries: 'generatedSummaries',
     interpretationsGenerated: 'interpretationsGenerated',
-    reportsCreated: 'reportsCreated',
     recentActivity: 'recentActivity',
     summaryDataSaved: 'summaryDataSaved'
   };
@@ -140,7 +139,81 @@
   }
 
   // ---------- Section 1: Data Source Preview ----------
-  function refreshDataOverview() {
+  function getTableDisplayName(t) {
+    return (t && t.tableTitle) ? t.tableTitle.trim() : 'Untitled';
+  }
+
+  function getTableTypeLabel(t) {
+    if (!t) return 'Profile';
+    if (t.type === 'twoGroup') return 'Profile (Two Groups)';
+    if (t.type === 'singleGroup') return 'Profile (Single Group)';
+    return 'Profile';
+  }
+
+  function getLikertTypeLabel(t) {
+    if (!t) return 'Likert';
+    if (t.type === 'tTest') return 'Likert (T-test)';
+    if (t.type === 'twoGroup') return 'Likert (Two Groups)';
+    return 'Likert';
+  }
+
+  function renderProfileTableList(profile) {
+    var list = document.getElementById('sg-profile-list');
+    if (!list) return;
+    list.innerHTML = '';
+    if (!profile || profile.length === 0) {
+      var li = document.createElement('li');
+      li.className = 'sg-saved-table-list__empty';
+      li.textContent = 'No profile tables saved yet.';
+      list.appendChild(li);
+      return;
+    }
+    profile.forEach(function (t) {
+      var li = document.createElement('li');
+      li.className = 'sg-saved-table-item';
+      var name = document.createElement('span');
+      name.className = 'sg-saved-table-item__name';
+      name.textContent = getTableDisplayName(t);
+      var meta = document.createElement('span');
+      meta.className = 'sg-saved-table-item__meta';
+      var parts = [getTableTypeLabel(t)];
+      if (t.createdAt) parts.push(formatTimestamp(t.createdAt));
+      meta.textContent = parts.join(' • ');
+      li.appendChild(name);
+      li.appendChild(meta);
+      list.appendChild(li);
+    });
+  }
+
+  function renderLikertTableList(likert) {
+    var list = document.getElementById('sg-likert-list');
+    if (!list) return;
+    list.innerHTML = '';
+    if (!likert || likert.length === 0) {
+      var li = document.createElement('li');
+      li.className = 'sg-saved-table-list__empty';
+      li.textContent = 'No Likert tables saved yet.';
+      list.appendChild(li);
+      return;
+    }
+    likert.forEach(function (t) {
+      var li = document.createElement('li');
+      li.className = 'sg-saved-table-item';
+      var name = document.createElement('span');
+      name.className = 'sg-saved-table-item__name';
+      name.textContent = getTableDisplayName(t);
+      var meta = document.createElement('span');
+      meta.className = 'sg-saved-table-item__meta';
+      var parts = [getLikertTypeLabel(t)];
+      if (t.createdAt) parts.push(formatTimestamp(t.createdAt));
+      meta.textContent = parts.join(' • ');
+      li.appendChild(name);
+      li.appendChild(meta);
+      list.appendChild(li);
+    });
+  }
+
+  function refreshDataOverview(suppressToast) {
     var profile = getProfileTables();
     var likert = getLikertTables();
     var hasData = profile.length > 0 || likert.length > 0;
@@ -150,21 +223,32 @@
     if (overview) overview.hidden = !hasData;
     if (emptyState) emptyState.hidden = hasData;
 
-    var profileCount = document.getElementById('sg-profile-count');
-    var likertCount = document.getElementById('sg-likert-count');
+    var summaryEl = document.getElementById('sg-overview-summary');
     var lastSaved = document.getElementById('sg-last-saved');
-    if (profileCount) profileCount.textContent = profile.length;
-    if (likertCount) likertCount.textContent = likert.length;
-    if (lastSaved) lastSaved.textContent = formatTimestamp(getLastSavedTimestamp());
+    var pc = profile.length;
+    var lc = likert.length;
+    if (summaryEl) {
+      summaryEl.textContent = pc + ' Profile Table' + (pc !== 1 ? 's' : '') + ' • ' + lc + ' Likert Table' + (lc !== 1 ? 's' : '');
+    }
+    if (lastSaved) lastSaved.textContent = formatTimestamp(getLastSavedTimestamp()) || '—';
+
+    renderProfileTableList(profile);
+    renderLikertTableList(likert);
 
     resizeAllOutputs();
-    showToast('Data refreshed. ' + profile.length + ' profile table(s), ' + likert.length + ' Likert table(s) loaded.');
+    if (!suppressToast) {
+      showToast('Data refreshed. ' + profile.length + ' profile table(s), ' + likert.length + ' Likert table(s) loaded.');
+    }
   }
 
   function clearSavedSummaries() {
     try {
+      localStorage.removeItem(KEYS.profileTables);
+      localStorage.removeItem(KEYS.likertTables);
       localStorage.removeItem(KEYS.generatedSummaries);
       localStorage.setItem(KEYS.summaryDataSaved, 'false');
+      localStorage.setItem('profileDataSaved', 'false');
+      localStorage.setItem('likertDataSaved', 'false');
     } catch (e) {}
     var outputs = ['sg-respondents-output', 'sg-findings-output', 'sg-conclusions-output', 'sg-recommendations-output'];
     outputs.forEach(function (id) {
@@ -172,8 +256,8 @@
       if (el) el.value = '';
     });
     appendActivity('Cleared saved summaries');
-    showToast('Saved summaries cleared.');
-    refreshDataOverview();
+    showToast('Saved summaries and data cleared.');
+    refreshDataOverview(true);
   }
 
   // ---------- Section 2: Respondents Summary ----------
@@ -187,6 +271,18 @@
         return h + t;
       }
       return r.frequency || 0;
+    };
+    var maxFreq = Math.max.apply(null, rows.map(getFreq));
+    if (maxFreq <= 0) return [];
+    return rows.filter(function (r) { return getFreq(r) === maxFreq; }).map(function (r) { return r.category; });
+  }
+
+  /** Get dominant category per slot for a specific group (heads or teachers) in two-group profile. */
+  function getDominantCategoriesByGroup(rows, groupKey) {
+    if (!rows || rows.length === 0) return [];
+    var getFreq = function (r) {
+      var g = groupKey === 'heads' ? (r.heads && r.heads.f) : (r.teachers && r.teachers.f);
+      return g || 0;
     };
     var maxFreq = Math.max.apply(null, rows.map(getFreq));
     if (maxFreq <= 0) return [];
@@ -214,6 +310,134 @@
     return cats.length > 0 ? cats[0] : '';
   }
 
+  /** Build profile paragraph from slot data (age, gender, etc.) for Summary of Findings. */
+  function buildProfileParagraphFromSlots(data, groupLabel, opener, includeImplication) {
+    var age = data[1] || '';
+    var gender = data[2] || '';
+    var civilStatus = data[3] || '';
+    var education = data[4] || '';
+    var position = data[5] || '';
+    var rating = data[6] || '';
+    var yearsService = data[7] || '';
+    var inService = data[8] || '';
+    var parts = [];
+    var prefix = groupLabel ? groupLabel + ' respondents ' : 'Most of the respondents ';
+    if (age || gender) {
+      var agePart = age ? 'belong to the "' + age + '" age group' : '';
+      var genderPart = gender ? 'are "' + gender + '"' : '';
+      if (agePart && genderPart) {
+        parts.push(prefix + agePart + ' and ' + genderPart + '.');
+      } else if (agePart) {
+        parts.push(prefix + agePart + '.');
+      } else if (genderPart) {
+        parts.push(prefix + genderPart + '.');
+      }
+    }
+    if (civilStatus || education || position) {
+      var midParts = [];
+      if (civilStatus) midParts.push('are "' + civilStatus + '"');
+      if (education) midParts.push('have "' + education + '"');
+      if (position) midParts.push('occupy the position of "' + position + '"');
+      if (midParts.length > 0) {
+        var midText = midParts.length === 1 ? midParts[0] : midParts.slice(0, -1).join(', ') + ', and ' + midParts[midParts.length - 1];
+        parts.push('The majority ' + midText + '.');
+      }
+    }
+    if (rating || yearsService || inService) {
+      var endParts = [];
+      if (rating) {
+        var article = /^[aeiou]/i.test(rating) ? 'an' : 'a';
+        endParts.push('received ' + article + ' "' + rating + '" performance rating');
+      }
+      if (yearsService) endParts.push('have "' + yearsService + '" years of service');
+      if (inService) {
+        var inServiceLabel = inService.toLowerCase().indexOf('level') !== -1 ? inService : inService + ' level';
+        endParts.push('attended in-service trainings mostly at the "' + inServiceLabel + '"');
+      }
+      if (endParts.length > 0) {
+        var endText = endParts.length === 1 ? endParts[0] : endParts.slice(0, -1).join(', ') + ', and ' + endParts[endParts.length - 1];
+        parts.push('Most ' + endText + '.');
+      }
+    }
+    if (parts.length === 0) return '';
+    var conclusionPhrase = 'characterized by the demographic and professional profile reflected in the above categories.';
+    var text = opener + parts.join(' ') + ' This indicates that the respondents are ' + conclusionPhrase + '.';
+    if (includeImplication) {
+      var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+      var impl = Utils ? Utils.buildImplications('profile') : { first: '', second: '' };
+      if (impl.first) text += ' ' + impl.first;
+      if (impl.second) text += ' ' + impl.second;
+    }
+    return text;
+  }
+
+  /** Check if table is executive summary by title. */
+  function isExecutiveSummary(title) {
+    return (title || '').toLowerCase().indexOf('executive summary') !== -1;
+  }
+
+  /** Check if table is constraint or challenge by title. */
+  function isConstraintOrChallenge(title) {
+    var t = (title || '').toLowerCase();
+    return t.indexOf('constraint') !== -1 || t.indexOf('challenge') !== -1;
+  }
+
+  /** Get indicators under highest QD for two-group Likert; if none, use next. Returns { sh: [], t: [] }. */
+  function getIndicatorsByTopQdForTwoGroup(rows, includeNext) {
+    if (!rows || rows.length === 0) return { sh: [], t: [] };
+    var getShWm = function (r) { return r.sh && r.sh.wm != null ? r.sh.wm : 0; };
+    var getTWm = function (r) { return r.t && r.t.wm != null ? r.t.wm : 0; };
+    var getShQd = function (r) { return (r.sh && r.sh.qd) || ''; };
+    var getTQd = function (r) { return (r.t && r.t.qd) || ''; };
+    var sortedSh = rows.slice().sort(function (a, b) { return getShWm(b) - getShWm(a); });
+    var sortedT = rows.slice().sort(function (a, b) { return getTWm(b) - getTWm(a); });
+    var topShQd = sortedSh.length && getShWm(sortedSh[0]) > 0 ? getShQd(sortedSh[0]) : '';
+    var topTQd = sortedT.length && getTWm(sortedT[0]) > 0 ? getTQd(sortedT[0]) : '';
+    var shGroup = topShQd ? rows.filter(function (r) { return getShQd(r) === topShQd; }) : [];
+    var tGroup = topTQd ? rows.filter(function (r) { return getTQd(r) === topTQd; }) : [];
+    if (shGroup.length === 0 && includeNext && sortedSh.length > 1) {
+      var nextShQd = getShQd(sortedSh[1]);
+      shGroup = rows.filter(function (r) { return getShQd(r) === nextShQd; });
+    }
+    if (tGroup.length === 0 && includeNext && sortedT.length > 1) {
+      var nextTQd = getTQd(sortedT[1]);
+      tGroup = rows.filter(function (r) { return getTQd(r) === nextTQd; });
+    }
+    return {
+      sh: shGroup.map(function (r) { return { indicator: r.indicator, qd: getShQd(r), wm: getShWm(r) }; }),
+      t: tGroup.map(function (r) { return { indicator: r.indicator, qd: getTQd(r), wm: getTWm(r) }; })
+    };
+  }
+
+  /** Build T-test finding from rows. Compares t-value vs t-critical, determines reject/accept. */
+  function buildTTestFinding(rows, tableTitle, opener, includeImplication) {
+    if (!rows || rows.length === 0) return '';
+    var row = rows[0];
+    var tValStr = (row.tValue || '').toString().trim();
+    var tCritStr = (row.tCritical || '').toString().trim();
+    var decision = (row.decision || '').toString().trim().toLowerCase();
+    var theme = (tableTitle || 'the variable').toLowerCase();
+    var isRejected = decision.indexOf('reject') !== -1 || decision.indexOf('significant') !== -1;
+    var tVal = parseFloat(tValStr.replace(/[^0-9.-]/g, ''));
+    var tCrit = parseFloat(tCritStr.replace(/[^0-9.-]/g, ''));
+    if (!isNaN(tVal) && !isNaN(tCrit)) {
+      isRejected = Math.abs(tVal) > tCrit;
+    }
+    var p;
+    if (isRejected) {
+      p = opener + theme + ', the T-test results show a significant difference between the perceptions of school heads and teachers. The computed t-value exceeded the critical value, resulting in the rejection of the null hypothesis. This indicates that the two groups differ significantly in their assessment.';
+    } else {
+      p = opener + theme + ', the T-test results show no significant difference between the perceptions of school heads and teachers. The computed t-value did not exceed the critical value, and the null hypothesis was accepted. This indicates that the two groups do not differ significantly in their assessment.';
+    }
+    if (includeImplication) {
+      var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+      var impl = Utils ? Utils.buildImplications('ttest') : { first: '', second: '' };
+      if (impl.first) p += ' ' + impl.first;
+      if (impl.second) p += ' ' + impl.second;
+    }
+    return p;
+  }
+
   /** Concluding phrases for "This indicates that the respondents are __________." */
   var RESPONDENT_CONCLUSION_PHRASES = [
     'experienced educators actively engaged in professional development',
@@ -233,6 +457,32 @@
     var sorted = profile.slice().sort(function (a, b) {
       return getProfileTableSlot(a.tableTitle) - getProfileTableSlot(b.tableTitle);
     });
+
+    var hasTwoGroup = profile.some(function (pt) { return pt.type === 'twoGroup'; });
+
+    if (hasTwoGroup) {
+      var dataSh = {};
+      var dataT = {};
+      sorted.forEach(function (t) {
+        if (t.type !== 'twoGroup') return;
+        var slot = getProfileTableSlot(t.tableTitle);
+        if (slot >= 1 && slot <= 8) {
+          var catSh = getDominantCategoriesByGroup(t.rows || [], 'heads');
+          var catT = getDominantCategoriesByGroup(t.rows || [], 'teachers');
+          if (catSh.length) dataSh[slot] = catSh[0];
+          if (catT.length) dataT[slot] = catT[0];
+        }
+      });
+      var conclusionPhrase = RESPONDENT_CONCLUSION_PHRASES[vi % RESPONDENT_CONCLUSION_PHRASES.length];
+      var opener = Gen ? Gen.getOpenerForVariant(vi, lastOpener) : getVariedOpener();
+      var pSh = buildProfileParagraphFromSlots(dataSh, 'School head', opener, includeImplication);
+      var opener2 = Gen ? Gen.getOpenerForVariant(vi + 1, '') : getVariedOpener();
+      var pT = buildProfileParagraphFromSlots(dataT, 'Teacher', opener2, includeImplication);
+      var result = [];
+      if (pSh) result.push(pSh);
+      if (pT) result.push(pT);
+      return result.join('\n\n');
+    }
 
     var data = {};
     sorted.forEach(function (t) {
@@ -362,12 +612,16 @@
     var desc = awmDesc || '—';
     var themeLower = (theme || '').toLowerCase();
     var signifies = 'respondents view the manifestation of the theme as ' + desc + '.';
-    if (themeLower.indexOf('challenge') !== -1) {
+    if (themeLower.indexOf('challenge') !== -1 || themeLower.indexOf('challenges') !== -1) {
       signifies = 'respondents view the challenges encountered as ' + desc + '.';
+    } else if (themeLower.indexOf('constraint') !== -1 || themeLower.indexOf('constraints') !== -1) {
+      signifies = 'respondents view the constraints experienced as ' + desc + '.';
     } else if (themeLower.indexOf('effect') !== -1) {
       signifies = 'respondents view the effect as ' + desc + '.';
+    } else if (themeLower.indexOf('abilit') !== -1 || themeLower.indexOf('manifest') !== -1) {
+      signifies = 'respondents perceive the assessed construct as strongly evident, described as ' + desc + '.';
     }
-    return 'The average weighted mean is described as "' + desc + '," which signifies that ' + signifies;
+    return 'The average weighted mean, described as ' + desc + ', implies that ' + signifies;
   }
 
   function generateFindingsWithVariant(variantIndex, lastOpener) {
@@ -384,62 +638,175 @@
     var paragraphs = [];
     var openerIdx = 0;
 
-    profile.forEach(function (t) {
-      var tableType = t.type === 'twoGroup' ? 'twoGroup' : 'singleGroup';
-      var topCats = getHighestCategories(t.rows || [], tableType);
-      if (topCats.length === 0) return;
-      var opening = Gen ? Gen.getOpenerForVariant(vi + openerIdx, openerIdx === 0 ? lastOpener : '') : getNextOpening();
-      openerIdx++;
-      var quoted = topCats.map(function (c) { return '"' + c + '"'; });
-      var subject = (t.tableTitle || 'the variable').toLowerCase();
-      var dominantWord = Gen ? Gen.getSynonym('majority', vi + openerIdx) : 'dominant';
-      var categoryPhrase = (dominantWord.indexOf('category') !== -1 ? dominantWord : dominantWord + ' category');
-      var p = opening + subject + ', the ' + categoryPhrase + ' was ' + (quoted.length === 1 ? quoted[0] : quoted.join(' and ')) + '.';
-      if (includeImplication) {
-        var impl = Gen ? Gen.buildImplicationsWithVariant('profile', vi + openerIdx) : (Utils ? Utils.buildImplications('profile') : { first: '', second: '' });
-        if (impl.first) p += ' ' + impl.first;
-        if (impl.second) p += ' ' + impl.second;
-      }
-      paragraphs.push(p);
+    // --- Profile Tables: one combined paragraph per respondent group ---
+    var hasTwoGroupProfile = profile.some(function (pt) { return pt.type === 'twoGroup'; });
+    var sortedProfile = profile.slice().sort(function (a, b) {
+      return getProfileTableSlot(a.tableTitle) - getProfileTableSlot(b.tableTitle);
     });
 
+    if (hasTwoGroupProfile) {
+      var dataSh = {};
+      var dataT = {};
+      sortedProfile.forEach(function (pt) {
+        if (pt.type !== 'twoGroup') return;
+        var slot = getProfileTableSlot(pt.tableTitle);
+        if (slot >= 1 && slot <= 8) {
+          var catSh = getDominantCategoriesByGroup(pt.rows || [], 'heads');
+          var catT = getDominantCategoriesByGroup(pt.rows || [], 'teachers');
+          if (catSh.length) dataSh[slot] = catSh[0];
+          if (catT.length) dataT[slot] = catT[0];
+        }
+      });
+      if (Object.keys(dataSh).length > 0 || Object.keys(dataT).length > 0) {
+        var openingSh = Gen ? Gen.getOpenerForVariant(vi + openerIdx, openerIdx === 0 ? lastOpener : '') : getNextOpening();
+        openerIdx++;
+        var openingT = Gen ? Gen.getOpenerForVariant(vi + openerIdx, '') : getNextOpening();
+        openerIdx++;
+        var pSh = buildProfileParagraphFromSlots(dataSh, 'School head', openingSh, includeImplication);
+        var pT = buildProfileParagraphFromSlots(dataT, 'Teacher', openingT, includeImplication);
+        if (pSh) paragraphs.push(pSh);
+        if (pT) paragraphs.push(pT);
+      }
+    } else {
+      var data = {};
+      sortedProfile.forEach(function (pt) {
+        var slot = getProfileTableSlot(pt.tableTitle);
+        if (slot >= 1 && slot <= 8) {
+          var cat = getDominantCategory(pt.rows, 'singleGroup');
+          if (cat) data[slot] = cat;
+        }
+      });
+      if (Object.keys(data).length > 0) {
+        var opening = Gen ? Gen.getOpenerForVariant(vi + openerIdx, openerIdx === 0 ? lastOpener : '') : getNextOpening();
+        openerIdx++;
+        var p = buildProfileParagraphFromSlots(data, '', opening, includeImplication);
+        if (p) paragraphs.push(p);
+      }
+    }
+
+    // --- Likert Tables ---
     likert.forEach(function (t) {
       var isTwoGroup = t.type === 'twoGroup';
       var isTTest = t.type === 'tTest';
-      var indicators = t.indicators || [];
-      var topGroup = getTopQualGroupIndicators(indicators, includeNextGroup);
+      var theme = (t.tableTitle || 'the theme').toLowerCase();
       var opening = Gen ? Gen.getOpenerForVariant(vi + openerIdx, openerIdx === 0 ? lastOpener : '') : getNextOpening();
       openerIdx++;
-      var theme = (t.tableTitle || 'the theme').toLowerCase();
 
       if (isTTest) {
-        var tTestP = opening + theme + ', the t-test results indicate significant or non-significant differences between the compared groups as reported in the table.';
-        if (includeImplication) {
-          var implT = Gen ? Gen.buildImplicationsWithVariant('likert', vi + openerIdx) : (Utils ? Utils.buildImplications('likert') : { first: '', second: '' });
-          if (implT.first) tTestP += ' ' + implT.first;
-          if (implT.second) tTestP += ' ' + implT.second;
+        var tTestP = buildTTestFinding(t.rows || [], t.tableTitle, opening, includeImplication);
+        if (tTestP) paragraphs.push(tTestP);
+        return;
+      }
+
+      if (isTwoGroup && t.rows) {
+        var execSummary = isExecutiveSummary(t.tableTitle);
+        var groups = getIndicatorsByTopQdForTwoGroup(t.rows, includeNextGroup);
+
+        if (execSummary) {
+          var shAwm = t.awm && t.awm.sh ? t.awm.sh : {};
+          var tAwm = t.awm && t.awm.t ? t.awm.t : {};
+          var shDesc = (shAwm.qd || '').trim();
+          var tDesc = (tAwm.qd || '').trim();
+          var shByQd = {};
+          var tByQd = {};
+          (t.rows || []).forEach(function (r) {
+            var shQd = (r.sh && r.sh.qd) || '';
+            var tQd = (r.t && r.t.qd) || '';
+            if (shQd) {
+              if (!shByQd[shQd]) shByQd[shQd] = [];
+              shByQd[shQd].push({ indicator: r.indicator, wm: r.sh && r.sh.wm != null ? r.sh.wm : 0 });
+            }
+            if (tQd) {
+              if (!tByQd[tQd]) tByQd[tQd] = [];
+              tByQd[tQd].push({ indicator: r.indicator, wm: r.t && r.t.wm != null ? r.t.wm : 0 });
+            }
+          });
+          var sortByWm = function (a, b) { return b.wm - a.wm; };
+          var formatDomainList = function (byQd) {
+            var keys = Object.keys(byQd);
+            if (keys.length === 0) return '';
+            keys.forEach(function (k) { byQd[k].sort(sortByWm); });
+            var ordered = keys.slice().sort(function (a, b) {
+              var maxA = Math.max.apply(null, byQd[a].map(function (d) { return d.wm; }));
+              var maxB = Math.max.apply(null, byQd[b].map(function (d) { return d.wm; }));
+              return maxB - maxA;
+            });
+            var parts = [];
+            ordered.forEach(function (qd) {
+              var domains = byQd[qd].map(function (d) { return '"' + d.indicator + '"'; });
+              if (domains.length) parts.push(domains.join(', ') + ' are rated ' + qd);
+            });
+            return parts.join(', while ');
+          };
+          var shDomainText = formatDomainList(shByQd);
+          var tDomainText = formatDomainList(tByQd);
+          var pSh = opening + theme + ', school head respondents show that ' + (shDomainText || 'the domains reflect the overall assessment') + '. ';
+          pSh += 'With an overall average weighted mean described as ' + (shDesc || '—') + ', the findings indicate that school heads perceive the assessed construct as strongly evident across domains.';
+          if (includeImplication) {
+            var impl = Utils ? Utils.buildImplications('executive') : { first: '', second: '' };
+            if (impl.first) pSh += ' ' + impl.first;
+          }
+          paragraphs.push(pSh);
+          openerIdx++;
+          var openingT2 = Gen ? Gen.getOpenerForVariant(vi + openerIdx, '') : getNextOpening();
+          var pT = openingT2 + theme + ', teacher respondents show that ' + (tDomainText || 'the domains reflect the overall assessment') + '. ';
+          pT += 'With an overall average weighted mean described as ' + (tDesc || '—') + ', the findings indicate that teachers perceive the assessed construct across the measured domains.';
+          if (includeImplication) {
+            var impl2 = Utils ? Utils.buildImplications('executive') : { first: '', second: '' };
+            if (impl2.second) pT += ' ' + impl2.second;
+          }
+          paragraphs.push(pT);
+        } else {
+          var shIndicators = groups.sh.map(function (i) { return '"' + i.indicator + '"'; });
+          var tIndicators = groups.t.map(function (i) { return '"' + i.indicator + '"'; });
+          var shQd = groups.sh.length ? groups.sh[0].qd : (t.awm && t.awm.sh ? t.awm.sh.qd : '');
+          var tQd = groups.t.length ? groups.t[0].qd : (t.awm && t.awm.t ? t.awm.t.qd : '');
+          var shAwmVal = t.awm && t.awm.sh && t.awm.sh.value != null ? t.awm.sh.value : 0;
+          var tAwmVal = t.awm && t.awm.t && t.awm.t.value != null ? t.awm.t.value : 0;
+          if (shIndicators.length > 0) {
+            var pSh = opening + theme + ', school head respondents rated the following indicators as ' + shQd + ': ' + shIndicators.join(', ') + '. ';
+            pSh += buildAwmSentence(shAwmVal, shQd, t.tableTitle);
+            if (includeImplication) {
+              var impl = Utils ? Utils.buildImplications('likert') : { first: '', second: '' };
+              if (impl.first) pSh += ' ' + impl.first;
+            }
+            paragraphs.push(pSh);
+            openerIdx++;
+          }
+          if (tIndicators.length > 0) {
+            var openingT2 = Gen ? Gen.getOpenerForVariant(vi + openerIdx, '') : getNextOpening();
+            var pT = openingT2 + theme + ', teacher respondents rated the following indicators as ' + tQd + ': ' + tIndicators.join(', ') + '. ';
+            pT += buildAwmSentence(tAwmVal, tQd, t.tableTitle);
+            if (includeImplication) {
+              var impl2 = Utils ? Utils.buildImplications('likert') : { first: '', second: '' };
+              if (impl2.second) pT += ' ' + impl2.second;
+            }
+            paragraphs.push(pT);
+          }
+          if (shIndicators.length === 0 && tIndicators.length === 0 && (t.awm && (t.awm.sh || t.awm.t))) {
+            var awmParts = [];
+            if (t.awm.sh) awmParts.push('school heads: ' + (t.awm.sh.qd || '—'));
+            if (t.awm.t) awmParts.push('teachers: ' + (t.awm.t.qd || '—'));
+            var p = opening + theme + ', the overall assessment shows ' + awmParts.join('; ') + '.';
+            if (includeImplication) {
+              var impl = Utils ? Utils.buildImplications('likert') : { first: '', second: '' };
+              if (impl.first) p += ' ' + impl.first;
+            }
+            paragraphs.push(p);
+          }
         }
-        paragraphs.push(tTestP);
-      } else if (isTwoGroup && t.awm && (t.awm.sh || t.awm.t)) {
-        var shDesc = (t.awm.sh && t.awm.sh.qd) ? t.awm.sh.qd : '';
-        var tDesc = (t.awm.t && t.awm.t.qd) ? t.awm.t.qd : '';
-        var awmParts = [];
-        if (shDesc) awmParts.push('school heads: ' + shDesc);
-        if (tDesc) awmParts.push('teachers: ' + tDesc);
-        var awmText = awmParts.length > 0 ? awmParts.join('; ') : 'as indicated by the average weighted means';
-        var p = opening + theme + ', the overall assessment shows ' + awmText + '. The findings reflect the perceptions of both respondent groups across the measured indicators.';
-        if (includeImplication) {
-          var impl2 = Gen ? Gen.buildImplicationsWithVariant('likert', vi + openerIdx) : (Utils ? Utils.buildImplications('likert') : { first: '', second: '' });
-          if (impl2.first) p += ' ' + impl2.first;
-          if (impl2.second) p += ' ' + impl2.second;
-        }
-        paragraphs.push(p);
-      } else if (topGroup.length > 0) {
-        var labels = topGroup.map(function (i) { return '"' + i.indicator + '"'; });
-        var p = opening + theme + ', the indicators under the dominant qualitative description group were ' + labels.join(', ') + '. ';
+        return;
+      }
+
+      var indicators = t.indicators || [];
+      var topGroup = getTopQualGroupIndicators(indicators, includeNextGroup);
+      if (topGroup.length > 0) {
+        var labels = topGroup.map(function (i) { return '"' + (i.indicator || i) + '"'; });
+        var qd = topGroup[0].qualitativeDescription || topGroup[0].qd || t.awmDesc || '';
+        var p = opening + theme + ', respondents rated the following indicators as ' + qd + ': ' + labels.join(', ') + '. ';
         p += buildAwmSentence(t.awm, t.awmDesc, t.tableTitle);
         if (includeImplication) {
-          var impl = Gen ? Gen.buildImplicationsWithVariant('likert', vi + openerIdx) : (Utils ? Utils.buildImplications('likert') : { first: '', second: '' });
+          var impl = Utils ? Utils.buildImplications('likert') : { first: '', second: '' };
           if (impl.first) p += ' ' + impl.first;
           if (impl.second) p += ' ' + impl.second;
         }
@@ -448,7 +815,7 @@
         var p = opening + theme + ', ';
         p += buildAwmSentence(t.awm, t.awmDesc, t.tableTitle);
         if (includeImplication) {
-          var impl = Gen ? Gen.buildImplicationsWithVariant('likert', vi + openerIdx) : (Utils ? Utils.buildImplications('likert') : { first: '', second: '' });
+          var impl = Utils ? Utils.buildImplications('likert') : { first: '', second: '' };
           if (impl.first) p += ' ' + impl.first;
           if (impl.second) p += ' ' + impl.second;
         }
@@ -587,130 +954,143 @@
   }
 
   // ---------- Section 5: Recommendations ----------
+  /** Detect themes from findings and conclusions text for recommendation mapping. */
+  function detectThemesFromFindingsAndConclusions(findingsText, conclusionsText) {
+    var combined = ((findingsText || '') + ' ' + (conclusionsText || '')).toLowerCase();
+    var themes = {
+      abilities: /abilit(y|ies)|curiosity|creativity|communication|collaboration|manifested|pupils? (demonstrate|perceive)/i.test(combined),
+      constraints: /constraint|difficult|struggle|moderately serious|slightly serious|resource|readiness|comprehension|support from the learning environment/i.test(combined),
+      challenges: /challenge|instructional|teachers? (encounter|experience)/i.test(combined),
+      instructional: /inquiry|instruction|instructional|hands-on|cooperative|strateg(y|ies)|teaching|science (learning|teaching)/i.test(combined),
+      resources: /resource|material|equipment|professional development|training/i.test(combined),
+      administration: /school head|administrator|supervisor|perception|significant difference|t-test|two groups/i.test(combined),
+      profile: /respondent|demographic|age|gender|civil status|educational attainment|position|years in service/i.test(combined),
+      parents: /support from|family|parent|learning environment|home/i.test(combined)
+    };
+    return themes;
+  }
+
+  /** Build recommendations from detected themes; each addresses a finding/conclusion and targets a stakeholder. */
+  function buildRecommendationsFromThemes(themes, profile, likert) {
+    var recs = [];
+
+    if (themes.abilities) {
+      recs.push({ stakeholder: 'teachers', text: 'Teachers may continue to implement inquiry-based instructional strategies that strengthen pupils\' curiosity, creativity, communication, and collaboration in Science learning.' });
+    }
+    if (themes.constraints) {
+      recs.push({ stakeholder: 'schools', text: 'Schools may strengthen collaborative learning environments that encourage active participation and teamwork among pupils during science investigations, and address constraints identified in the study.' });
+      recs.push({ stakeholder: 'school administrators', text: 'School administrators may provide additional instructional resources and professional development opportunities to support teachers in implementing inquiry-based science activities and addressing learner constraints.' });
+    }
+    if (themes.challenges) {
+      recs.push({ stakeholder: 'teachers', text: 'Teachers may seek professional development and peer support to address the instructional challenges identified in the study, such as motivating unengaged learners and implementing hands-on or experimental tasks effectively.' });
+    }
+    if (themes.instructional && !themes.abilities) {
+      recs.push({ stakeholder: 'teachers', text: 'Teachers may continue to implement and refine instructional strategies that support Science learning, in line with the findings of the study.' });
+    }
+    if (themes.resources && !themes.constraints) {
+      recs.push({ stakeholder: 'school administrators', text: 'School administrators may ensure adequate allocation of instructional materials and equipment to support Science teaching and learning.' });
+    }
+    if (themes.administration) {
+      recs.push({ stakeholder: 'school administrators', text: 'School administrators may strengthen collaborative dialogue between school heads and teachers to align perceptions and support consistent implementation of Science instruction.' });
+    }
+    if (themes.profile) {
+      recs.push({ stakeholder: 'schools', text: 'Schools may design programs and policies that accommodate the demographic and professional profile of the respondents reflected in the study.' });
+    }
+    if (themes.parents) {
+      recs.push({ stakeholder: 'parents', text: 'Parents may be encouraged to support science learning at home and to engage with the school on ways to reinforce curiosity and inquiry outside the classroom.' });
+    }
+
+    recs.push({ stakeholder: 'future researchers', text: 'Future researchers may conduct similar studies using larger or different populations to further validate the findings of the present study.' });
+
+    return recs;
+  }
+
   function generateRecommendations() {
-    var profile = getProfileTables();
-    var likert = getLikertTables();
-    var findingsSummary = document.getElementById('sg-findings-output') && document.getElementById('sg-findings-output').value.trim();
-    var conclusionsSummary = document.getElementById('sg-conclusions-output') && document.getElementById('sg-conclusions-output').value.trim();
+    var findingsEl = document.getElementById('sg-findings-output');
+    var conclusionsEl = document.getElementById('sg-conclusions-output');
+    var findingsSummary = findingsEl && findingsEl.value ? findingsEl.value.trim() : '';
+    var conclusionsSummary = conclusionsEl && conclusionsEl.value ? conclusionsEl.value.trim() : '';
 
     var profile = getProfileTables();
     var likert = getLikertTables();
-    if (profile.length === 0 && likert.length === 0) {
-      showToast('No saved data. Save tables from analyzers first.', true);
+
+    if (profile.length === 0 && likert.length === 0 && !findingsSummary && !conclusionsSummary) {
+      showToast('Generate findings and conclusions first, or save tables from analyzers.', true);
       return '';
     }
 
-    var targetEl = document.getElementById('sg-target-audience');
-    var target = targetEl && targetEl.value ? targetEl.value.trim() : '';
-    var use35 = document.getElementById('sg-toggle-recs-per-theme') && document.getElementById('sg-toggle-recs-per-theme').checked;
+    var themes = detectThemesFromFindingsAndConclusions(findingsSummary, conclusionsSummary);
 
-    var themes = [];
-    profile.forEach(function (t) {
-      if (t.tableTitle) themes.push({ type: 'profile', title: t.tableTitle });
-    });
-    likert.forEach(function (t) {
-      if (t.tableTitle) themes.push({ type: t.type === 'tTest' ? 'tTest' : 'likert', title: t.tableTitle });
-    });
+    if (!themes.abilities && !themes.constraints && !themes.challenges && !themes.instructional && !themes.resources && !themes.administration && !themes.profile) {
+      themes = {
+        abilities: likert.some(function (t) { return (t.tableTitle || '').toLowerCase().indexOf('abilit') !== -1 || (t.tableTitle || '').toLowerCase().indexOf('manifest') !== -1; }),
+        constraints: likert.some(function (t) { return (t.tableTitle || '').toLowerCase().indexOf('constraint') !== -1; }),
+        challenges: likert.some(function (t) { return (t.tableTitle || '').toLowerCase().indexOf('challenge') !== -1; }),
+        instructional: likert.length > 0,
+        resources: true,
+        administration: likert.some(function (t) { return t.type === 'twoGroup' || t.type === 'tTest'; }),
+        profile: profile.length > 0
+      };
+    }
 
-    if (themes.length === 0) themes.push({ type: 'general', title: 'the study' });
+    var recList = buildRecommendationsFromThemes(themes, profile, likert);
 
     var intro = 'Based on the foregoing findings and conclusions of the study, the following are recommended for implementation:';
-    var recs = [];
-    var count = 1;
-    var profileRecTemplates = [
-      'Develop targeted interventions that address the needs of the predominant respondent category in ',
-      'Design programs that accommodate the demographic characteristics reflected in ',
-      'Consider the implications of the respondent distribution in '
-    ];
-    var likertRecTemplates = [
-      'Strengthen the areas identified in ',
-      'Maintain and reinforce the positive indicators observed in ',
-      'Address gaps and build on the findings from ',
-      'Implement follow-up measures based on the assessment of '
-    ];
-
-    themes.forEach(function (theme) {
-      var n = use35 ? 3 + Math.floor(Math.random() * 3) : 3;
-      var audience = target ? ' for ' + target : '';
-      for (var i = 0; i < n; i++) {
-        var rec = '';
-        if (theme.type === 'profile') {
-          var tpl = profileRecTemplates[i % profileRecTemplates.length];
-          rec = tpl + theme.title + audience + '.';
-        } else if (theme.type === 'likert' || theme.type === 'tTest') {
-          var tpl2 = likertRecTemplates[i % likertRecTemplates.length];
-          rec = tpl2 + theme.title + audience + '.';
-        } else {
-          rec = 'Apply the insights from the findings to inform policy and practice' + audience + '.';
-        }
-        recs.push(count + '. ' + rec);
-        count += 1;
-      }
+    var numbered = [];
+    recList.forEach(function (r, i) {
+      numbered.push((i + 1) + '. ' + r.text);
     });
 
-    return intro + '\n\n' + recs.join('\n');
+    return intro + '\n\n' + numbered.join('\n');
   }
 
-  // ---------- Save / Copy helpers ----------
-  function saveSectionToReport(section, content) {
-    var summaries = getGeneratedSummaries() || {};
-    summaries[section] = content;
-    summaries.updatedAt = Date.now();
-    try {
-      localStorage.setItem(KEYS.generatedSummaries, JSON.stringify(summaries));
-      setNumber(KEYS.interpretationsGenerated, getNumber(KEYS.interpretationsGenerated) + 1);
-      localStorage.setItem(KEYS.summaryDataSaved, 'true');
-      appendActivity('Saved ' + section + ' to report');
-      showToast('Saved to report.');
-    } catch (e) {
-      showToast('Save failed.', true);
-    }
+  // ---------- Copy helpers ----------
+  function escapeHtml(s) {
+    if (s == null) return '';
+    var div = document.createElement('div');
+    div.textContent = s;
+    return div.innerHTML;
   }
 
-  function saveAllToReport() {
-    var respondents = document.getElementById('sg-respondents-output') && document.getElementById('sg-respondents-output').value.trim();
-    var findings = document.getElementById('sg-findings-output') && document.getElementById('sg-findings-output').value.trim();
-    var conclusions = document.getElementById('sg-conclusions-output') && document.getElementById('sg-conclusions-output').value.trim();
-    var recommendations = document.getElementById('sg-recommendations-output') && document.getElementById('sg-recommendations-output').value.trim();
-
-    var summaries = {
-      respondentsSummary: respondents,
-      findingsSummary: findings,
-      conclusions: conclusions,
-      recommendations: recommendations,
-      updatedAt: Date.now()
-    };
-
-    try {
-      localStorage.setItem(KEYS.generatedSummaries, JSON.stringify(summaries));
-      setNumber(KEYS.reportsCreated, getNumber(KEYS.reportsCreated) + 1);
-      localStorage.setItem(KEYS.summaryDataSaved, 'true');
-      appendActivity('Saved all sections to report');
-      showToast('All sections saved to report.');
-    } catch (e) {
-      showToast('Save failed.', true);
-    }
-  }
-
+  /**
+   * Copy All: all generated sections (Respondents, Findings, Conclusions, Recommendations)
+   * as rich HTML for Word — section headings + paragraphs with readable spacing.
+   */
   function copyAll() {
     var parts = [];
+    var partsHtml = [];
     var ids = ['sg-respondents-output', 'sg-findings-output', 'sg-conclusions-output', 'sg-recommendations-output'];
     var labels = ['Summary of Respondents', 'Summary of Findings', 'Conclusions', 'Recommendations'];
     ids.forEach(function (id, i) {
       var el = document.getElementById(id);
       if (el && el.value.trim()) {
-        parts.push(labels[i] + '\n\n' + el.value.trim());
+        var text = el.value.trim();
+        parts.push(labels[i] + '\n\n' + text);
+        partsHtml.push('<h2 style="margin-top: 1em; margin-bottom: 0.5em;">' + escapeHtml(labels[i]) + '</h2><p style="margin: 0 0 0.75em;">' + escapeHtml(text).replace(/\n/g, '<br>') + '</p>');
       }
     });
     if (parts.length === 0) {
-      showToast('No content to copy.', true);
+      showToast('Please generate the sections first before copying.', true);
       return;
     }
-    var text = parts.join('\n\n---\n\n');
-    navigator.clipboard.writeText(text).then(function () {
-      showToast('All sections copied!');
+    var plain = parts.join('\n\n---\n\n');
+    var html = partsHtml.join('');
+    copyRichToClipboard(html, plain);
+  }
+
+  function copyRichToClipboard(html, plain) {
+    if (!navigator.clipboard || !navigator.clipboard.write) {
+      navigator.clipboard.writeText(plain).then(function () { showToast('All sections copied as text.'); }).catch(function () { showToast('Copy failed.', true); });
+      return;
+    }
+    var blobHtml = new Blob([html], { type: 'text/html' });
+    var blobPlain = new Blob([plain], { type: 'text/plain' });
+    navigator.clipboard.write([
+      new ClipboardItem({ 'text/html': blobHtml, 'text/plain': blobPlain })
+    ]).then(function () {
+      showToast('Copied! Paste into Word to keep headings and formatting.');
     }).catch(function () {
-      showToast('Copy failed.', true);
+      navigator.clipboard.writeText(plain).then(function () { showToast('All sections copied as text.'); }).catch(function () { showToast('Copy failed.', true); });
     });
   }
 
@@ -721,14 +1101,12 @@
       localStorage.removeItem(KEYS.likertTables);
       localStorage.removeItem(KEYS.generatedSummaries);
       localStorage.removeItem(KEYS.interpretationsGenerated);
-      localStorage.removeItem(KEYS.reportsCreated);
       localStorage.removeItem(KEYS.recentActivity);
       localStorage.removeItem(KEYS.summaryDataSaved);
       localStorage.removeItem('tablesProcessed');
       localStorage.removeItem('respondentsEncoded');
       localStorage.removeItem('profileDataSaved');
       localStorage.removeItem('likertDataSaved');
-      localStorage.removeItem('reportDataSaved');
     } catch (e) {
       console.warn('Reset session: could not clear some keys', e);
     }
@@ -769,9 +1147,47 @@
 
   // ---------- Init ----------
   function init() {
-    refreshDataOverview();
+    refreshDataOverview(true);
 
-    document.getElementById('sg-refresh-data').addEventListener('click', refreshDataOverview);
+    // Update when data changes in another tab (Profile/Likert Analyzer saved)
+    window.addEventListener('storage', function (e) {
+      if (e.key === KEYS.profileTables || e.key === KEYS.likertTables) {
+        refreshDataOverview(true);
+      }
+    });
+
+    // Update when user returns to this tab (in case they saved in another tab)
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') {
+        refreshDataOverview(true);
+      }
+    });
+
+    document.getElementById('sg-refresh-data').addEventListener('click', function () { refreshDataOverview(false); });
+    var autoGenAll = document.getElementById('sg-auto-generate-all');
+    if (autoGenAll) {
+      autoGenAll.addEventListener('click', function () {
+        var profile = getProfileTables();
+        var likert = getLikertTables();
+        if (profile.length === 0 && likert.length === 0) {
+          showToast('No saved data. Save tables from analyzers first.', true);
+          return;
+        }
+        var rOut = document.getElementById('sg-respondents-output');
+        var fOut = document.getElementById('sg-findings-output');
+        var cOut = document.getElementById('sg-conclusions-output');
+        var recOut = document.getElementById('sg-recommendations-output');
+        if (rOut) { rOut.value = generateRespondentsSummary(); if (rOut.value) { autoResizeTextarea(rOut); var regen = document.getElementById('sg-regenerate-respondents'); if (regen) regen.disabled = false; } }
+        if (fOut) { fOut.value = generateFindings(); if (fOut.value) { autoResizeTextarea(fOut); var regenF = document.getElementById('sg-regenerate-findings'); if (regenF) regenF.disabled = false; } }
+        if (cOut) { cOut.value = generateConclusions(); if (cOut.value) { autoResizeTextarea(cOut); var regenC = document.getElementById('sg-regenerate-conclusions'); if (regenC) regenC.disabled = false; } }
+        if (recOut) { recOut.value = generateRecommendations(); if (recOut.value) autoResizeTextarea(recOut); }
+        showToast('All sections generated.');
+      });
+    }
+    var refreshEmpty = document.getElementById('sg-refresh-data-empty');
+    if (refreshEmpty) refreshEmpty.addEventListener('click', function () { refreshDataOverview(false); });
+    var clearEmpty = document.getElementById('sg-clear-summaries-empty');
+    if (clearEmpty) clearEmpty.addEventListener('click', openClearModal);
     document.getElementById('sg-clear-summaries').addEventListener('click', openClearModal);
     if (clearConfirm) clearConfirm.addEventListener('click', function () {
       clearSavedSummaries();
@@ -800,10 +1216,6 @@
         navigator.clipboard.writeText(el.value).then(function () { showToast('Copied!'); }).catch(function () { showToast('Copy failed.', true); });
       }
     });
-    document.getElementById('sg-save-respondents').addEventListener('click', function () {
-      var el = document.getElementById('sg-respondents-output');
-      if (el && el.value) saveSectionToReport('respondentsSummary', el.value);
-    });
 
     document.getElementById('sg-generate-findings').addEventListener('click', function () {
       var out = document.getElementById('sg-findings-output');
@@ -821,10 +1233,6 @@
       if (el && el.value) {
         navigator.clipboard.writeText(el.value).then(function () { showToast('Copied!'); }).catch(function () { showToast('Copy failed.', true); });
       }
-    });
-    document.getElementById('sg-save-findings').addEventListener('click', function () {
-      var el = document.getElementById('sg-findings-output');
-      if (el && el.value) saveSectionToReport('findingsSummary', el.value);
     });
 
     document.getElementById('sg-generate-conclusions').addEventListener('click', function () {
@@ -844,10 +1252,6 @@
         navigator.clipboard.writeText(el.value).then(function () { showToast('Copied!'); }).catch(function () { showToast('Copy failed.', true); });
       }
     });
-    document.getElementById('sg-save-conclusions').addEventListener('click', function () {
-      var el = document.getElementById('sg-conclusions-output');
-      if (el && el.value) saveSectionToReport('conclusions', el.value);
-    });
 
     document.getElementById('sg-generate-recommendations').addEventListener('click', function () {
       var out = document.getElementById('sg-recommendations-output');
@@ -863,12 +1267,6 @@
         navigator.clipboard.writeText(el.value).then(function () { showToast('Copied!'); }).catch(function () { showToast('Copy failed.', true); });
       }
     });
-    document.getElementById('sg-save-recommendations').addEventListener('click', function () {
-      var el = document.getElementById('sg-recommendations-output');
-      if (el && el.value) saveSectionToReport('recommendations', el.value);
-    });
-
-    document.getElementById('sg-save-all').addEventListener('click', saveAllToReport);
     document.getElementById('sg-copy-all').addEventListener('click', copyAll);
 
     document.getElementById('sg-btn-reset').addEventListener('click', openResetModal);

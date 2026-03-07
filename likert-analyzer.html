@@ -21,14 +21,17 @@
           <span class="la-brand__tagline">Tables & interpretation</span>
         </div>
       </a>
-      <nav class="la-top-bar__nav" aria-label="Main navigation">
-        <a href="index.html" class="la-top-bar__link">Dashboard</a>
-        <a href="profile-analyzer.html" class="la-top-bar__link">Profile Analyzer</a>
-        <a href="likert-analyzer.html" class="la-top-bar__link is-active">Likert Analyzer</a>
-        <a href="summary-generator.html" class="la-top-bar__link">Summary Generator</a>
-        <a href="report-export.html" class="la-top-bar__link">Report / Export</a>
-        <button type="button" class="la-btn la-btn--reset" id="la-btn-reset" aria-label="Reset session data">Reset Session</button>
-      </nav>
+      <div class="la-top-bar__right">
+        <nav class="la-top-bar__nav" aria-label="Main navigation">
+          <a href="index.html" class="la-top-bar__link">Dashboard</a>
+          <a href="profile-analyzer.html" class="la-top-bar__link">Profile</a>
+          <a href="likert-analyzer.html" class="la-top-bar__link is-active">Likert</a>
+          <a href="summary-generator.html" class="la-top-bar__link">Summary</a>
+        </nav>
+        <div class="la-top-bar__actions">
+          <button type="button" class="la-btn la-btn--reset la-btn--sm" id="la-btn-reset" aria-label="Reset session data">Reset</button>
+        </div>
+      </div>
       <button type="button" class="la-hamburger" id="la-hamburger" aria-label="Toggle menu" aria-expanded="false">
         <span class="la-hamburger__line"></span>
         <span class="la-hamburger__line"></span>
@@ -37,11 +40,10 @@
     </div>
     <div class="la-nav-dropdown" id="la-nav-dropdown" aria-hidden="true">
       <a href="index.html" class="la-nav-dropdown__link">Dashboard</a>
-      <a href="profile-analyzer.html" class="la-nav-dropdown__link">Profile Analyzer</a>
-      <a href="likert-analyzer.html" class="la-nav-dropdown__link">Likert Analyzer</a>
-      <a href="summary-generator.html" class="la-nav-dropdown__link">Summary Generator</a>
-      <a href="report-export.html" class="la-nav-dropdown__link">Report / Export</a>
-      <button type="button" class="la-btn la-btn--reset la-nav-dropdown__reset" id="la-btn-reset-mobile">Reset Session</button>
+      <a href="profile-analyzer.html" class="la-nav-dropdown__link">Profile</a>
+      <a href="likert-analyzer.html" class="la-nav-dropdown__link">Likert</a>
+      <a href="summary-generator.html" class="la-nav-dropdown__link">Summary</a>
+      <button type="button" class="la-btn la-btn--reset la-nav-dropdown__reset" id="la-btn-reset-mobile">Reset</button>
     </div>
   </header>
 
@@ -154,47 +156,79 @@
                 </div>
                 <div class="la-scale-body" id="la-scale-body">
                   <p class="la-field-hint">Define ranges and labels to map weighted means to qualitative descriptions when Auto Q.D. is selected.</p>
-                  <div class="la-scale-grid" id="la-scale-grid">
-                    <div class="la-scale-row" data-scale-value="5">
-                      <span class="la-scale-value">5</span>
-                      <input type="number" class="la-input la-input--num" id="la-scale-5-min" step="0.01" min="0" max="5" placeholder="4.21" aria-label="Range min for 5">
-                      <span class="la-scale-sep">–</span>
-                      <input type="number" class="la-input la-input--num" id="la-scale-5-max" step="0.01" min="0" max="5" placeholder="5.00" aria-label="Range max for 5">
-                      <span class="la-scale-eq">=</span>
-                      <input type="text" class="la-input la-input--label" id="la-scale-5-label" placeholder="Label (e.g. Fully Manifested)" aria-label="Label for 5">
-                    </div>
-                    <div class="la-scale-row" data-scale-value="4">
-                      <span class="la-scale-value">4</span>
-                      <input type="number" class="la-input la-input--num" id="la-scale-4-min" step="0.01" min="0" max="5" placeholder="3.41" aria-label="Range min for 4">
-                      <span class="la-scale-sep">–</span>
-                      <input type="number" class="la-input la-input--num" id="la-scale-4-max" step="0.01" min="0" max="5" placeholder="4.20" aria-label="Range max for 4">
-                      <span class="la-scale-eq">=</span>
-                      <input type="text" class="la-input la-input--label" id="la-scale-4-label" placeholder="Label" aria-label="Label for 4">
-                    </div>
-                    <div class="la-scale-row" data-scale-value="3">
-                      <span class="la-scale-value">3</span>
-                      <input type="number" class="la-input la-input--num" id="la-scale-3-min" step="0.01" min="0" max="5" placeholder="2.61" aria-label="Range min for 3">
-                      <span class="la-scale-sep">–</span>
-                      <input type="number" class="la-input la-input--num" id="la-scale-3-max" step="0.01" min="0" max="5" placeholder="3.40" aria-label="Range max for 3">
-                      <span class="la-scale-eq">=</span>
-                      <input type="text" class="la-input la-input--label" id="la-scale-3-label" placeholder="Label" aria-label="Label for 3">
-                    </div>
-                    <div class="la-scale-row" data-scale-value="2">
-                      <span class="la-scale-value">2</span>
-                      <input type="number" class="la-input la-input--num" id="la-scale-2-min" step="0.01" min="0" max="5" placeholder="1.81" aria-label="Range min for 2">
-                      <span class="la-scale-sep">–</span>
-                      <input type="number" class="la-input la-input--num" id="la-scale-2-max" step="0.01" min="0" max="5" placeholder="2.60" aria-label="Range max for 2">
-                      <span class="la-scale-eq">=</span>
-                      <input type="text" class="la-input la-input--label" id="la-scale-2-label" placeholder="Label" aria-label="Label for 2">
-                    </div>
-                    <div class="la-scale-row" data-scale-value="1">
-                      <span class="la-scale-value">1</span>
-                      <input type="number" class="la-input la-input--num" id="la-scale-1-min" step="0.01" min="0" max="5" placeholder="1.00" aria-label="Range min for 1">
-                      <span class="la-scale-sep">–</span>
-                      <input type="number" class="la-input la-input--num" id="la-scale-1-max" step="0.01" min="0" max="5" placeholder="1.80" aria-label="Range max for 1">
-                      <span class="la-scale-eq">=</span>
-                      <input type="text" class="la-input la-input--label" id="la-scale-1-label" placeholder="Label" aria-label="Label for 1">
-                    </div>
+                  <div class="la-scale-table-wrap" id="la-scale-grid">
+                    <table class="la-scale-table" role="grid" aria-label="Scale mapping configuration">
+                      <thead>
+                        <tr>
+                          <th class="la-scale-table__th la-scale-table__th--scale">Scale</th>
+                          <th class="la-scale-table__th la-scale-table__th--range">Range From</th>
+                          <th class="la-scale-table__th la-scale-table__th--range">Range To</th>
+                          <th class="la-scale-table__th la-scale-table__th--label">Qualitative Description</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr class="la-scale-row" data-scale-value="5">
+                          <td class="la-scale-table__td la-scale-table__td--scale">5</td>
+                          <td class="la-scale-table__td la-scale-table__td--range">
+                            <input type="number" class="la-input la-scale-input la-scale-input--num" id="la-scale-5-min" step="0.01" min="0" max="5" placeholder="4.21" aria-label="Range from for 5">
+                          </td>
+                          <td class="la-scale-table__td la-scale-table__td--range">
+                            <input type="number" class="la-input la-scale-input la-scale-input--num" id="la-scale-5-max" step="0.01" min="0" max="5" placeholder="5.00" aria-label="Range to for 5">
+                          </td>
+                          <td class="la-scale-table__td la-scale-table__td--label">
+                            <input type="text" class="la-input la-scale-input la-scale-input--label" id="la-scale-5-label" placeholder="Fully Manifested" aria-label="Label for 5">
+                          </td>
+                        </tr>
+                        <tr class="la-scale-row" data-scale-value="4">
+                          <td class="la-scale-table__td la-scale-table__td--scale">4</td>
+                          <td class="la-scale-table__td la-scale-table__td--range">
+                            <input type="number" class="la-input la-scale-input la-scale-input--num" id="la-scale-4-min" step="0.01" min="0" max="5" placeholder="3.41" aria-label="Range from for 4">
+                          </td>
+                          <td class="la-scale-table__td la-scale-table__td--range">
+                            <input type="number" class="la-input la-scale-input la-scale-input--num" id="la-scale-4-max" step="0.01" min="0" max="5" placeholder="4.20" aria-label="Range to for 4">
+                          </td>
+                          <td class="la-scale-table__td la-scale-table__td--label">
+                            <input type="text" class="la-input la-scale-input la-scale-input--label" id="la-scale-4-label" placeholder="Manifested" aria-label="Label for 4">
+                          </td>
+                        </tr>
+                        <tr class="la-scale-row" data-scale-value="3">
+                          <td class="la-scale-table__td la-scale-table__td--scale">3</td>
+                          <td class="la-scale-table__td la-scale-table__td--range">
+                            <input type="number" class="la-input la-scale-input la-scale-input--num" id="la-scale-3-min" step="0.01" min="0" max="5" placeholder="2.61" aria-label="Range from for 3">
+                          </td>
+                          <td class="la-scale-table__td la-scale-table__td--range">
+                            <input type="number" class="la-input la-scale-input la-scale-input--num" id="la-scale-3-max" step="0.01" min="0" max="5" placeholder="3.40" aria-label="Range to for 3">
+                          </td>
+                          <td class="la-scale-table__td la-scale-table__td--label">
+                            <input type="text" class="la-input la-scale-input la-scale-input--label" id="la-scale-3-label" placeholder="Moderately Manifested" aria-label="Label for 3">
+                          </td>
+                        </tr>
+                        <tr class="la-scale-row" data-scale-value="2">
+                          <td class="la-scale-table__td la-scale-table__td--scale">2</td>
+                          <td class="la-scale-table__td la-scale-table__td--range">
+                            <input type="number" class="la-input la-scale-input la-scale-input--num" id="la-scale-2-min" step="0.01" min="0" max="5" placeholder="1.81" aria-label="Range from for 2">
+                          </td>
+                          <td class="la-scale-table__td la-scale-table__td--range">
+                            <input type="number" class="la-input la-scale-input la-scale-input--num" id="la-scale-2-max" step="0.01" min="0" max="5" placeholder="2.60" aria-label="Range to for 2">
+                          </td>
+                          <td class="la-scale-table__td la-scale-table__td--label">
+                            <input type="text" class="la-input la-scale-input la-scale-input--label" id="la-scale-2-label" placeholder="Slightly Manifested" aria-label="Label for 2">
+                          </td>
+                        </tr>
+                        <tr class="la-scale-row" data-scale-value="1">
+                          <td class="la-scale-table__td la-scale-table__td--scale">1</td>
+                          <td class="la-scale-table__td la-scale-table__td--range">
+                            <input type="number" class="la-input la-scale-input la-scale-input--num" id="la-scale-1-min" step="0.01" min="0" max="5" placeholder="1.00" aria-label="Range from for 1">
+                          </td>
+                          <td class="la-scale-table__td la-scale-table__td--range">
+                            <input type="number" class="la-input la-scale-input la-scale-input--num" id="la-scale-1-max" step="0.01" min="0" max="5" placeholder="1.80" aria-label="Range to for 1">
+                          </td>
+                          <td class="la-scale-table__td la-scale-table__td--label">
+                            <input type="text" class="la-input la-scale-input la-scale-input--label" id="la-scale-1-label" placeholder="Not Manifested" aria-label="Label for 1">
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                   <p id="la-scale-error" class="la-field-error" role="alert" aria-live="polite"></p>
                 </div>
@@ -238,9 +272,11 @@
                 </table>
               </div>
               <div class="la-card-actions la-output-actions">
-                <button type="button" class="la-btn la-btn--primary" id="la-recompute" disabled>Recompute</button>
+                <button type="button" class="la-btn la-btn--ghost" id="la-add-row">Add Row</button>
+                <button type="button" class="la-btn la-btn--ghost" id="la-clear-inputs">Clear Inputs</button>
+                <button type="button" class="la-btn la-btn--primary" id="la-recompute" disabled>Compute</button>
                 <button type="button" class="la-btn la-btn--ghost" id="la-restore-original" disabled>Restore Original Values</button>
-                <button type="button" class="la-btn la-btn--secondary" id="la-save-input" disabled>Save to Report</button>
+                <button type="button" class="la-btn la-btn--primary" id="la-save-table" disabled>Save Table</button>
               </div>
             </div>
           </div>
@@ -280,10 +316,6 @@
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                       <span>Copy All</span>
                     </button>
-                    <button type="button" class="la-btn la-btn--secondary" id="la-save-interpretation" disabled title="Save to report">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                      <span>Save to Report</span>
-                    </button>
                   </div>
                 </div>
               </div>
@@ -322,10 +354,6 @@
               <div class="la-session-stats__row">
                 <span class="la-session-stats__label">Interpretations Generated</span>
                 <span class="la-session-stats__value" id="la-session-interpretations">0</span>
-              </div>
-              <div class="la-session-stats__row">
-                <span class="la-session-stats__label">Reports Created</span>
-                <span class="la-session-stats__value" id="la-session-reports">0</span>
               </div>
             </div>
           </div>

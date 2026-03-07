@@ -13,12 +13,10 @@
   var KEYS = {
     profileTables: 'profileTables',
     likertTables: 'likertTables',
-    reportsCreated: 'reportsCreated',
     recentActivity: 'recentActivity',
     profileDataSaved: 'profileDataSaved',
     likertDataSaved: 'likertDataSaved',
-    summaryDataSaved: 'summaryDataSaved',
-    reportDataSaved: 'reportDataSaved'
+    summaryDataSaved: 'summaryDataSaved'
   };
 
   var MAX_ACTIVITY = 10;
@@ -116,20 +114,15 @@
   function hasSummaryData() {
     return localStorage.getItem(KEYS.summaryDataSaved) === 'true';
   }
-  function hasReportData() {
-    return getNumber(KEYS.reportsCreated) > 0 || localStorage.getItem(KEYS.reportDataSaved) === 'true';
-  }
 
   // ---------- Update KPI cards (from actual stored data) ----------
   function updateKpis() {
     var tables = document.getElementById('kpi-tables');
     var respondents = document.getElementById('kpi-respondents');
     var interpretations = document.getElementById('kpi-interpretations');
-    var reports = document.getElementById('kpi-reports');
     if (tables) tables.textContent = getTablesCount();
     if (respondents) respondents.textContent = getRespondentsCount();
     if (interpretations) interpretations.textContent = getInterpretationsCount();
-    if (reports) reports.textContent = getNumber(KEYS.reportsCreated);
   }
 
   // ---------- Update workflow steps (checkmarks) ----------
@@ -137,11 +130,9 @@
     var step1 = document.getElementById('workflow-step-1');
     var step2 = document.getElementById('workflow-step-2');
     var step3 = document.getElementById('workflow-step-3');
-    var step4 = document.getElementById('workflow-step-4');
     if (step1) step1.classList.toggle('is-done', hasProfileData());
     if (step2) step2.classList.toggle('is-done', hasLikertData());
     if (step3) step3.classList.toggle('is-done', hasSummaryData());
-    if (step4) step4.classList.toggle('is-done', hasReportData());
   }
 
   // ---------- Render recent activity list ----------
@@ -196,12 +187,10 @@
     try {
       localStorage.removeItem(KEYS.profileTables);
       localStorage.removeItem(KEYS.likertTables);
-      localStorage.removeItem(KEYS.reportsCreated);
       localStorage.removeItem(KEYS.recentActivity);
       localStorage.removeItem(KEYS.profileDataSaved);
       localStorage.removeItem(KEYS.likertDataSaved);
       localStorage.removeItem(KEYS.summaryDataSaved);
-      localStorage.removeItem(KEYS.reportDataSaved);
       localStorage.removeItem('tablesProcessed');
       localStorage.removeItem('respondentsEncoded');
       localStorage.removeItem('interpretationsGenerated');

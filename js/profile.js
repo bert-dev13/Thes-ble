@@ -519,24 +519,23 @@
 
   function updateLoadedSummary() {
     var pill = document.getElementById('pa-loaded-summary');
-    var projectSelect = document.getElementById('pa-project-select');
     var tableSelect = document.getElementById('pa-table-select');
-    if (!pill || !tableSelect) return;
+    if (!tableSelect) return;
     var key = tableSelect.value;
     if (!key) {
-      pill.textContent = 'None selected';
+      if (pill) pill.textContent = 'None selected';
       return;
     }
     var cfg = activeProjectId === 'rp2' ? PROJECT2_TABLES[key] : PROFILE_TABLE_CONFIGS[key];
     if (!cfg) {
-      pill.textContent = 'Unknown table';
+      if (pill) pill.textContent = 'Unknown table';
       return;
     }
     var count = (cfg.rows ? cfg.rows.length : (cfg.categories ? cfg.categories.length : 0));
     var mode = activeProjectId === 'rp2' ? 'Two groups' : 'Single group';
     var shortName = cfg.title ? cfg.title.replace(/^Table \d+\.\s*Respondents as to\s*(?:the\s*)?/i, '').trim() : key;
     var titlePart = (cfg.tableNumber ? 'Table ' + cfg.tableNumber + ' — ' : '') + (shortName || cfg.title || key);
-    pill.textContent = titlePart + ' • ' + count + ' categories • ' + mode;
+    if (pill) pill.textContent = titlePart + ' • ' + count + ' categories • ' + mode;
   }
 
   function showToast(message, isError) {
@@ -551,15 +550,53 @@
     }, 2500);
   }
 
-  /** Load table by key for current project. Call on init and when table select changes. */
+  /** Show empty state when no table selected. */
+  function showEmptyState() {
+    var emptyEl = document.getElementById('pa-encode-empty');
+    var tableCard = document.getElementById('pa-table-card');
+    var tbody = document.getElementById('pa-table-tbody');
+    var titleEl = document.getElementById('pa-table-title');
+    var twoGroupSection = document.getElementById('pa-output-section');
+    if (emptyEl) emptyEl.hidden = false;
+    if (tableCard) tableCard.hidden = true;
+    if (twoGroupSection) twoGroupSection.hidden = true;
+    if (tbody) tbody.innerHTML = '';
+    if (titleEl) {
+      titleEl.value = '';
+      titleEl.disabled = true;
+    }
+    currentTableConfig = null;
+    currentProject2Table = null;
+    currentTableTitle = '';
+    computedRows = [];
+    renderOutputPlaceholder();
+    setInterpretationTabsVisibility(false);
+    updateLoadedSummary();
+    onInputChange();
+  }
+
+  /** Show table state when a table is selected. */
+  function showTableState() {
+    var emptyEl = document.getElementById('pa-encode-empty');
+    var tableCard = document.getElementById('pa-table-card');
+    var titleEl = document.getElementById('pa-table-title');
+    if (emptyEl) emptyEl.hidden = true;
+    if (tableCard) tableCard.hidden = false;
+    if (titleEl) titleEl.disabled = false;
+  }
+
+  /** Load table by key. Call on init and when table select changes. */
   function loadSelectedTable(key) {
     if (!key) {
+      showEmptyState();
+      hideTwoGroupSection();
       updateLoadedSummary();
       return;
     }
     if (activeProjectId === 'rp2') {
       var cfg = PROJECT2_TABLES[key];
       if (!cfg) {
+        showEmptyState();
         updateLoadedSummary();
         return;
       }
@@ -567,31 +604,53 @@
       currentTableConfig = null;
       currentTableTitle = cfg.title;
       var titleEl = document.getElementById('pa-table-title');
-      if (titleEl) titleEl.value = cfg.title;
-      var inputSingle = document.getElementById('pa-input-single-group');
-      if (inputSingle) inputSingle.hidden = true;
-      setGroupToggleVisibility();
-      setInterpretationTabsVisibility(true);
+      if (titleEl) {
+        titleEl.value = cfg.title;
+        titleEl.disabled = false;
+      }
+      hideSingleGroupSection();
+      showTwoGroupSection();
       renderTwoGroupTable(currentProject2Table);
-      var computeBtn = document.getElementById('pa-compute');
-      var restoreBtn = document.getElementById('pa-restore-original');
-      var saveInputBtn = document.getElementById('pa-save-to-report-input');
-      if (computeBtn) computeBtn.disabled = false;
-      if (restoreBtn) restoreBtn.disabled = false;
-      if (saveInputBtn) saveInputBtn.disabled = false;
+      var block = document.getElementById('pa-interpretation-block');
+      if (block) block.textContent = buildTwoGroupProfileInterpretation(currentProject2Table);
+      var copyBtn = document.getElementById('pa-copy-interpretation');
+      var saveTableBtn = document.getElementById('pa-save-table');
+      var saveTableBtnTwo = document.getElementById('pa-save-table-two');
+      var restoreBtnTwo = document.getElementById('pa-restore-original-two');
+      if (copyBtn) copyBtn.disabled = false;
+      if (saveTableBtn) saveTableBtn.disabled = false;
+      if (saveTableBtnTwo) saveTableBtnTwo.disabled = false;
+      if (restoreBtnTwo) restoreBtnTwo.disabled = false;
+      setInterpretationTabsVisibility(true);
     } else {
-      var inputSingle2 = document.getElementById('pa-input-single-group');
-      if (inputSingle2) inputSingle2.hidden = false;
-      setGroupToggleVisibility();
-      setInterpretationTabsVisibility(false);
       applyProfileTableConfig(key);
+      showTableState();
+      hideTwoGroupSection();
     }
     updateLoadedSummary();
   }
 
+  function hideSingleGroupSection() {
+    var emptyEl = document.getElementById('pa-encode-empty');
+    var tableCard = document.getElementById('pa-table-card');
+    if (emptyEl) emptyEl.hidden = true;
+    if (tableCard) tableCard.hidden = true;
+  }
+
+  function hideTwoGroupSection() {
+    var section = document.getElementById('pa-output-section');
+    if (section) section.hidden = true;
+    setInterpretationTabsVisibility(false);
+  }
+
+  function showTwoGroupSection() {
+    var section = document.getElementById('pa-output-section');
+    if (section) section.hidden = false;
+  }
+
   function applyProfileTableConfig(key) {
     var config = PROFILE_TABLE_CONFIGS[key];
-    var tbody = document.getElementById('pa-input-tbody');
+    var tbody = document.getElementById('pa-table-tbody');
     var titleEl = document.getElementById('pa-table-title');
     if (!config || !tbody || !titleEl) {
       return;
@@ -617,23 +676,24 @@
     // Reset computed state
     computedRows = [];
     renderOutputPlaceholder();
+    var totalFreq = (config.frequencies || []).reduce(function (s, f) { return s + (typeof f === 'number' ? f : 0); }, 0);
+    var totalFreqEl = document.getElementById('pa-total-freq');
+    if (totalFreqEl) totalFreqEl.textContent = totalFreq;
     var block = document.getElementById('pa-interpretation-block');
     if (block) block.textContent = '';
     var copyBtn = document.getElementById('pa-copy-interpretation');
-    var saveBtn = document.getElementById('pa-save-to-report');
-    var saveInputBtn = document.getElementById('pa-save-to-report-input');
+    var saveTableBtn = document.getElementById('pa-save-table');
     var restoreBtn = document.getElementById('pa-restore-original');
     var computeBtn = document.getElementById('pa-compute');
     if (copyBtn) copyBtn.disabled = true;
-    if (saveBtn) saveBtn.disabled = true;
-    if (saveInputBtn) saveInputBtn.disabled = true;
+    if (saveTableBtn) saveTableBtn.disabled = true;
     if (restoreBtn) restoreBtn.disabled = false;
     updateLoadedSummary();
     onInputChange();
   }
 
   function addRow(initialCategory, initialFrequency) {
-    var tbody = document.getElementById('pa-input-tbody');
+    var tbody = document.getElementById('pa-table-tbody');
     if (!tbody) return null;
     var tr = document.createElement('tr');
     var tdCat = document.createElement('td');
@@ -658,6 +718,14 @@
     }
     tdFreq.appendChild(freqInput);
 
+    var tdPct = document.createElement('td');
+    tdPct.setAttribute('data-pa-pct', '');
+    tdPct.textContent = '—';
+
+    var tdRank = document.createElement('td');
+    tdRank.setAttribute('data-pa-rank', '');
+    tdRank.textContent = '—';
+
     var tdRemove = document.createElement('td');
     var removeBtn = document.createElement('button');
     removeBtn.type = 'button';
@@ -669,6 +737,8 @@
 
     tr.appendChild(tdCat);
     tr.appendChild(tdFreq);
+    tr.appendChild(tdPct);
+    tr.appendChild(tdRank);
     tr.appendChild(tdRemove);
 
     tbody.appendChild(tr);
@@ -686,7 +756,7 @@
   }
 
   function removeRow(tr) {
-    var tbody = document.getElementById('pa-input-tbody');
+    var tbody = document.getElementById('pa-table-tbody');
     if (tbody && tr.parentNode === tbody) {
       tbody.removeChild(tr);
       onInputChange();
@@ -694,7 +764,7 @@
   }
 
   function getInputRows() {
-    var tbody = document.getElementById('pa-input-tbody');
+    var tbody = document.getElementById('pa-table-tbody');
     if (!tbody) return [];
     var rows = [];
     tbody.querySelectorAll('tr').forEach(function (tr) {
@@ -754,9 +824,9 @@
       rows.forEach(function (r) { total += r.frequency; });
       updateLiveTotals(total, total > 0 ? '100.00' : '0.00');
       var computeBtn = document.getElementById('pa-compute');
-      var saveInputBtn = document.getElementById('pa-save-to-report-input');
+      var saveTableBtn = document.getElementById('pa-save-table');
       if (computeBtn) computeBtn.disabled = !validate();
-      if (saveInputBtn) saveInputBtn.disabled = true;
+      if (saveTableBtn) saveTableBtn.disabled = true;
     }
   }
 
@@ -807,40 +877,41 @@
     computedRows = rounded;
     currentTableTitle = getTableTitle();
 
-    var tbody = document.getElementById('pa-output-tbody');
-    var tfoot = document.getElementById('pa-output-tfoot');
+    var tbody = document.getElementById('pa-table-tbody');
+    var tfoot = document.getElementById('pa-table-tfoot');
     if (!tbody || !tfoot) return;
 
-    tbody.innerHTML = '';
-    rounded.forEach(function (r) {
-      var tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td class="pa-thesis-table__td pa-thesis-table__td--particulars">' + escapeHtml(r.category) + '</td>' +
-        '<td class="pa-thesis-table__td pa-thesis-table__td--f">' + r.frequency + '</td>' +
-        '<td class="pa-thesis-table__td pa-thesis-table__td--pct">' + r.percentage.toFixed(2) + '</td>' +
-        '<td class="pa-thesis-table__td pa-thesis-table__td--rank">' + r.rank + '</td>';
-      tbody.appendChild(tr);
+    var rowIndex = 0;
+    tbody.querySelectorAll('tr').forEach(function (tr) {
+      var catEl = tr.querySelector('[data-pa-category]');
+      var freqEl = tr.querySelector('[data-pa-freq]');
+      var pctEl = tr.querySelector('[data-pa-pct]');
+      var rankEl = tr.querySelector('[data-pa-rank]');
+      var cat = (catEl && catEl.value || '').trim();
+      var freq = parseInt((freqEl && freqEl.value || '0'), 10) || 0;
+      if (cat && freq > 0 && rounded[rowIndex]) {
+        var r = rounded[rowIndex];
+        if (pctEl) pctEl.textContent = r.percentage.toFixed(2);
+        if (rankEl) rankEl.textContent = r.rank;
+        rowIndex++;
+      } else if (pctEl && rankEl) {
+        pctEl.textContent = '—';
+        rankEl.textContent = '—';
+      }
     });
 
-    tfoot.innerHTML =
-      '<tr class="pa-thesis-table__footer-row">' +
-        '<td class="pa-thesis-table__footer-label"><strong>TOTAL</strong></td>' +
-        '<td class="pa-thesis-table__footer-value"><strong id="pa-total-freq">' + total + '</strong></td>' +
-        '<td class="pa-thesis-table__footer-value"><strong id="pa-total-pct">100.00</strong></td>' +
-        '<td class="pa-thesis-table__footer-value"></td>' +
-      '</tr>';
-
-    updateTotalsStrip(total, '100.00');
+    var totalFreqEl = document.getElementById('pa-total-freq');
+    var totalPctEl = document.getElementById('pa-total-pct');
+    if (totalFreqEl) totalFreqEl.textContent = total;
+    if (totalPctEl) totalPctEl.textContent = '100.00';
     updateLiveTotals(total, '100.00');
 
     generateInterpretation(rounded, currentTableTitle);
     var copyBtn = document.getElementById('pa-copy-interpretation');
-    var saveBtn = document.getElementById('pa-save-to-report');
-    var saveInputBtn = document.getElementById('pa-save-to-report-input');
+    var saveTableBtn = document.getElementById('pa-save-table');
     var regenBtn = document.getElementById('pa-regenerate-interpretation');
     if (copyBtn) copyBtn.disabled = false;
-    if (saveBtn) saveBtn.disabled = false;
-    if (saveInputBtn) saveInputBtn.disabled = false;
+    if (saveTableBtn) saveTableBtn.disabled = false;
     if (regenBtn) regenBtn.disabled = false;
   }
 
@@ -1338,13 +1409,104 @@
     }
   }
 
+  /**
+   * Copy All: table title + full table (no inputs/buttons) + interpretation as rich HTML for Word.
+   * Disabled when nothing is computed; shows message if user clicks before computing.
+   */
   function copyInterpretation() {
     var block = document.getElementById('pa-interpretation-block');
-    if (!block || !block.textContent.trim()) return;
-    navigator.clipboard.writeText(block.textContent).then(function () {
-      showToast('Copied!');
+    var interpText = block && block.textContent ? block.textContent.trim() : '';
+    if (!interpText) {
+      showToast('Please compute and generate the interpretation first before copying.', true);
+      return;
+    }
+    var titleEl = document.getElementById('pa-table-title');
+    var tableTitle = (titleEl && titleEl.value) ? titleEl.value.trim() : '';
+    var tableHtml = '';
+    var tablePlain = '';
+
+    if (currentProject2Table && currentProject2Table.rows && currentProject2Table.rows.length) {
+      var sumH = 0, sumT = 0;
+      currentProject2Table.rows.forEach(function (r) {
+        sumH += (r.heads && typeof r.heads.f === 'number') ? r.heads.f : 0;
+        sumT += (r.teachers && typeof r.teachers.f === 'number') ? r.teachers.f : 0;
+      });
+      var rankMapH = computeDenseRanks(currentProject2Table.rows, function (r) { return r.heads && r.heads.f; });
+      var rankMapT = computeDenseRanks(currentProject2Table.rows, function (r) { return r.teachers && r.teachers.f; });
+      var shPctText = (currentProject2Table.type === 'twoGroupPercent' && sumH > 0) || (computeTable9Percent && sumH > 0) ? '100.00' : '—';
+      var tPctText = (currentProject2Table.type === 'twoGroupPercent' && sumT > 0) || (computeTable9Percent && sumT > 0) ? '100.00' : '—';
+      tableHtml =
+        '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">' +
+        '<thead><tr><th style="border: 1px solid #000; text-align: left;">Particulars</th>' +
+        '<th colspan="3" style="border: 1px solid #000; text-align: center;">School Heads</th>' +
+        '<th colspan="3" style="border: 1px solid #000; text-align: center;">Teachers</th></tr>' +
+        '<tr><th style="border: 1px solid #000;"></th>' +
+        '<th style="border: 1px solid #000;">f</th><th style="border: 1px solid #000;">Percentage</th><th style="border: 1px solid #000;">Rank</th>' +
+        '<th style="border: 1px solid #000;">f</th><th style="border: 1px solid #000;">Percentage</th><th style="border: 1px solid #000;">Rank</th></tr></thead><tbody>';
+      tablePlain = 'Particulars\tSchool Heads (f)\t%\tRank\tTeachers (f)\t%\tRank\n';
+      currentProject2Table.rows.forEach(function (row, idx) {
+        var hF = row.heads && typeof row.heads.f === 'number' ? row.heads.f : 0;
+        var tF = row.teachers && typeof row.teachers.f === 'number' ? row.teachers.f : 0;
+        var hPct = row.heads && typeof row.heads.pct === 'number' ? row.heads.pct.toFixed(2) : '';
+        var tPct = row.teachers && typeof row.teachers.pct === 'number' ? row.teachers.pct.toFixed(2) : '';
+        var hRank = rankMapH[idx] || '';
+        var tRank = rankMapT[idx] || '';
+        tableHtml += '<tr><td style="border: 1px solid #000;">' + escapeHtml(row.category) + '</td>' +
+          '<td style="border: 1px solid #000; text-align: right;">' + hF + '</td><td style="border: 1px solid #000; text-align: right;">' + hPct + '</td><td style="border: 1px solid #000; text-align: center;">' + hRank + '</td>' +
+          '<td style="border: 1px solid #000; text-align: right;">' + tF + '</td><td style="border: 1px solid #000; text-align: right;">' + tPct + '</td><td style="border: 1px solid #000; text-align: center;">' + tRank + '</td></tr>';
+        tablePlain += (row.category || '') + '\t' + hF + '\t' + hPct + '\t' + hRank + '\t' + tF + '\t' + tPct + '\t' + tRank + '\n';
+      });
+      tableHtml += '</tbody><tfoot><tr><td style="border: 1px solid #000;"><strong>TOTAL</strong></td>' +
+        '<td style="border: 1px solid #000; text-align: right;"><strong>' + sumH + '</strong></td><td style="border: 1px solid #000;"><strong>' + shPctText + '</strong></td><td style="border: 1px solid #000;"></td>' +
+        '<td style="border: 1px solid #000; text-align: right;"><strong>' + sumT + '</strong></td><td style="border: 1px solid #000;"><strong>' + tPctText + '</strong></td><td style="border: 1px solid #000;"></td></tr></tfoot></table>';
+      tablePlain += 'TOTAL\t' + sumH + '\t' + shPctText + '\t\t' + sumT + '\t' + tPctText + '\n';
+    } else if (computedRows.length) {
+      var total = computedRows.reduce(function (s, r) { return s + (r.frequency || 0); }, 0);
+      tableHtml =
+        '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">' +
+        '<thead><tr><th style="border: 1px solid #000; text-align: left;">Particulars</th>' +
+        '<th style="border: 1px solid #000; text-align: right;">Frequency (f)</th>' +
+        '<th style="border: 1px solid #000; text-align: right;">Percentage</th>' +
+        '<th style="border: 1px solid #000; text-align: center;">Rank</th></tr></thead><tbody>';
+      tablePlain = 'Particulars\tFrequency (f)\tPercentage\tRank\n';
+      computedRows.forEach(function (r) {
+        tableHtml += '<tr><td style="border: 1px solid #000;">' + escapeHtml(r.category) + '</td>' +
+          '<td style="border: 1px solid #000; text-align: right;">' + r.frequency + '</td>' +
+          '<td style="border: 1px solid #000; text-align: right;">' + (r.percentage != null ? r.percentage.toFixed(2) : '—') + '</td>' +
+          '<td style="border: 1px solid #000; text-align: center;">' + (r.rank != null ? r.rank : '') + '</td></tr>';
+        tablePlain += (r.category || '') + '\t' + (r.frequency || '') + '\t' + (r.percentage != null ? r.percentage.toFixed(2) : '') + '\t' + (r.rank != null ? r.rank : '') + '\n';
+      });
+      tableHtml += '</tbody><tfoot><tr><td style="border: 1px solid #000;"><strong>TOTAL</strong></td>' +
+        '<td style="border: 1px solid #000; text-align: right;"><strong>' + total + '</strong></td>' +
+        '<td style="border: 1px solid #000; text-align: right;"><strong>100.00</strong></td>' +
+        '<td style="border: 1px solid #000;"></td></tr></tfoot></table>';
+      tablePlain += 'TOTAL\t' + total + '\t100.00\n';
+    } else {
+      showToast('Please compute and generate the interpretation first before copying.', true);
+      return;
+    }
+
+    var titleHtml = tableTitle ? '<p style="margin-bottom: 0.5em; font-weight: bold;">' + escapeHtml(tableTitle) + '</p>' : '';
+    var interpHtml = '<p style="margin-top: 1em;">' + escapeHtml(interpText).replace(/\n/g, '<br>') + '</p>';
+    var fullHtml = titleHtml + tableHtml + interpHtml;
+    var fullPlain = (tableTitle ? tableTitle + '\n\n' : '') + tablePlain + '\n' + interpText;
+
+    copyRichToClipboard(fullHtml, fullPlain);
+  }
+
+  function copyRichToClipboard(html, plain) {
+    if (!navigator.clipboard || !navigator.clipboard.write) {
+      navigator.clipboard.writeText(plain).then(function () { showToast('Copied as text.'); }).catch(function () { showToast('Copy failed.', true); });
+      return;
+    }
+    var blobHtml = new Blob([html], { type: 'text/html' });
+    var blobPlain = new Blob([plain], { type: 'text/plain' });
+    navigator.clipboard.write([
+      new ClipboardItem({ 'text/html': blobHtml, 'text/plain': blobPlain })
+    ]).then(function () {
+      showToast('Copied! Paste into Word to keep table format.');
     }).catch(function () {
-      showToast('Copy failed.', true);
+      navigator.clipboard.writeText(plain).then(function () { showToast('Copied as text.'); }).catch(function () { showToast('Copy failed.', true); });
     });
   }
 
@@ -1408,7 +1570,7 @@
     appendActivity('Saved profile table: ' + (currentTableTitle || 'Untitled'));
     updateSessionProgress();
     renderSavedProfileTables();
-    showToast('Saved to report.');
+    showToast('Table saved.');
   }
 
   function updateSessionProgress() {
@@ -1421,40 +1583,21 @@
   }
 
   function renderOutputPlaceholder() {
+    var totalFreqEl = document.getElementById('pa-total-freq');
+    var totalPctEl = document.getElementById('pa-total-pct');
+    if (totalFreqEl) totalFreqEl.textContent = '0';
+    if (totalPctEl) totalPctEl.textContent = '100.00';
+  }
+
+  function renderTwoGroupOutputPlaceholder() {
     var thead = document.getElementById('pa-output-thead');
     var tbody = document.getElementById('pa-output-tbody');
     var tfoot = document.getElementById('pa-output-tfoot');
-    var tableWrap = document.getElementById('pa-table-wrap');
+    var tableWrap = document.getElementById('pa-two-group-wrap');
     if (tableWrap) tableWrap.classList.remove('pa-thesis-table--two-group');
-    if (thead) {
-      thead.innerHTML =
-        '<tr>' +
-          '<th class="pa-thesis-table__th pa-thesis-table__th--particulars">Particulars</th>' +
-          '<th class="pa-thesis-table__th pa-thesis-table__th--f">f</th>' +
-          '<th class="pa-thesis-table__th pa-thesis-table__th--pct">Percentage</th>' +
-          '<th class="pa-thesis-table__th pa-thesis-table__th--rank">Rank</th>' +
-        '</tr>';
-    }
-    if (tfoot) {
-      tfoot.innerHTML =
-        '<tr class="pa-thesis-table__footer-row">' +
-          '<td class="pa-thesis-table__footer-label"><strong>TOTAL</strong></td>' +
-          '<td class="pa-thesis-table__footer-value"><strong id="pa-total-freq">0</strong></td>' +
-          '<td class="pa-thesis-table__footer-value"><strong id="pa-total-pct">100.00</strong></td>' +
-          '<td class="pa-thesis-table__footer-value"></td>' +
-        '</tr>';
-    }
-    if (tbody) {
-      tbody.innerHTML = '<tr><td colspan="4" class="pa-output-empty">Select a table and compute to see results.</td></tr>';
-    }
-    updateTotalsStrip(0, '100.00');
-  }
-
-  function updateTotalsStrip(totalFreq, totalPct) {
-    var fEl = document.getElementById('pa-totals-freq');
-    var pEl = document.getElementById('pa-totals-pct');
-    if (fEl) fEl.textContent = totalFreq;
-    if (pEl) pEl.textContent = totalPct || '100.00';
+    if (thead) thead.innerHTML = '';
+    if (tfoot) tfoot.innerHTML = '';
+    if (tbody) tbody.innerHTML = '';
   }
 
   function computeDenseRanks(rows, getFreq) {
@@ -1474,7 +1617,7 @@
     var thead = document.getElementById('pa-output-thead');
     var tbody = document.getElementById('pa-output-tbody');
     var tfoot = document.getElementById('pa-output-tfoot');
-    var tableWrap = document.getElementById('pa-table-wrap');
+    var tableWrap = document.getElementById('pa-two-group-wrap');
     if (!tbody || !table || !thead || !tfoot) return;
 
     if (tableWrap) tableWrap.classList.add('pa-thesis-table--two-group');
@@ -1577,7 +1720,6 @@
         '<td class="pa-thesis-table__footer-value"></td>' +
       '</tr>';
 
-    updateTotalsStrip(sumHeads + ' / ' + sumTeachers, '100.00');
     updateLiveTotals(sumHeads + sumTeachers, '100.00');
     bindTwoGroupInputListeners();
 
@@ -1585,12 +1727,14 @@
     var block = document.getElementById('pa-interpretation-block');
     if (block) block.textContent = interpText;
     var copyBtn = document.getElementById('pa-copy-interpretation');
-    var saveBtn = document.getElementById('pa-save-to-report');
-    var saveInputBtn = document.getElementById('pa-save-to-report-input');
+    var saveTableBtn = document.getElementById('pa-save-table');
+    var saveTableBtnTwo = document.getElementById('pa-save-table-two');
+    var restoreBtnTwo = document.getElementById('pa-restore-original-two');
     var regenBtn = document.getElementById('pa-regenerate-interpretation');
     if (copyBtn) copyBtn.disabled = !interpText;
-    if (saveBtn) saveBtn.disabled = !interpText;
-    if (saveInputBtn) saveInputBtn.disabled = !interpText;
+    if (saveTableBtn) saveTableBtn.disabled = !interpText;
+    if (saveTableBtnTwo) saveTableBtnTwo.disabled = !interpText;
+    if (restoreBtnTwo) restoreBtnTwo.disabled = false;
     if (regenBtn) regenBtn.disabled = !interpText;
   }
 
@@ -1635,43 +1779,29 @@
     var fTeachers = document.getElementById('pa-total-teachers-f');
     if (fSingle) fSingle.textContent = sumHeads;
     if (fTeachers) fTeachers.textContent = sumTeachers;
-    updateTotalsStrip(sumHeads + ' / ' + sumTeachers, '100.00');
     updateLiveTotals(sumHeads + sumTeachers, '100.00');
   }
 
   function clearInputs() {
-    var tbody = document.getElementById('pa-input-tbody');
-    if (tbody) {
-      tbody.innerHTML = '';
-      for (var i = 0; i < 3; i++) addRow();
-    }
-    var titleEl = document.getElementById('pa-table-title');
-    if (titleEl) titleEl.value = '';
     var selectEl = document.getElementById('pa-table-select');
+    var projectSelect = document.getElementById('pa-project-select');
     if (selectEl) selectEl.value = '';
-    currentTableConfig = null;
-    currentProject2Table = null;
-    computedRows = [];
-    currentTableTitle = '';
-    renderOutputPlaceholder();
-    updateLoadedSummary();
+    if (projectSelect) projectSelect.value = 'rp1';
+    activeProjectId = 'rp1';
+    showEmptyState();
     var block = document.getElementById('pa-interpretation-block');
     if (block) block.textContent = '';
     var copyBtn = document.getElementById('pa-copy-interpretation');
-    var saveBtn = document.getElementById('pa-save-to-report');
-    var saveInputBtn = document.getElementById('pa-save-to-report-input');
+    var saveTableBtn = document.getElementById('pa-save-table');
     var regenBtn = document.getElementById('pa-regenerate-interpretation');
     var restoreBtn = document.getElementById('pa-restore-original');
     var computeBtn = document.getElementById('pa-compute');
     if (copyBtn) copyBtn.disabled = true;
-    if (saveBtn) saveBtn.disabled = true;
-    if (saveInputBtn) saveInputBtn.disabled = true;
+    if (saveTableBtn) saveTableBtn.disabled = true;
     if (regenBtn) regenBtn.disabled = true;
     if (restoreBtn) restoreBtn.disabled = true;
     if (computeBtn) computeBtn.disabled = true;
     setInterpretationTabsVisibility(false);
-    var inputSingle = document.getElementById('pa-input-single-group');
-    if (inputSingle && activeProjectId === 'rp1') inputSingle.hidden = false;
     onInputChange();
   }
 
@@ -2004,14 +2134,6 @@
         loadTableIntoInputs(t);
       });
 
-      var btnSaveReport = document.createElement('button');
-      btnSaveReport.type = 'button';
-      btnSaveReport.className = 'pa-btn pa-btn--ghost pa-btn--sm';
-      btnSaveReport.textContent = 'Save to Report';
-      btnSaveReport.addEventListener('click', function () {
-        showToast('This table is already included in Report / Export.');
-      });
-
       var btnRemove = document.createElement('button');
       btnRemove.type = 'button';
       btnRemove.className = 'pa-btn pa-btn--ghost pa-btn--sm';
@@ -2038,7 +2160,6 @@
 
       actions.appendChild(btnCopy);
       actions.appendChild(btnEdit);
-      actions.appendChild(btnSaveReport);
       actions.appendChild(btnRemove);
 
       card.appendChild(header);
@@ -2050,7 +2171,7 @@
   }
 
   function loadTableIntoInputs(table) {
-    var tbody = document.getElementById('pa-input-tbody');
+    var tbody = document.getElementById('pa-table-tbody');
     var titleEl = document.getElementById('pa-table-title');
     if (!tbody || !titleEl) return;
     if (table.type === 'twoGroup') {
@@ -2161,7 +2282,7 @@
   }
 
   function setRowDensity(mode) {
-    var table = document.getElementById('pa-output-table');
+    var table = document.getElementById('pa-unified-table');
     if (!table) return;
     if (mode === 'compact') table.classList.add('pa-table--compact');
     else table.classList.remove('pa-table--compact');
@@ -2181,25 +2302,20 @@
   }
 
   function init() {
-    var tbody = document.getElementById('pa-input-tbody');
-    if (tbody) {
-      for (var i = 0; i < 3; i++) addRow();
-    }
+    activeProjectId = 'rp1';
+    showEmptyState();
 
     var projectSelect = document.getElementById('pa-project-select');
     if (projectSelect) {
       projectSelect.addEventListener('change', function () {
         activeProjectId = this.value || 'rp1';
-        clearInputs();
-        var tableSelectProj = document.getElementById('pa-table-select');
-        if (tableSelectProj) {
-          tableSelectProj.value = 'age';
+        var tableSelect = document.getElementById('pa-table-select');
+        if (tableSelect) {
+          tableSelect.value = '';
+          showEmptyState();
         }
         setGroupToggleVisibility();
-        var inputSingle = document.getElementById('pa-input-single-group');
-        if (inputSingle) inputSingle.hidden = activeProjectId === 'rp2';
-        setInterpretationTabsVisibility(activeProjectId === 'rp2');
-        loadSelectedTable('age');
+        updateLoadedSummary();
       });
     }
 
@@ -2213,20 +2329,6 @@
         } else if (computedRows.length) {
           generateInterpretation(computedRows, currentTableTitle);
         }
-      });
-    }
-
-    var autoPctEl = document.getElementById('pa-auto-percent');
-    if (autoPctEl) autoPctEl.addEventListener('change', function () { autoPercentTwoGroup = this.checked; });
-    var t9PctEl = document.getElementById('pa-table9-percent-toggle');
-    if (t9PctEl) t9PctEl.addEventListener('change', function () { computeTable9Percent = this.checked; });
-
-    var advToggle = document.getElementById('pa-advanced-toggle');
-    var advBody = document.getElementById('pa-advanced-body');
-    if (advToggle && advBody) {
-      advToggle.addEventListener('click', function () {
-        var open = advBody.classList.toggle('is-open');
-        advToggle.setAttribute('aria-expanded', open);
       });
     }
 
@@ -2249,19 +2351,44 @@
     if (regenBtn) regenBtn.addEventListener('click', regenerateInterpretation);
     var copyBtn = document.getElementById('pa-copy-interpretation');
     if (copyBtn) copyBtn.addEventListener('click', copyInterpretation);
-    var saveBtn = document.getElementById('pa-save-to-report');
-    if (saveBtn) saveBtn.addEventListener('click', saveToReport);
-    var saveInputBtn = document.getElementById('pa-save-to-report-input');
-    if (saveInputBtn) saveInputBtn.addEventListener('click', saveToReport);
+    var saveTableBtn = document.getElementById('pa-save-table');
+    if (saveTableBtn) saveTableBtn.addEventListener('click', saveToReport);
 
     var clearInputsBtn = document.getElementById('pa-clear-inputs');
     if (clearInputsBtn) clearInputsBtn.addEventListener('click', openClearModal);
+    var clearInputsBtnTwo = document.getElementById('pa-clear-inputs-two');
+    if (clearInputsBtnTwo) clearInputsBtnTwo.addEventListener('click', openClearModal);
     if (clearConfirm) clearConfirm.addEventListener('click', function () { clearInputs(); closeClearModal(); });
     if (clearCancel) clearCancel.addEventListener('click', closeClearModal);
     if (clearBackdrop) clearBackdrop.addEventListener('click', closeClearModal);
 
     var restoreBtn = document.getElementById('pa-restore-original');
     if (restoreBtn) restoreBtn.addEventListener('click', restoreOriginalValues);
+    var addRowBtnTwo = document.getElementById('pa-add-row-two');
+    if (addRowBtnTwo) addRowBtnTwo.addEventListener('click', function () {
+      if (currentProject2Table && currentProject2Table.rows) {
+        currentProject2Table.rows.push({
+          category: '',
+          heads: { f: 0, pct: 0 },
+          teachers: { f: 0, pct: 0 }
+        });
+        renderTwoGroupTable(currentProject2Table);
+        showToast('Row added.');
+      }
+    });
+    var computeBtnTwo = document.getElementById('pa-compute-two');
+    if (computeBtnTwo) computeBtnTwo.addEventListener('click', function () {
+      if (currentProject2Table) {
+        renderTwoGroupTable(currentProject2Table);
+        var block = document.getElementById('pa-interpretation-block');
+        if (block) block.textContent = buildTwoGroupProfileInterpretation(currentProject2Table);
+        showToast('Table updated.');
+      }
+    });
+    var restoreBtnTwo = document.getElementById('pa-restore-original-two');
+    if (restoreBtnTwo) restoreBtnTwo.addEventListener('click', restoreOriginalValues);
+    var saveTableBtnTwo = document.getElementById('pa-save-table-two');
+    if (saveTableBtnTwo) saveTableBtnTwo.addEventListener('click', saveToReport);
 
     var interpToggle = document.getElementById('pa-interpretation-toggle');
     if (interpToggle) interpToggle.addEventListener('click', toggleInterpretationExpand);
@@ -2282,16 +2409,6 @@
       });
     }
 
-
-    var densityBtns = document.querySelectorAll('[data-row-density]');
-    densityBtns.forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var mode = btn.getAttribute('data-row-density') || 'comfortable';
-        setRowDensity(mode);
-        densityBtns.forEach(function (b) { b.classList.remove('pa-chip--active'); });
-        btn.classList.add('pa-chip--active');
-      });
-    });
 
     var btnLoadSample = document.getElementById('pa-load-sample');
     var btnClearSample = document.getElementById('pa-clear-sample');
@@ -2327,15 +2444,14 @@
       });
     }
 
-    setGroupToggleVisibility();
-    setInterpretationTabsVisibility(activeProjectId === 'rp2');
+    setInterpretationTabsVisibility(false);
     updateSessionProgress();
     renderSavedProfileTables();
 
-    // Auto-load selected table on init (sync, like Likert page)
+    // Load table only if user has already selected one (e.g. after refresh)
     var tableSelectInit = document.getElementById('pa-table-select');
     if (tableSelectInit) {
-      var key = tableSelectInit.value || 'age';
+      var key = tableSelectInit.value || '';
       if (key) loadSelectedTable(key);
     }
 

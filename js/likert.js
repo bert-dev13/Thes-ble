@@ -3,7 +3,7 @@
  * Vanilla JS: manual table title, opening phrase, scale mapping, indicator rows.
  * Computes weighted mean, rank (ties = average-of-positions), qualitative description, AWM.
  * Generates formal academic interpretation paragraph.
- * localStorage: likertTables[], tablesProcessed, interpretationsGenerated, reportsCreated, recentActivity.
+ * localStorage: likertTables[], tablesProcessed, interpretationsGenerated, recentActivity.
  */
 
 (function () {
@@ -13,7 +13,6 @@
     likertTables: 'likertTables',
     tablesProcessed: 'tablesProcessed',
     interpretationsGenerated: 'interpretationsGenerated',
-    reportsCreated: 'reportsCreated',
     recentActivity: 'recentActivity',
     likertDataSaved: 'likertDataSaved'
   };
@@ -1241,7 +1240,7 @@
     var awmDescEl = document.getElementById('la-awm-desc');
     var recomputeBtn = document.getElementById('la-recompute');
     var restoreBtn = document.getElementById('la-restore-original');
-    var saveInputBtn = document.getElementById('la-save-input');
+    var saveTableBtn = document.getElementById('la-save-table');
     if (!tbody || !config) return;
 
     if (tableWrap) tableWrap.classList.remove('la-thesis-table--two-group');
@@ -1283,7 +1282,7 @@
 
     if (recomputeBtn) recomputeBtn.disabled = false;
     if (restoreBtn) restoreBtn.disabled = false;
-    if (saveInputBtn) saveInputBtn.disabled = false;
+    if (saveTableBtn) saveTableBtn.disabled = false;
   }
 
   function getConfigForProject(projectId, tableId) {
@@ -1333,10 +1332,10 @@
     updateLiveStats(computedData.awm, computedData.awmDesc);
 
     var copyBtn = document.getElementById('la-copy-interpretation');
-    var saveBtn = document.getElementById('la-save-interpretation');
+    var saveTableBtn = document.getElementById('la-save-table');
     var regenBtn = document.getElementById('la-regenerate-interpretation');
     if (copyBtn) copyBtn.disabled = false;
-    if (saveBtn) saveBtn.disabled = false;
+    if (saveTableBtn) saveTableBtn.disabled = false;
     if (regenBtn) regenBtn.disabled = false;
 
     onInputChange();
@@ -1497,20 +1496,44 @@
     }
 
     var copyBtn = document.getElementById('la-copy-interpretation');
-    var saveBtn = document.getElementById('la-save-interpretation');
     var regenBtn = document.getElementById('la-regenerate-interpretation');
     var recomputeBtn = document.getElementById('la-recompute');
     var restoreBtn = document.getElementById('la-restore-original');
-    var saveInputBtn = document.getElementById('la-save-input');
+    var saveTableBtn = document.getElementById('la-save-table');
     if (copyBtn) copyBtn.disabled = false;
-    if (saveBtn) saveBtn.disabled = false;
+    if (saveTableBtn) saveTableBtn.disabled = false;
     if (regenBtn) regenBtn.disabled = false;
     if (recomputeBtn) recomputeBtn.disabled = false;
     if (restoreBtn) restoreBtn.disabled = false;
-    if (saveInputBtn) saveInputBtn.disabled = false;
     var awmVal = config.awm && config.awm.sh ? config.awm.sh.value : 0;
     var awmDesc = config.awm && config.awm.sh ? config.awm.sh.qd : '—';
     updateLiveStats(awmVal, awmDesc);
+    onInputChange();
+  }
+
+  function addLikertRow() {
+    var tbody = document.getElementById('la-output-tbody');
+    var thead = document.getElementById('la-output-thead');
+    if (!tbody || !thead) return;
+    var isTwoGroup = thead.querySelector('.la-thesis-table__group-row');
+    if (isTwoGroup) return;
+    var emptyRow = tbody.querySelector('.la-output-empty');
+    if (emptyRow) tbody.removeChild(emptyRow);
+    var tr = document.createElement('tr');
+    var nextIdx = tbody.querySelectorAll('tr').length;
+    tr.setAttribute('data-la-row-index', String(nextIdx));
+    tr.innerHTML =
+      '<td class="la-thesis-table__td la-thesis-table__td--indicator"><input type="text" class="la-thesis-input la-thesis-input--indicator" data-la-indicator placeholder="New indicator"></td>' +
+      '<td class="la-thesis-table__td la-thesis-table__td--num"><input type="number" step="0.01" class="la-thesis-input la-thesis-input--wm" data-la-wm placeholder="0.00"></td>' +
+      '<td class="la-thesis-table__td la-thesis-table__td--qd"><input type="text" class="la-thesis-input la-thesis-input--qd" data-la-qd placeholder="Q.D."></td>' +
+      '<td class="la-thesis-table__td la-thesis-table__td--rank" data-la-rank>—</td>';
+    tbody.appendChild(tr);
+    if (currentLikertConfig && currentLikertConfig.rows) {
+      currentLikertConfig.rows.push({ indicator: '', wm: 0, qd: '', rank: 0 });
+    }
+    tr.querySelectorAll('input').forEach(function (inp) {
+      inp.addEventListener('input', onInputChange);
+    });
     onInputChange();
   }
 
@@ -1912,12 +1935,10 @@
     updateLiveStats(awm, awmDesc);
 
     var copyBtn = document.getElementById('la-copy-interpretation');
-    var saveBtn = document.getElementById('la-save-interpretation');
-    var saveInputBtn = document.getElementById('la-save-input');
+    var saveTableBtn = document.getElementById('la-save-table');
     var regenBtn = document.getElementById('la-regenerate-interpretation');
     if (copyBtn) copyBtn.disabled = false;
-    if (saveBtn) saveBtn.disabled = false;
-    if (saveInputBtn) saveInputBtn.disabled = false;
+    if (saveTableBtn) saveTableBtn.disabled = false;
     if (regenBtn) regenBtn.disabled = false;
   }
 
@@ -2391,17 +2412,117 @@
     if (liveAwmDesc) liveAwmDesc.textContent = awmDesc || '—';
   }
 
+  /**
+   * Copy All: table title + full table (W.M., Q.D., Rank, AWM) + interpretation as rich HTML for Word.
+   */
   function copyInterpretation() {
     var block = document.getElementById('la-interpretation-block');
-    if (!block) return;
-    var text = laInterpTwoGroup && laInterpretationSh && laInterpretationT
+    var interpText = laInterpTwoGroup && laInterpretationSh && laInterpretationT
       ? 'School Heads:\n\n' + laInterpretationSh + '\n\nTeachers:\n\n' + laInterpretationT
-      : block.textContent.trim();
-    if (!text) return;
-    navigator.clipboard.writeText(text).then(function () {
-      showToast('Copied!');
+      : (block && block.textContent ? block.textContent.trim() : '');
+    if (!interpText) {
+      showToast('Please compute and generate the interpretation first before copying.', true);
+      return;
+    }
+    if (!currentLikertConfig || !currentLikertConfig.rows || !currentLikertConfig.rows.length) {
+      showToast('Please compute and generate the interpretation first before copying.', true);
+      return;
+    }
+    var titleEl = document.getElementById('la-table-title');
+    var tableTitle = (titleEl && titleEl.value) ? titleEl.value.trim() : '';
+    var tableHtml = '';
+    var tablePlain = '';
+    var styleCell = 'border: 1px solid #000;';
+    var styleRight = styleCell + ' text-align: right;';
+    var styleCenter = styleCell + ' text-align: center;';
+    var styleLeft = styleCell + ' text-align: left;';
+
+    if (currentLikertConfig.type === 'tTest') {
+      tableHtml =
+        '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">' +
+        '<thead><tr><th style="' + styleLeft + '">Particulars</th><th style="' + styleRight + '">t-value</th><th style="' + styleRight + '">t-critical</th>' +
+        '<th style="' + styleRight + '">p-value</th><th style="' + styleLeft + '">Decision</th><th style="' + styleLeft + '">Description</th></tr></thead><tbody>';
+      tablePlain = 'Particulars\tt-value\tt-critical\tp-value\tDecision\tDescription\n';
+      (currentLikertConfig.rows || []).forEach(function (row, idx) {
+        var label = (idx + 1) + '. ' + (row.label || '');
+        var tVal = row.tValue != null ? String(row.tValue) : '';
+        var tCrit = row.tCritical != null ? String(row.tCritical) : '';
+        var pVal = row.pValue != null ? String(row.pValue) : '';
+        var dec = row.decision || '';
+        var desc = row.description || '';
+        tableHtml += '<tr><td style="' + styleLeft + '">' + escapeHtml(label) + '</td><td style="' + styleRight + '">' + escapeHtml(tVal) + '</td><td style="' + styleRight + '">' + escapeHtml(tCrit) + '</td>' +
+          '<td style="' + styleRight + '">' + escapeHtml(pVal) + '</td><td style="' + styleLeft + '">' + escapeHtml(dec) + '</td><td style="' + styleLeft + '">' + escapeHtml(desc) + '</td></tr>';
+        tablePlain += label + '\t' + tVal + '\t' + tCrit + '\t' + pVal + '\t' + dec + '\t' + desc + '\n';
+      });
+      tableHtml += '</tbody></table>';
+    } else if (currentLikertConfig.type === 'twoGroup' || (currentLikertConfig.rows[0] && (currentLikertConfig.rows[0].sh || currentLikertConfig.rows[0].t))) {
+      var awmSh = currentLikertConfig.awm && currentLikertConfig.awm.sh ? currentLikertConfig.awm.sh : { value: 0, qd: '—' };
+      var awmT = currentLikertConfig.awm && currentLikertConfig.awm.t ? currentLikertConfig.awm.t : { value: 0, qd: '—' };
+      tableHtml =
+        '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">' +
+        '<thead><tr><th style="' + styleLeft + '">Particulars</th><th colspan="3" style="' + styleCenter + '">School Heads</th><th colspan="3" style="' + styleCenter + '">Teachers</th></tr>' +
+        '<tr><th style="' + styleLeft + '"></th><th style="' + styleRight + '">W.M.</th><th style="' + styleLeft + '">Q.D.</th><th style="' + styleCenter + '">Rank</th>' +
+        '<th style="' + styleRight + '">W.M.</th><th style="' + styleLeft + '">Q.D.</th><th style="' + styleCenter + '">Rank</th></tr></thead><tbody>';
+      tablePlain = 'Particulars\tSchool Heads W.M.\tQ.D.\tRank\tTeachers W.M.\tQ.D.\tRank\n';
+      currentLikertConfig.rows.forEach(function (row) {
+        var sh = row.sh || {};
+        var t = row.t || {};
+        var shWm = typeof sh.wm === 'number' ? sh.wm.toFixed(2) : '';
+        var tWm = typeof t.wm === 'number' ? t.wm.toFixed(2) : '';
+        var shRank = sh.rank != null ? (sh.rank % 1 === 0 ? sh.rank : sh.rank.toFixed(1)) : '';
+        var tRank = t.rank != null ? (t.rank % 1 === 0 ? t.rank : t.rank.toFixed(1)) : '';
+        tableHtml += '<tr><td style="' + styleLeft + '">' + escapeHtml(row.indicator || '') + '</td>' +
+          '<td style="' + styleRight + '">' + shWm + '</td><td style="' + styleLeft + '">' + escapeHtml(sh.qd || '') + '</td><td style="' + styleCenter + '">' + shRank + '</td>' +
+          '<td style="' + styleRight + '">' + tWm + '</td><td style="' + styleLeft + '">' + escapeHtml(t.qd || '') + '</td><td style="' + styleCenter + '">' + tRank + '</td></tr>';
+        tablePlain += (row.indicator || '') + '\t' + shWm + '\t' + (sh.qd || '') + '\t' + shRank + '\t' + tWm + '\t' + (t.qd || '') + '\t' + tRank + '\n';
+      });
+      tableHtml += '</tbody><tfoot><tr><td style="' + styleLeft + '"><strong>AVERAGE WEIGHTED MEAN</strong></td>' +
+        '<td style="' + styleRight + '"><strong>' + (typeof awmSh.value === 'number' ? awmSh.value.toFixed(2) : '—') + '</strong></td>' +
+        '<td style="' + styleLeft + '"><strong>' + escapeHtml(awmSh.qd || '—') + '</strong></td><td style="' + styleCenter + '"></td>' +
+        '<td style="' + styleRight + '"><strong>' + (typeof awmT.value === 'number' ? awmT.value.toFixed(2) : '—') + '</strong></td>' +
+        '<td style="' + styleLeft + '"><strong>' + escapeHtml(awmT.qd || '—') + '</strong></td><td style="' + styleCenter + '"></td></tr></tfoot></table>';
+      tablePlain += 'AVERAGE WEIGHTED MEAN\t' + (typeof awmSh.value === 'number' ? awmSh.value.toFixed(2) : '—') + '\t' + (awmSh.qd || '') + '\t\t' + (typeof awmT.value === 'number' ? awmT.value.toFixed(2) : '—') + '\t' + (awmT.qd || '') + '\n';
+    } else {
+      var awm = currentLikertConfig.awm;
+      var awmDesc = currentLikertConfig.awmDesc != null ? currentLikertConfig.awmDesc : '—';
+      tableHtml =
+        '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">' +
+        '<thead><tr><th style="' + styleLeft + '">Particulars</th><th style="' + styleRight + '">W.M.</th><th style="' + styleLeft + '">Q.D.</th><th style="' + styleCenter + '">Rank</th></tr></thead><tbody>';
+      tablePlain = 'Particulars\tW.M.\tQ.D.\tRank\n';
+      currentLikertConfig.rows.forEach(function (row) {
+        var wm = typeof row.wm === 'number' ? row.wm.toFixed(2) : '';
+        var rank = row.rank != null ? (row.rank % 1 === 0 ? row.rank : row.rank.toFixed(1)) : '';
+        tableHtml += '<tr><td style="' + styleLeft + '">' + escapeHtml(row.indicator || '') + '</td>' +
+          '<td style="' + styleRight + '">' + wm + '</td><td style="' + styleLeft + '">' + escapeHtml(row.qd || '') + '</td><td style="' + styleCenter + '">' + rank + '</td></tr>';
+        tablePlain += (row.indicator || '') + '\t' + wm + '\t' + (row.qd || '') + '\t' + rank + '\n';
+      });
+      tableHtml += '</tbody><tfoot><tr><td style="' + styleLeft + '"><strong>AVERAGE WEIGHTED MEAN</strong></td>' +
+        '<td style="' + styleRight + '"><strong>' + (typeof awm === 'number' ? awm.toFixed(2) : '—') + '</strong></td>' +
+        '<td style="' + styleLeft + '"><strong>' + escapeHtml(awmDesc) + '</strong></td><td style="' + styleCenter + '"></td></tr></tfoot></table>';
+      tablePlain += 'AVERAGE WEIGHTED MEAN\t' + (typeof awm === 'number' ? awm.toFixed(2) : '—') + '\t' + awmDesc + '\n';
+    }
+
+    var titleHtml = tableTitle ? '<p style="margin-bottom: 0.5em; font-weight: bold;">' + escapeHtml(tableTitle) + '</p>' : '';
+    var interpHtml = '<p style="margin-top: 1em;">' + escapeHtml(interpText).replace(/\n/g, '<br>') + '</p>';
+    var fullHtml = titleHtml + tableHtml + interpHtml;
+    var fullPlain = (tableTitle ? tableTitle + '\n\n' : '') + tablePlain + '\n' + interpText;
+
+    copyRichToClipboard(fullHtml, fullPlain);
+  }
+
+  function copyRichToClipboard(html, plain) {
+    if (!navigator.clipboard || !navigator.clipboard.write) {
+      navigator.clipboard.writeText(plain).then(function () { showToast('Copied as text.'); }).catch(function () { showToast('Copy failed.', true); });
+      return;
+    }
+    var blobHtml = new Blob([html], { type: 'text/html' });
+    var blobPlain = new Blob([plain], { type: 'text/plain' });
+    navigator.clipboard.write([
+      new ClipboardItem({ 'text/html': blobHtml, 'text/plain': blobPlain })
+    ]).then(function () {
+      showToast('Copied! Paste into Word to keep table format.');
     }).catch(function () {
-      showToast('Copy failed.', true);
+      navigator.clipboard.writeText(plain).then(function () { showToast('Copied as text.'); }).catch(function () { showToast('Copy failed.', true); });
     });
   }
 
@@ -2523,21 +2644,18 @@
 
     setNumber(KEYS.tablesProcessed, getNumber(KEYS.tablesProcessed) + 1);
     setNumber(KEYS.interpretationsGenerated, getNumber(KEYS.interpretationsGenerated) + 1);
-    setNumber(KEYS.reportsCreated, getNumber(KEYS.reportsCreated) + 1);
     localStorage.setItem(KEYS.likertDataSaved, 'true');
     appendActivity('Saved Likert table: ' + (toSave.tableTitle || 'Untitled'));
     updateSessionProgress();
     renderRecentActivity();
-    showToast('Saved to report.');
+    showToast('Table saved.');
   }
 
   function updateSessionProgress() {
     var tables = document.getElementById('la-session-tables');
     var interpretations = document.getElementById('la-session-interpretations');
-    var reports = document.getElementById('la-session-reports');
     if (tables) tables.textContent = getNumber(KEYS.tablesProcessed);
     if (interpretations) interpretations.textContent = getNumber(KEYS.interpretationsGenerated);
-    if (reports) reports.textContent = getNumber(KEYS.reportsCreated);
   }
 
   function getActivityList() {
@@ -2636,14 +2754,12 @@
     var interpTabs = document.getElementById('la-interp-tabs');
     if (interpTabs) interpTabs.hidden = true;
     var copyBtn = document.getElementById('la-copy-interpretation');
-    var saveBtn = document.getElementById('la-save-interpretation');
-    var saveInputBtn = document.getElementById('la-save-input');
+    var saveTableBtn = document.getElementById('la-save-table');
     var regenBtn = document.getElementById('la-regenerate-interpretation');
     var recomputeBtn = document.getElementById('la-recompute');
     var restoreBtn = document.getElementById('la-restore-original');
     if (copyBtn) copyBtn.disabled = true;
-    if (saveBtn) saveBtn.disabled = true;
-    if (saveInputBtn) saveInputBtn.disabled = true;
+    if (saveTableBtn) saveTableBtn.disabled = true;
     if (regenBtn) regenBtn.disabled = true;
     if (recomputeBtn) recomputeBtn.disabled = true;
     if (restoreBtn) restoreBtn.disabled = true;
@@ -2656,15 +2772,12 @@
       localStorage.removeItem(KEYS.likertTables);
       localStorage.removeItem(KEYS.tablesProcessed);
       localStorage.removeItem(KEYS.interpretationsGenerated);
-      localStorage.removeItem(KEYS.reportsCreated);
       localStorage.removeItem(KEYS.recentActivity);
       localStorage.removeItem(KEYS.likertDataSaved);
       localStorage.removeItem('tablesProcessed');
       localStorage.removeItem('respondentsEncoded');
-      localStorage.removeItem('reportsCreated');
       localStorage.removeItem('profileDataSaved');
       localStorage.removeItem('summaryDataSaved');
-      localStorage.removeItem('reportDataSaved');
       localStorage.removeItem('profileTables');
     } catch (e) {
       console.warn('Reset session: could not clear some keys', e);
@@ -2705,6 +2818,8 @@
 
   function init() {
     document.body.setAttribute('data-la-project', activeProjectId);
+    var saveTableBtn = document.getElementById('la-save-table');
+    if (saveTableBtn) saveTableBtn.disabled = true;
     var titleEl = document.getElementById('la-table-title');
     if (titleEl) titleEl.addEventListener('input', onInputChange);
 
@@ -2729,6 +2844,8 @@
             renderOutputPlaceholder();
             var block = document.getElementById('la-interpretation-block');
             if (block) block.textContent = '';
+            var saveTableBtn = document.getElementById('la-save-table');
+            if (saveTableBtn) saveTableBtn.disabled = true;
             updateLiveStats(null, null);
           }
         }
@@ -2874,10 +2991,11 @@
         });
       });
     }
-    var saveInterpretationBtn = document.getElementById('la-save-interpretation');
-    if (saveInterpretationBtn) saveInterpretationBtn.addEventListener('click', saveToReport);
-    var saveInputBtn = document.getElementById('la-save-input');
-    if (saveInputBtn) saveInputBtn.addEventListener('click', saveToReport);
+    var saveTableBtn = document.getElementById('la-save-table');
+    if (saveTableBtn) saveTableBtn.addEventListener('click', saveToReport);
+
+    var addRowBtn = document.getElementById('la-add-row');
+    if (addRowBtn) addRowBtn.addEventListener('click', addLikertRow);
 
     var clearInputsBtn = document.getElementById('la-clear-inputs');
     if (clearInputsBtn) clearInputsBtn.addEventListener('click', openClearModal);
