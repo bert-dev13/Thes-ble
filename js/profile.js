@@ -610,9 +610,7 @@
       }
       hideSingleGroupSection();
       showTwoGroupSection();
-      renderTwoGroupTable(currentProject2Table);
-      var block = document.getElementById('pa-interpretation-block');
-      if (block) block.textContent = buildTwoGroupProfileInterpretation(currentProject2Table);
+      renderTwoGroupTable(currentProject2Table, { showComputed: false });
       var copyBtn = document.getElementById('pa-copy-interpretation');
       var saveTableBtn = document.getElementById('pa-save-table');
       var saveTableBtnTwo = document.getElementById('pa-save-table-two');
@@ -673,12 +671,13 @@
       }
     });
 
-    // Reset computed state
+    // Reset computed state — do not show totals until user clicks Compute
     computedRows = [];
     renderOutputPlaceholder();
-    var totalFreq = (config.frequencies || []).reduce(function (s, f) { return s + (typeof f === 'number' ? f : 0); }, 0);
     var totalFreqEl = document.getElementById('pa-total-freq');
-    if (totalFreqEl) totalFreqEl.textContent = totalFreq;
+    var totalPctEl = document.getElementById('pa-total-pct');
+    if (totalFreqEl) totalFreqEl.textContent = '—';
+    if (totalPctEl) totalPctEl.textContent = '—';
     var block = document.getElementById('pa-interpretation-block');
     if (block) block.textContent = '';
     var copyBtn = document.getElementById('pa-copy-interpretation');
@@ -827,12 +826,32 @@
       var saveTableBtn = document.getElementById('pa-save-table');
       if (computeBtn) computeBtn.disabled = !validate();
       if (saveTableBtn) saveTableBtn.disabled = true;
+      // When user edits after computation, clear computed values until they click Compute again
+      if (computedRows.length > 0) {
+        var tbody = document.getElementById('pa-table-tbody');
+        if (tbody) {
+          tbody.querySelectorAll('tr').forEach(function (tr) {
+            var pctEl = tr.querySelector('[data-pa-pct]');
+            var rankEl = tr.querySelector('[data-pa-rank]');
+            if (pctEl) pctEl.textContent = '—';
+            if (rankEl) rankEl.textContent = '—';
+          });
+        }
+        renderOutputPlaceholder();
+        computedRows = [];
+        var block = document.getElementById('pa-interpretation-block');
+        if (block) block.textContent = '';
+        var copyBtn = document.getElementById('pa-copy-interpretation');
+        var regenBtn = document.getElementById('pa-regenerate-interpretation');
+        if (copyBtn) copyBtn.disabled = true;
+        if (regenBtn) regenBtn.disabled = true;
+      }
     }
   }
 
   function compute() {
     if (activeProjectId === 'rp2' && currentProject2Table) {
-      renderTwoGroupTable(currentProject2Table);
+      renderTwoGroupTable(currentProject2Table, { showComputed: true });
       return;
     }
     if (!validate()) return;
@@ -1585,8 +1604,8 @@
   function renderOutputPlaceholder() {
     var totalFreqEl = document.getElementById('pa-total-freq');
     var totalPctEl = document.getElementById('pa-total-pct');
-    if (totalFreqEl) totalFreqEl.textContent = '0';
-    if (totalPctEl) totalPctEl.textContent = '100.00';
+    if (totalFreqEl) totalFreqEl.textContent = '—';
+    if (totalPctEl) totalPctEl.textContent = '—';
   }
 
   function renderTwoGroupOutputPlaceholder() {
@@ -1613,7 +1632,13 @@
   }
 
   // ---------- Two-group (School Heads vs Teachers) rendering ----------
-  function renderTwoGroupTable(table) {
+  var profileTwoGroupComputed = false;
+
+  function renderTwoGroupTable(table, opts) {
+    opts = opts || {};
+    var showComputed = opts.showComputed === true;
+    profileTwoGroupComputed = showComputed;
+
     var thead = document.getElementById('pa-output-thead');
     var tbody = document.getElementById('pa-output-tbody');
     var tfoot = document.getElementById('pa-output-tfoot');
@@ -1648,31 +1673,32 @@
       sumTeachers += tF;
     });
 
-    var rankMapH = computeDenseRanks(table.rows, function (r) { return r.heads && r.heads.f; });
-    var rankMapT = computeDenseRanks(table.rows, function (r) { return r.teachers && r.teachers.f; });
+    var rankMapH = showComputed ? computeDenseRanks(table.rows, function (r) { return r.heads && r.heads.f; }) : {};
+    var rankMapT = showComputed ? computeDenseRanks(table.rows, function (r) { return r.teachers && r.teachers.f; }) : {};
 
     table.rows.forEach(function (row, idx) {
       var hF = row.heads && typeof row.heads.f === 'number' ? row.heads.f : 0;
       var tF = row.teachers && typeof row.teachers.f === 'number' ? row.teachers.f : 0;
-      var hPct = row.heads && typeof row.heads.pct === 'number' ? row.heads.pct.toFixed(2) : '';
-      var tPct = row.teachers && typeof row.teachers.pct === 'number' ? row.teachers.pct.toFixed(2) : '';
-      var hRank = rankMapH[idx] || '';
-      var tRank = rankMapT[idx] || '';
+      var hPct = showComputed && row.heads && typeof row.heads.pct === 'number' ? row.heads.pct.toFixed(2) : '';
+      var tPct = showComputed && row.teachers && typeof row.teachers.pct === 'number' ? row.teachers.pct.toFixed(2) : '';
+      var hRank = showComputed ? (rankMapH[idx] || '') : '—';
+      var tRank = showComputed ? (rankMapT[idx] || '') : '—';
+      if (!showComputed) { hPct = '—'; tPct = '—'; }
 
       var tr = document.createElement('tr');
       tr.setAttribute('data-pa-two-row', String(idx));
       tr.innerHTML =
         '<td class="pa-thesis-table__td pa-thesis-table__td--particulars">' + escapeHtml(row.category) + '</td>' +
         '<td class="pa-thesis-table__td pa-thesis-table__td--f"><input type="number" class="pa-thesis-input" step="1" min="0" data-pa-h-f value="' + hF + '"></td>' +
-        '<td class="pa-thesis-table__td pa-thesis-table__td--pct"><input type="number" class="pa-thesis-input" step="0.01" data-pa-h-pct value="' + hPct + '"></td>' +
-        '<td class="pa-thesis-table__td pa-thesis-table__td--rank">' + hRank + '</td>' +
+        '<td class="pa-thesis-table__td pa-thesis-table__td--pct"><input type="text" class="pa-thesis-input" readonly data-pa-h-pct value="' + (hPct || '—') + '"></td>' +
+        '<td class="pa-thesis-table__td pa-thesis-table__td--rank">' + (hRank || '—') + '</td>' +
         '<td class="pa-thesis-table__td pa-thesis-table__td--f"><input type="number" class="pa-thesis-input" step="1" min="0" data-pa-t-f value="' + tF + '"></td>' +
-        '<td class="pa-thesis-table__td pa-thesis-table__td--pct"><input type="number" class="pa-thesis-input" step="0.01" data-pa-t-pct value="' + tPct + '"></td>' +
-        '<td class="pa-thesis-table__td pa-thesis-table__td--rank">' + tRank + '</td>';
+        '<td class="pa-thesis-table__td pa-thesis-table__td--pct"><input type="text" class="pa-thesis-input" readonly data-pa-t-pct value="' + (tPct || '—') + '"></td>' +
+        '<td class="pa-thesis-table__td pa-thesis-table__td--rank">' + (tRank || '—') + '</td>';
       tbody.appendChild(tr);
     });
 
-    if (autoPercentTwoGroup && table.type === 'twoGroupPercent' && (sumHeads > 0 || sumTeachers > 0)) {
+    if (showComputed && autoPercentTwoGroup && table.type === 'twoGroupPercent' && (sumHeads > 0 || sumTeachers > 0)) {
       table.rows.forEach(function (row, idx) {
         var hF = row.heads && typeof row.heads.f === 'number' ? row.heads.f : 0;
         var tF = row.teachers && typeof row.teachers.f === 'number' ? row.teachers.f : 0;
@@ -1688,7 +1714,7 @@
           if (tPctInput) tPctInput.value = tPctVal.toFixed(2);
         }
       });
-    } else if (table.type === 'twoGroupMention' && computeTable9Percent && (sumHeads > 0 || sumTeachers > 0)) {
+    } else if (showComputed && table.type === 'twoGroupMention' && computeTable9Percent && (sumHeads > 0 || sumTeachers > 0)) {
       table.rows.forEach(function (row, idx) {
         var hF = row.heads && typeof row.heads.f === 'number' ? row.heads.f : 0;
         var tF = row.teachers && typeof row.teachers.f === 'number' ? row.teachers.f : 0;
@@ -1706,24 +1732,26 @@
       });
     }
 
-    var shPctText = (table.type === 'twoGroupPercent' && sumHeads > 0) || (computeTable9Percent && sumHeads > 0) ? '100.00' : '—';
-    var tPctText = (table.type === 'twoGroupPercent' && sumTeachers > 0) || (computeTable9Percent && sumTeachers > 0) ? '100.00' : '—';
+    var totalHeadsF = showComputed ? String(sumHeads) : '—';
+    var totalTeachersF = showComputed ? String(sumTeachers) : '—';
+    var shPctText = showComputed && ((table.type === 'twoGroupPercent' && sumHeads > 0) || (computeTable9Percent && sumHeads > 0)) ? '100.00' : '—';
+    var tPctText = showComputed && ((table.type === 'twoGroupPercent' && sumTeachers > 0) || (computeTable9Percent && sumTeachers > 0)) ? '100.00' : '—';
 
     tfoot.innerHTML =
       '<tr class="pa-thesis-table__footer-row">' +
         '<td class="pa-thesis-table__footer-label"><strong>TOTAL</strong></td>' +
-        '<td class="pa-thesis-table__footer-value"><strong id="pa-total-heads-f">' + sumHeads + '</strong></td>' +
-        '<td class="pa-thesis-table__footer-value"><strong>' + shPctText + '</strong></td>' +
+        '<td class="pa-thesis-table__footer-value"><strong id="pa-total-heads-f">' + totalHeadsF + '</strong></td>' +
+        '<td class="pa-thesis-table__footer-value"><strong id="pa-total-heads-pct">' + shPctText + '</strong></td>' +
         '<td class="pa-thesis-table__footer-value"></td>' +
-        '<td class="pa-thesis-table__footer-value"><strong id="pa-total-teachers-f">' + sumTeachers + '</strong></td>' +
-        '<td class="pa-thesis-table__footer-value"><strong>' + tPctText + '</strong></td>' +
+        '<td class="pa-thesis-table__footer-value"><strong id="pa-total-teachers-f">' + totalTeachersF + '</strong></td>' +
+        '<td class="pa-thesis-table__footer-value"><strong id="pa-total-teachers-pct">' + tPctText + '</strong></td>' +
         '<td class="pa-thesis-table__footer-value"></td>' +
       '</tr>';
 
-    updateLiveTotals(sumHeads + sumTeachers, '100.00');
+    updateLiveTotals(sumHeads + sumTeachers, showComputed ? '100.00' : '—');
     bindTwoGroupInputListeners();
 
-    var interpText = buildTwoGroupProfileInterpretation(table);
+    var interpText = showComputed ? buildTwoGroupProfileInterpretation(table) : '';
     var block = document.getElementById('pa-interpretation-block');
     if (block) block.textContent = interpText;
     var copyBtn = document.getElementById('pa-copy-interpretation');
@@ -1741,7 +1769,7 @@
   function bindTwoGroupInputListeners() {
     var tbody = document.getElementById('pa-output-tbody');
     if (!tbody || !currentProject2Table) return;
-    tbody.querySelectorAll('input[data-pa-h-f], input[data-pa-t-f], input[data-pa-h-pct], input[data-pa-t-pct]').forEach(function (inp) {
+    tbody.querySelectorAll('input[data-pa-h-f], input[data-pa-t-f]').forEach(function (inp) {
       inp.removeEventListener('input', onTwoGroupInputChange);
       inp.addEventListener('input', onTwoGroupInputChange);
     });
@@ -1761,25 +1789,39 @@
       row.heads.f = hF;
       row.teachers.f = tF;
     });
-    if (autoPercentTwoGroup && currentProject2Table.type === 'twoGroupPercent') {
-      tbody.querySelectorAll('tr').forEach(function (tr, idx) {
-        var row = currentProject2Table.rows[idx];
-        if (!row) return;
-        var hPct = sumHeads > 0 ? Math.round((row.heads.f / sumHeads) * 10000) / 100 : 0;
-        var tPct = sumTeachers > 0 ? Math.round((row.teachers.f / sumTeachers) * 10000) / 100 : 0;
-        row.heads.pct = hPct;
-        row.teachers.pct = tPct;
-        var hInp = tr.querySelector('[data-pa-h-pct]');
-        var tInp = tr.querySelector('[data-pa-t-pct]');
-        if (hInp) hInp.value = hPct.toFixed(2);
-        if (tInp) tInp.value = tPct.toFixed(2);
+    if (profileTwoGroupComputed) {
+      profileTwoGroupComputed = false;
+      tbody.querySelectorAll('tr').forEach(function (tr) {
+        var hPctInp = tr.querySelector('[data-pa-h-pct]');
+        var tPctInp = tr.querySelector('[data-pa-t-pct]');
+        var rankCells = tr.querySelectorAll('.pa-thesis-table__td--rank');
+        if (hPctInp) hPctInp.value = '—';
+        if (tPctInp) tPctInp.value = '—';
+        if (rankCells && rankCells.length >= 2) {
+          rankCells[0].textContent = '—';
+          rankCells[1].textContent = '—';
+        }
       });
+      var fSingle = document.getElementById('pa-total-heads-f');
+      var fTeachers = document.getElementById('pa-total-teachers-f');
+      var totalHeadsPct = document.getElementById('pa-total-heads-pct');
+      var totalTeachersPct = document.getElementById('pa-total-teachers-pct');
+      if (fSingle) fSingle.textContent = '—';
+      if (fTeachers) fTeachers.textContent = '—';
+      if (totalHeadsPct) totalHeadsPct.textContent = '—';
+      if (totalTeachersPct) totalTeachersPct.textContent = '—';
+      var block = document.getElementById('pa-interpretation-block');
+      if (block) block.textContent = '';
+      var copyBtn = document.getElementById('pa-copy-interpretation');
+      var saveTableBtn = document.getElementById('pa-save-table');
+      var saveTableBtnTwo = document.getElementById('pa-save-table-two');
+      var regenBtn = document.getElementById('pa-regenerate-interpretation');
+      if (copyBtn) copyBtn.disabled = true;
+      if (saveTableBtn) saveTableBtn.disabled = true;
+      if (saveTableBtnTwo) saveTableBtnTwo.disabled = true;
+      if (regenBtn) regenBtn.disabled = true;
     }
-    var fSingle = document.getElementById('pa-total-heads-f');
-    var fTeachers = document.getElementById('pa-total-teachers-f');
-    if (fSingle) fSingle.textContent = sumHeads;
-    if (fTeachers) fTeachers.textContent = sumTeachers;
-    updateLiveTotals(sumHeads + sumTeachers, '100.00');
+    updateLiveTotals(sumHeads + sumTeachers, profileTwoGroupComputed ? '100.00' : '—');
   }
 
   function clearInputs() {
@@ -2293,7 +2335,7 @@
     if (!key) return;
     if (activeProjectId === 'rp2' && currentProject2Table) {
       currentProject2Table = JSON.parse(JSON.stringify(PROJECT2_TABLES[key]));
-      renderTwoGroupTable(currentProject2Table);
+      renderTwoGroupTable(currentProject2Table, { showComputed: false });
       showToast('Original values restored.');
     } else if (currentTableConfig) {
       applyProfileTableConfig(key);
@@ -2372,16 +2414,14 @@
           heads: { f: 0, pct: 0 },
           teachers: { f: 0, pct: 0 }
         });
-        renderTwoGroupTable(currentProject2Table);
+        renderTwoGroupTable(currentProject2Table, { showComputed: false });
         showToast('Row added.');
       }
     });
     var computeBtnTwo = document.getElementById('pa-compute-two');
     if (computeBtnTwo) computeBtnTwo.addEventListener('click', function () {
       if (currentProject2Table) {
-        renderTwoGroupTable(currentProject2Table);
-        var block = document.getElementById('pa-interpretation-block');
-        if (block) block.textContent = buildTwoGroupProfileInterpretation(currentProject2Table);
+        renderTwoGroupTable(currentProject2Table, { showComputed: true });
         showToast('Table updated.');
       }
     });

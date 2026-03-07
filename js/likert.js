@@ -1231,13 +1231,13 @@
   }
 
   // ---------- Predefined table loading ----------
-  function renderPredefinedTableRows(config) {
+  function renderPredefinedTableRows(config, opts) {
+    opts = opts || {};
+    var showComputed = opts.showComputed === true;
     var tbody = document.getElementById('la-output-tbody');
     var thead = document.getElementById('la-output-thead');
     var tfoot = document.getElementById('la-output-tfoot');
     var tableWrap = document.getElementById('la-table-wrap');
-    var awmVal = document.getElementById('la-awm-value');
-    var awmDescEl = document.getElementById('la-awm-desc');
     var recomputeBtn = document.getElementById('la-recompute');
     var restoreBtn = document.getElementById('la-restore-original');
     var saveTableBtn = document.getElementById('la-save-table');
@@ -1253,12 +1253,14 @@
           '<th class="la-thesis-table__th la-thesis-table__th--rank">Rank</th>' +
         '</tr>';
     }
+    var awmStr = showComputed && config.awm != null ? config.awm.toFixed(2) : '—';
+    var awmDescStr = showComputed && (config.awmDesc != null && config.awmDesc !== '') ? config.awmDesc : '—';
     if (tfoot) {
       tfoot.innerHTML =
         '<tr class="la-thesis-table__footer-row">' +
           '<td class="la-thesis-table__footer-label"><strong>AVERAGE WEIGHTED MEAN</strong></td>' +
-          '<td class="la-thesis-table__footer-value"><strong id="la-awm-value">' + config.awm.toFixed(2) + '</strong></td>' +
-          '<td class="la-thesis-table__footer-value"><strong id="la-awm-desc">' + (config.awmDesc || '—') + '</strong></td>' +
+          '<td class="la-thesis-table__footer-value"><strong id="la-awm-value">' + awmStr + '</strong></td>' +
+          '<td class="la-thesis-table__footer-value"><strong id="la-awm-desc">' + escapeHtml(awmDescStr) + '</strong></td>' +
           '<td class="la-thesis-table__footer-value"></td>' +
         '</tr>';
     }
@@ -1275,14 +1277,9 @@
       tbody.appendChild(tr);
     });
 
-    awmVal = document.getElementById('la-awm-value');
-    awmDescEl = document.getElementById('la-awm-desc');
-    if (awmVal) awmVal.textContent = config.awm.toFixed(2);
-    if (awmDescEl) awmDescEl.textContent = config.awmDesc || '—';
-
     if (recomputeBtn) recomputeBtn.disabled = false;
     if (restoreBtn) restoreBtn.disabled = false;
-    if (saveTableBtn) saveTableBtn.disabled = false;
+    if (saveTableBtn) saveTableBtn.disabled = !showComputed;
   }
 
   function getConfigForProject(projectId, tableId) {
@@ -1327,16 +1324,17 @@
       scaleMapping: getScaleMapping()
     };
 
-    renderPredefinedTableRows(currentLikertConfig);
-    generateInterpretation();
-    updateLiveStats(computedData.awm, computedData.awmDesc);
+    renderPredefinedTableRows(currentLikertConfig, { showComputed: false });
+    var block = document.getElementById('la-interpretation-block');
+    if (block) block.textContent = '';
+    updateLiveStats(null, null);
 
     var copyBtn = document.getElementById('la-copy-interpretation');
     var saveTableBtn = document.getElementById('la-save-table');
     var regenBtn = document.getElementById('la-regenerate-interpretation');
-    if (copyBtn) copyBtn.disabled = false;
-    if (saveTableBtn) saveTableBtn.disabled = false;
-    if (regenBtn) regenBtn.disabled = false;
+    if (copyBtn) copyBtn.disabled = true;
+    if (saveTableBtn) saveTableBtn.disabled = true;
+    if (regenBtn) regenBtn.disabled = true;
 
     onInputChange();
   }
@@ -1381,7 +1379,9 @@
   }
 
   // ---------- RP2 two-group weighted table rendering ----------
-  function renderTwoGroupWeighted(config) {
+  function renderTwoGroupWeighted(config, opts) {
+    opts = opts || {};
+    var showComputed = opts.showComputed === true;
     var thead = document.getElementById('la-output-thead');
     var tbody = document.getElementById('la-output-tbody');
     var tfoot = document.getElementById('la-output-tfoot');
@@ -1420,14 +1420,18 @@
       tbody.appendChild(tr);
     });
 
+    var awmShVal = showComputed && config.awm && config.awm.sh ? config.awm.sh.value.toFixed(2) : '—';
+    var awmShDesc = showComputed && config.awm && config.awm.sh ? escapeHtml(config.awm.sh.qd) : '—';
+    var awmTVal = showComputed && config.awm && config.awm.t ? config.awm.t.value.toFixed(2) : '—';
+    var awmTDesc = showComputed && config.awm && config.awm.t ? escapeHtml(config.awm.t.qd) : '—';
     tfoot.innerHTML =
       '<tr class="la-thesis-table__footer-row">' +
         '<td class="la-thesis-table__footer-label"><strong>AVERAGE WEIGHTED MEAN</strong></td>' +
-        '<td class="la-thesis-table__footer-value"><strong id="la-awm-sh-value">' + config.awm.sh.value.toFixed(2) + '</strong></td>' +
-        '<td class="la-thesis-table__footer-value"><strong id="la-awm-sh-desc">' + escapeHtml(config.awm.sh.qd) + '</strong></td>' +
+        '<td class="la-thesis-table__footer-value"><strong id="la-awm-sh-value">' + awmShVal + '</strong></td>' +
+        '<td class="la-thesis-table__footer-value"><strong id="la-awm-sh-desc">' + awmShDesc + '</strong></td>' +
         '<td class="la-thesis-table__footer-value"></td>' +
-        '<td class="la-thesis-table__footer-value"><strong id="la-awm-t-value">' + config.awm.t.value.toFixed(2) + '</strong></td>' +
-        '<td class="la-thesis-table__footer-value"><strong id="la-awm-t-desc">' + escapeHtml(config.awm.t.qd) + '</strong></td>' +
+        '<td class="la-thesis-table__footer-value"><strong id="la-awm-t-value">' + awmTVal + '</strong></td>' +
+        '<td class="la-thesis-table__footer-value"><strong id="la-awm-t-desc">' + awmTDesc + '</strong></td>' +
         '<td class="la-thesis-table__footer-value"></td>' +
       '</tr>';
   }
@@ -1457,10 +1461,9 @@
     if (config.type === 'tTest') {
       renderTTestTable(currentLikertConfig);
     } else {
-      renderTwoGroupWeighted(currentLikertConfig);
+      renderTwoGroupWeighted(currentLikertConfig, { showComputed: false });
     }
 
-    // Initialize computedData for interpretation
     computedData = {
       indicators: [],
       awm: 0,
@@ -1475,23 +1478,18 @@
     laInterpTwoGroup = false;
     if (interpTabs) interpTabs.hidden = true;
     if (block) {
-      if (config.type !== 'tTest' && config.rows && config.rows.length) {
-        generateTwoGroupInterpretations(0, '');
-        laInterpTwoGroup = true;
-        if (block) {
-          block.textContent = laInterpretationSh + (laInterpretationT ? '\n\n' + laInterpretationT : '');
-        }
-        if (interpTabs) interpTabs.hidden = false;
-      } else if (config.prewritten) {
+      if (config.type === 'tTest' && config.prewritten) {
         var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
         var includeImplications = true;
         var implEl = document.getElementById('la-include-implications');
         if (implEl) includeImplications = implEl.checked;
-        var impl = Utils && includeImplications ? Utils.buildImplications(config.type === 'tTest' ? 'ttest' : 'executive') : null;
+        var impl = Utils && includeImplications ? Utils.buildImplications('ttest') : null;
         var implSuffix = impl ? ' ' + impl.first + ' ' + impl.second : '';
         var prewrittenText = (config.prewritten.sh || '') + (config.prewritten.t ? ' ' + config.prewritten.t : '');
         if (includeImplications && Utils && prewrittenText) prewrittenText += implSuffix;
         block.textContent = prewrittenText;
+      } else if (config.type !== 'tTest') {
+        block.textContent = '';
       }
     }
 
@@ -1500,14 +1498,21 @@
     var recomputeBtn = document.getElementById('la-recompute');
     var restoreBtn = document.getElementById('la-restore-original');
     var saveTableBtn = document.getElementById('la-save-table');
-    if (copyBtn) copyBtn.disabled = false;
-    if (saveTableBtn) saveTableBtn.disabled = false;
-    if (regenBtn) regenBtn.disabled = false;
+    if (config.type === 'tTest') {
+      if (copyBtn) copyBtn.disabled = false;
+      if (saveTableBtn) saveTableBtn.disabled = false;
+      if (regenBtn) regenBtn.disabled = false;
+      var awmVal = config.awm && config.awm.sh ? config.awm.sh.value : 0;
+      var awmDesc = config.awm && config.awm.sh ? config.awm.sh.qd : '—';
+      updateLiveStats(awmVal, awmDesc);
+    } else {
+      if (copyBtn) copyBtn.disabled = true;
+      if (saveTableBtn) saveTableBtn.disabled = true;
+      if (regenBtn) regenBtn.disabled = true;
+      updateLiveStats(null, null);
+    }
     if (recomputeBtn) recomputeBtn.disabled = false;
     if (restoreBtn) restoreBtn.disabled = false;
-    var awmVal = config.awm && config.awm.sh ? config.awm.sh.value : 0;
-    var awmDesc = config.awm && config.awm.sh ? config.awm.sh.qd : '—';
-    updateLiveStats(awmVal, awmDesc);
     onInputChange();
   }
 
@@ -1772,6 +1777,12 @@
 
       generateInterpretation();
       updateLiveStats(awm, awmDesc);
+      var copyBtn = document.getElementById('la-copy-interpretation');
+      var saveTableBtn = document.getElementById('la-save-table');
+      var regenBtn = document.getElementById('la-regenerate-interpretation');
+      if (copyBtn) copyBtn.disabled = false;
+      if (saveTableBtn) saveTableBtn.disabled = false;
+      if (regenBtn) regenBtn.disabled = false;
       return;
     }
 
@@ -1872,6 +1883,12 @@
     var interpTabs = document.getElementById('la-interp-tabs');
     if (block) block.textContent = laInterpretationSh;
     if (interpTabs) interpTabs.hidden = false;
+    var copyBtn = document.getElementById('la-copy-interpretation');
+    var saveTableBtn = document.getElementById('la-save-table');
+    var regenBtn = document.getElementById('la-regenerate-interpretation');
+    if (copyBtn) copyBtn.disabled = false;
+    if (saveTableBtn) saveTableBtn.disabled = false;
+    if (regenBtn) regenBtn.disabled = false;
   }
 
   function onInputChange() {
@@ -2898,17 +2915,11 @@
     if (useLoadedCheckbox) {
       useLoadedCheckbox.addEventListener('change', function () {
         useLoadedQd = !!this.checked;
-        if (usingPredefinedTable && activeProjectId === 'rp1') {
-          recomputeFromPredefinedTable();
-        }
       });
     }
     if (qdAutoCheckbox) {
       qdAutoCheckbox.addEventListener('change', function () {
         updateScaleSectionVisibility();
-        if (usingPredefinedTable && activeProjectId === 'rp1') {
-          recomputeFromPredefinedTable();
-        }
       });
     }
 
