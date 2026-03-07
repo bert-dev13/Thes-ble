@@ -36,6 +36,7 @@
   var PROFILE_TABLE_CONFIGS = {
     age: {
       id: 'age',
+      tableNumber: 2,
       title: 'Table 2. Respondents as to Age',
       opening: 'Age stratification of the respondents shows that ',
       categories: [
@@ -55,6 +56,7 @@
     },
     gender: {
       id: 'gender',
+      tableNumber: 3,
       title: 'Table 3. Respondents as to Gender',
       opening: 'With regard to the gender of respondents, ',
       categories: [
@@ -68,6 +70,7 @@
     },
     civilStatus: {
       id: 'civilStatus',
+      tableNumber: 4,
       title: 'Table 4. Respondents as to Civil Status',
       opening: 'In terms of civil status, ',
       categories: [
@@ -81,6 +84,7 @@
     },
     education: {
       id: 'education',
+      tableNumber: 5,
       title: 'Table 5. Respondents as to Highest Educational Attainment',
       opening: 'With respect to the highest educational attainment, ',
       categories: [
@@ -98,6 +102,7 @@
     },
     position: {
       id: 'position',
+      tableNumber: 6,
       title: 'Table 6. Respondents as to Present Position',
       opening: 'As to present position, ',
       categories: [
@@ -113,6 +118,7 @@
     },
     rating: {
       id: 'rating',
+      tableNumber: 7,
       title: 'Table 7. Respondents as to Latest Performance Rating',
       opening: 'Regarding the latest performance rating, ',
       categories: [
@@ -126,6 +132,7 @@
     },
     yearsService: {
       id: 'yearsService',
+      tableNumber: 8,
       title: 'Table 8. Respondents as to Number of Years in Service',
       opening: 'About the number of years in service, ',
       categories: [
@@ -147,6 +154,7 @@
     },
     inServiceTraining: {
       id: 'inServiceTraining',
+      tableNumber: 9,
       title: 'Table 9. Respondents as to the Level of In-Service Attended',
       opening: 'Considering the level of in-service training attended, ',
       categories: [
@@ -161,6 +169,108 @@
         7,
         14
       ]
+    }
+  };
+
+  // Research Paper 1: Table-specific interpretation format (Tables 2–9)
+  var RP1_INTERPRETATION_CONFIG = {
+    age: {
+      id: 'age',
+      title: 'Interpretation for Respondents as to Age',
+      opener: 'In terms of the age of the respondents, ',
+      openerAlternatives: [
+        'In terms of the age of the respondents, ', 'Regarding the age of the respondents, ', 'As to the age of the respondents, '
+      ],
+      majorityPrefix: 'belong to the ',
+      majoritySuffix: ' age group.',
+      indicates: 'This indicates that most of the teachers are in their early forties and are likely in the mature stage of their professional careers.',
+      implies: 'This further implies that the teaching workforce in the area is composed largely of experienced educators.'
+    },
+    gender: {
+      id: 'gender',
+      title: 'Interpretation for Respondents as to Gender',
+      opener: 'With regard to the gender of respondents, ',
+      openerAlternatives: [
+        'With regard to the gender of respondents, ', 'In terms of gender, ', 'Regarding the gender of respondents, '
+      ],
+      majorityPrefix: 'are ',
+      majoritySuffix: '.',
+      indicates: 'This indicates that the teaching workforce in the area is predominantly composed of female educators.',
+      implies: 'This further implies that classroom instruction and school activities are largely influenced by female teaching professionals.'
+    },
+    civilStatus: {
+      id: 'civilStatus',
+      title: 'Interpretation for Respondents as to Civil Status',
+      opener: 'Regarding the civil status of the respondents, ',
+      openerAlternatives: [
+        'Regarding the civil status of the respondents, ', 'In terms of civil status, ', 'As to the civil status of the respondents, '
+      ],
+      majorityPrefix: 'are ',
+      majoritySuffix: '.',
+      indicates: 'This indicates that most teachers maintain established family responsibilities alongside their professional roles.',
+      implies: 'This further implies that the respondents possess a level of personal stability that may contribute to their commitment to their profession.'
+    },
+    education: {
+      id: 'education',
+      title: 'Interpretation for Respondents as to Highest Educational Attainment',
+      opener: 'About the highest educational attainment of the respondents, ',
+      openerAlternatives: [
+        'About the highest educational attainment of the respondents, ', 'Regarding the highest educational attainment, ', 'As to the highest educational attainment of the respondents, '
+      ],
+      majorityPrefix: 'are ',
+      majoritySuffix: '.',
+      indicates: 'This indicates that many teachers have already begun pursuing graduate studies to enhance their professional competencies.',
+      implies: 'This further implies that the teaching workforce is actively engaged in continuing professional development.'
+    },
+    position: {
+      id: 'position',
+      title: 'Interpretation for Respondents as to Present Position',
+      opener: 'As to the present position of the respondents, ',
+      openerAlternatives: [
+        'As to the present position of the respondents, ', 'Regarding the present position of the respondents, ', 'About the respondents\' present position, '
+      ],
+      majorityPrefix: 'are ',
+      majoritySuffix: '.',
+      indicates: 'This indicates that most teachers have already progressed beyond the entry-level stage of the teaching profession.',
+      implies: 'This further implies that the respondents possess sufficient teaching experience and professional growth within the educational system.'
+    },
+    rating: {
+      id: 'rating',
+      title: 'Interpretation for Respondents as to Latest Performance Rating',
+      opener: 'Concerning the latest performance rating of the respondents, ',
+      openerAlternatives: [
+        'Concerning the latest performance rating of the respondents, ', 'Regarding the latest performance rating, ', 'As to the latest performance rating of the respondents, '
+      ],
+      majorityPrefix: 'received ',
+      majoritySuffix: ' rating.',
+      majorityReceived: true,
+      indicates: 'This indicates that most teachers demonstrate high levels of professional competence and dedication in their work.',
+      implies: 'This further implies that the teaching workforce maintains a strong commitment to delivering quality instruction.'
+    },
+    yearsService: {
+      id: 'yearsService',
+      title: 'Interpretation for Respondents as to Number of Years in Service',
+      opener: 'Pertaining to the number of years in service of the respondents, ',
+      openerAlternatives: [
+        'Pertaining to the number of years in service of the respondents, ', 'Regarding the number of years in service, ', 'As to the number of years in service of the respondents, '
+      ],
+      majorityPrefix: 'fall under the ',
+      majoritySuffix: ' category.',
+      indicates: 'This indicates that many teachers are in the early to middle stages of their teaching careers.',
+      implies: 'This further implies that the workforce combines developing experience with growing professional competence.'
+    },
+    inServiceTraining: {
+      id: 'inServiceTraining',
+      title: 'Interpretation for Respondents as to Level of In-Service Training Attended',
+      opener: 'Considering the level of in-service training attended by the respondents, ',
+      openerAlternatives: [
+        'Considering the level of in-service training attended by the respondents, ', 'Regarding the level of in-service training attended, ', 'As to the level of in-service training attended by the respondents, '
+      ],
+      majorityPrefix: 'attended ',
+      majoritySuffix: '-level training.',
+      useAttendedFormat: true,
+      indicates: 'This indicates that most professional development activities are conducted at the district level.',
+      implies: 'This further implies that teachers frequently participate in locally organized training programs to enhance their teaching practices.'
     }
   };
 
@@ -424,7 +534,8 @@
     }
     var count = (cfg.rows ? cfg.rows.length : (cfg.categories ? cfg.categories.length : 0));
     var mode = activeProjectId === 'rp2' ? 'Two groups' : 'Single group';
-    var titlePart = (cfg.tableNumber ? 'Table ' + cfg.tableNumber + ' — ' : '') + (cfg.title || key);
+    var shortName = cfg.title ? cfg.title.replace(/^Table \d+\.\s*Respondents as to\s*(?:the\s*)?/i, '').trim() : key;
+    var titlePart = (cfg.tableNumber ? 'Table ' + cfg.tableNumber + ' — ' : '') + (shortName || cfg.title || key);
     pill.textContent = titlePart + ' • ' + count + ' categories • ' + mode;
   }
 
@@ -438,6 +549,44 @@
     setTimeout(function () {
       if (toast.parentNode) toast.parentNode.removeChild(toast);
     }, 2500);
+  }
+
+  /** Load table by key for current project. Call on init and when table select changes. */
+  function loadSelectedTable(key) {
+    if (!key) {
+      updateLoadedSummary();
+      return;
+    }
+    if (activeProjectId === 'rp2') {
+      var cfg = PROJECT2_TABLES[key];
+      if (!cfg) {
+        updateLoadedSummary();
+        return;
+      }
+      currentProject2Table = JSON.parse(JSON.stringify(cfg));
+      currentTableConfig = null;
+      currentTableTitle = cfg.title;
+      var titleEl = document.getElementById('pa-table-title');
+      if (titleEl) titleEl.value = cfg.title;
+      var inputSingle = document.getElementById('pa-input-single-group');
+      if (inputSingle) inputSingle.hidden = true;
+      setGroupToggleVisibility();
+      setInterpretationTabsVisibility(true);
+      renderTwoGroupTable(currentProject2Table);
+      var computeBtn = document.getElementById('pa-compute');
+      var restoreBtn = document.getElementById('pa-restore-original');
+      var saveInputBtn = document.getElementById('pa-save-to-report-input');
+      if (computeBtn) computeBtn.disabled = false;
+      if (restoreBtn) restoreBtn.disabled = false;
+      if (saveInputBtn) saveInputBtn.disabled = false;
+    } else {
+      var inputSingle2 = document.getElementById('pa-input-single-group');
+      if (inputSingle2) inputSingle2.hidden = false;
+      setGroupToggleVisibility();
+      setInterpretationTabsVisibility(false);
+      applyProfileTableConfig(key);
+    }
+    updateLoadedSummary();
   }
 
   function applyProfileTableConfig(key) {
@@ -473,9 +622,12 @@
     var copyBtn = document.getElementById('pa-copy-interpretation');
     var saveBtn = document.getElementById('pa-save-to-report');
     var saveInputBtn = document.getElementById('pa-save-to-report-input');
+    var restoreBtn = document.getElementById('pa-restore-original');
+    var computeBtn = document.getElementById('pa-compute');
     if (copyBtn) copyBtn.disabled = true;
     if (saveBtn) saveBtn.disabled = true;
     if (saveInputBtn) saveInputBtn.disabled = true;
+    if (restoreBtn) restoreBtn.disabled = false;
     updateLoadedSummary();
     onInputChange();
   }
@@ -711,6 +863,179 @@
     return String(f) + ' or ' + pVal.toFixed(2) + ' percent';
   }
 
+  /**
+   * Build a narrative sentence that lists all categories for a given group (school heads / teachers)
+   * following the "[f] or [p] percent are ..." pattern. Groups categories by same percentage
+   * using "each are X and Y". Used for RP2 Tables 2–9.
+   * @param {Array} rows
+   * @param {'heads'|'teachers'} groupKey
+   * @param {number} totalF
+   * @param {string} ofGroup - e.g. " of the school heads" or "" for teachers
+   * @returns {string}
+   */
+  function buildTwoGroupDistributionSentence(rows, groupKey, totalF, ofGroup) {
+    if (!rows || !rows.length || !totalF) return '';
+    var items = [];
+    rows.forEach(function (r) {
+      var g = r[groupKey] || {};
+      var f = typeof g.f === 'number' ? g.f : 0;
+      if (f <= 0) return;
+      var pct = typeof g.pct === 'number' ? g.pct : (totalF > 0 ? (f / totalF) * 100 : 0);
+      items.push({ f: f, pct: pct, cat: r.category });
+    });
+    if (!items.length) return '';
+    var pctKey = function (x) { return String(x.f) + '_' + x.pct.toFixed(2); };
+    var groups = {};
+    items.forEach(function (x) {
+      var k = pctKey(x);
+      if (!groups[k]) groups[k] = [];
+      groups[k].push(x);
+    });
+    var parts = [];
+    for (var k in groups) {
+      var grp = groups[k];
+      var fp = formatFreqPercent(grp[0].f, grp[0].pct);
+      var cats = grp.map(function (x) { return x.cat.toLowerCase(); });
+      if (grp.length === 1) {
+        parts.push(fp + (ofGroup || '') + ' are ' + cats[0]);
+      } else {
+        parts.push(fp + ' each are ' + joinWithAnd(cats));
+      }
+    }
+    if (parts.length === 1) return parts[0] + '.';
+    if (parts.length === 2) return parts[0] + ' while ' + parts[1] + '.';
+    return parts.slice(0, -1).join(', ') + ', and ' + parts[parts.length - 1] + '.';
+  }
+
+  /**
+   * Build distribution sentence for Table 9 (In-Service Training) - count format without percentage.
+   * "5 school heads attended international level training, 8 participated in national level training, and 27 attended division level training"
+   */
+  function buildTwoGroupInServiceSentence(rows, groupKey, groupLabel) {
+    if (!rows || !rows.length) return '';
+    var parts = [];
+    rows.forEach(function (r) {
+      var g = r[groupKey] || {};
+      var f = typeof g.f === 'number' ? g.f : 0;
+      if (f <= 0) return;
+      var level = r.category.toLowerCase().replace(/\s+level$/, '');
+      if (level === 'international' || level === 'national' || level === 'division' || level === 'district') {
+        level = level + ' level';
+      }
+      var verb = level.indexOf('national') >= 0 ? 'participated in ' : 'attended ';
+      parts.push(f + ' ' + groupLabel + ' ' + verb + level + ' training');
+    });
+    if (!parts.length) return '';
+    if (parts.length === 1) return parts[0] + '.';
+    if (parts.length === 2) return parts[0] + ', and ' + parts[1] + '.';
+    return parts.slice(0, -1).join(', ') + ', and ' + parts[parts.length - 1] + '.';
+  }
+
+  /**
+   * RP2 Table-specific config (Tables 2–9): section title, intro, "which means", "This implies".
+   */
+  var RP2_TEACHERS_TRANSITION_ALTERNATIVES = [
+    'For the teachers, ', 'Meanwhile, for the teachers, ', 'As for the teachers, '
+  ];
+
+  var RP2_PROFILE_CONFIG = {
+    age: {
+      sectionTitle: 'Respondents as to Age',
+      headsIntro: 'Age stratification reveals that among the school heads, ',
+      headsIntroAlternatives: [
+        'Age stratification reveals that among the school heads, ',
+        'Regarding the age distribution of the school heads, ',
+        'As to the age of the school heads, '
+      ],
+      headsMeans: 'most school leaders are already in a mature and professionally experienced stage of their careers',
+      headsImplies: 'leadership positions are commonly occupied by individuals who have accumulated extensive experience in educational administration.',
+      teachersMeans: 'many teachers are already in the experienced stage of their teaching careers',
+      teachersImplies: 'the teaching workforce is composed of educators who have gained substantial professional experience in classroom instruction.'
+    },
+    gender: {
+      sectionTitle: 'Respondents as to Gender',
+      headsIntro: 'With regard to gender, ',
+      headsIntroAlternatives: [
+        'With regard to gender, ', 'In terms of gender, ', 'Regarding gender, ', 'As to gender, '
+      ],
+      headsMeans: 'leadership roles in the district are largely held by women',
+      headsImplies: 'female educators play a dominant role in school administration and educational leadership in the area.',
+      teachersMeans: 'classroom instruction in the district is primarily handled by female educators',
+      teachersImplies: 'the teaching profession in the area continues to reflect the common trend of strong female participation.'
+    },
+    civilStatus: {
+      sectionTitle: 'Respondents as to Civil Status',
+      headsIntro: 'In terms of civil status, ',
+      headsIntroAlternatives: [
+        'In terms of civil status, ', 'With regard to civil status, ', 'Regarding civil status, ', 'As to civil status, '
+      ],
+      headsMeans: 'all members of the leadership group have established family responsibilities',
+      headsImplies: 'school leaders manage both professional duties and family roles simultaneously.',
+      teachersMeans: 'most teachers belong to family-oriented households',
+      teachersImplies: 'many educators maintain a balance between their teaching responsibilities and their family commitments.'
+    },
+    education: {
+      sectionTitle: 'Respondents as to Highest Educational Attainment',
+      headsIntro: 'As to the highest educational attainment, ',
+      headsIntroAlternatives: [
+        'As to the highest educational attainment, ', 'Regarding the highest educational attainment, ', 'With regard to educational attainment, '
+      ],
+      headsMeans: 'school leaders possess advanced academic qualifications',
+      headsImplies: 'the leadership group is academically prepared to manage school programs and educational initiatives effectively.',
+      headsMajorityPhrase: 'doctorate degree holders',
+      teachersMeans: 'many teachers have pursued advanced studies beyond their undergraduate degrees',
+      teachersImplies: 'the teaching workforce values professional development and continuous academic advancement.'
+    },
+    position: {
+      sectionTitle: 'Respondents as to Present Position',
+      headsIntro: 'About the respondents\' present position, ',
+      headsIntroAlternatives: [
+        'About the respondents\' present position, ', 'Regarding the present position of respondents, ', 'As to the respondents\' present position, '
+      ],
+      headsMeans: 'most school leaders occupy the entry level of the principalship rank',
+      headsImplies: 'many administrators are relatively new to the principal position while still performing leadership responsibilities.',
+      teachersMeans: 'many teachers have already progressed to higher teaching ranks',
+      teachersImplies: 'the teaching group is composed of experienced educators who have advanced through the professional career ladder.'
+    },
+    rating: {
+      sectionTitle: 'Respondents as to Latest Performance Rating',
+      headsIntro: 'Regarding the latest performance rating, ',
+      headsIntroAlternatives: [
+        'Regarding the latest performance rating, ', 'As to the latest performance rating, ', 'With regard to the latest performance rating, '
+      ],
+      headsMajorityPhrase: 'obtained the highest performance rating',
+      headsMeans: 'school administrators demonstrate strong competence in performing their duties',
+      headsImplies: 'the leadership group maintains a high level of professional effectiveness in managing school operations.',
+      teachersMeans: 'teachers consistently perform their responsibilities at a high level',
+      teachersImplies: 'the teaching workforce demonstrates dedication and effectiveness in delivering quality instruction.'
+    },
+    yearsService: {
+      sectionTitle: 'Respondents as to Number of Years in Service',
+      headsIntro: 'Pertaining to the number of years in service, ',
+      headsIntroAlternatives: [
+        'Pertaining to the number of years in service, ', 'Regarding the number of years in service, ', 'As to the number of years in service, '
+      ],
+      headsMajorityVerb: 'have served for',
+      teachersMajorityVerb: 'have served for',
+      headsMeans: 'many administrators have long experience in the education sector',
+      headsImplies: 'school leadership is composed of individuals with extensive professional service.',
+      teachersMeans: 'many teachers are in the middle stage of their professional careers',
+      teachersImplies: 'the teaching workforce consists of educators who already possess practical classroom experience while continuing to develop their professional skills.'
+    },
+    inServiceTraining: {
+      sectionTitle: 'Respondents as to Level of In-Service Training Attended',
+      headsIntro: 'Considering the level of in-service training attended, ',
+      headsIntroAlternatives: [
+        'Considering the level of in-service training attended, ', 'Regarding the level of in-service training attended, ', 'As to the level of in-service training attended, '
+      ],
+      headsMeans: 'professional development activities are commonly organized within the division level',
+      headsImplies: 'school leaders continuously improve their competencies through locally conducted training programs.',
+      teachersMeans: 'most professional development opportunities are conducted within the division',
+      teachersImplies: 'teachers frequently engage in locally organized training activities to improve their instructional practices.',
+      useAttendedFormat: true
+    }
+  };
+
   /** Build two implication sentences for profile, contextual to dominant category. No "may". */
   function buildProfileImplications(dominantLabels) {
     if (!dominantLabels || dominantLabels.length === 0) return { first: '', second: '' };
@@ -722,61 +1047,140 @@
 
   function buildTwoGroupProfileInterpretation(table, variantIndex, lastOpener) {
     if (!table || !table.rows || !table.rows.length) return '';
+    var tableId = table.id || '';
+    var cfg = RP2_PROFILE_CONFIG[tableId] || null;
     var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
     var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
     var includeImplications = true;
     var implEl = document.getElementById('pa-include-implications');
     if (implEl) includeImplications = implEl.checked;
     var vi = typeof variantIndex === 'number' ? variantIndex : 0;
-
-    var opener = Gen
-      ? Gen.getOpenerForVariant(vi, lastOpener)
-      : (Utils ? Utils.getVariedOpener() : 'Regarding ');
-    var subject = (table.title || 'the variable').toLowerCase().replace(/^table \d+\.\s*/i, '');
     var sumH = 0, sumT = 0;
     table.rows.forEach(function (r) {
       sumH += (r.heads && r.heads.f) || 0;
       sumT += (r.teachers && r.teachers.f) || 0;
     });
+    if (sumH <= 0 && sumT <= 0) return '';
 
-    var parts = [];
-    if (sumH > 0) {
-      var maxH = 0, domH = [];
-      table.rows.forEach(function (r) {
-        var f = (r.heads && r.heads.f) || 0;
-        if (f > maxH) { maxH = f; domH = [r]; } else if (f === maxH && f > 0) domH.push(r);
-      });
-      var hPct = domH.length ? ((domH[0].heads && domH[0].heads.pct) || (maxH / sumH * 100)).toFixed(2) : '0.00';
-      var hLabels = domH.map(function (r) { return '"' + r.category + '"'; });
-      parts.push('among school heads, ' + (hLabels.length === 1 ? hLabels[0] : joinWithAnd(hLabels)) + ' had the largest share at ' + hPct + ' percent');
+    var distHeads;
+    var distTeachers;
+    if (cfg && cfg.useAttendedFormat) {
+      distHeads = sumH > 0 ? buildTwoGroupInServiceSentence(table.rows, 'heads', 'school heads') : '';
+      distTeachers = sumT > 0 ? buildTwoGroupInServiceSentence(table.rows, 'teachers', 'teachers') : '';
+    } else {
+      var ofHeads = (tableId === 'gender') ? ' of the school heads' : '';
+      distHeads = sumH > 0 ? buildTwoGroupDistributionSentence(table.rows, 'heads', sumH, ofHeads) : '';
+      distTeachers = sumT > 0 ? buildTwoGroupDistributionSentence(table.rows, 'teachers', sumT, '') : '';
     }
-    if (sumT > 0) {
-      var maxT = 0, domT = [];
-      table.rows.forEach(function (r) {
-        var f = (r.teachers && r.teachers.f) || 0;
-        if (f > maxT) { maxT = f; domT = [r]; } else if (f === maxT && f > 0) domT.push(r);
-      });
-      var tPct = domT.length ? ((domT[0].teachers && domT[0].teachers.pct) || (maxT / sumT * 100)).toFixed(2) : '0.00';
-      var tLabels = domT.map(function (r) { return '"' + r.category + '"'; });
-      parts.push('among teachers, ' + (tLabels.length === 1 ? tLabels[0] : joinWithAnd(tLabels)) + ' had the largest share at ' + tPct + ' percent');
-    }
-    if (!parts.length) return '';
 
-    var reflectWord = Gen ? Gen.getSynonym('shows', vi + 1) : 'reflect';
-    var sent1 = opener + subject + ', ' + parts.join('; ') + '.';
-    var sent2 = 'The data ' + reflectWord + ' the distribution across both respondent groups.';
-    var text = sent1 + ' ' + sent2;
-    if (includeImplications) {
-      var impl = Gen
-        ? Gen.buildImplicationsWithVariant('profile', vi)
-        : (Utils ? Utils.buildImplications('profile') : { first: '', second: '' });
-      if (impl.first) text += ' ' + impl.first;
-      if (impl.second) text += ' ' + impl.second;
+    // Identify dominant categories per group for the "highest proportion" sentence.
+    var maxH = 0, domH = [];
+    var maxT = 0, domT = [];
+    table.rows.forEach(function (r) {
+      var fh = (r.heads && r.heads.f) || 0;
+      var ft = (r.teachers && r.teachers.f) || 0;
+      if (fh > maxH) { maxH = fh; domH = [r.category]; } else if (fh === maxH && fh > 0) domH.push(r.category);
+      if (ft > maxT) { maxT = ft; domT = [r.category]; } else if (ft === maxT && ft > 0) domT.push(r.category);
+    });
+
+    var domHeadsPhrase = domH.length ? joinWithAnd(domH) : '';
+    var domTeachersPhrase = domT.length ? joinWithAnd(domT) : '';
+    var headsMeans = cfg && cfg.headsMeans ? cfg.headsMeans : '';
+    var headsImplies = cfg && cfg.headsImplies ? cfg.headsImplies : '';
+    var teachersMeans = cfg && cfg.teachersMeans ? cfg.teachersMeans : '';
+    var teachersImplies = cfg && cfg.teachersImplies ? cfg.teachersImplies : '';
+    var headsMajority = '';
+    var teachersMajority = '';
+    if (cfg && cfg.useAttendedFormat) {
+      headsMajority = domHeadsPhrase ? 'The majority of the school heads attended ' + domHeadsPhrase.toLowerCase().replace(/\s+level$/i, '') + ' level training' : '';
+      teachersMajority = domTeachersPhrase ? 'The majority of the teachers attended ' + domTeachersPhrase.toLowerCase().replace(/\s+level$/i, '') + ' level training' : '';
+    } else if (cfg && cfg.headsMajorityPhrase) {
+      headsMajority = 'The majority of the school heads are ' + cfg.headsMajorityPhrase;
+      teachersMajority = domTeachersPhrase ? 'The majority of the teachers are ' + domTeachersPhrase.toLowerCase() : '';
+    } else if (cfg && cfg.headsMajorityVerb && domHeadsPhrase) {
+      headsMajority = 'The majority of the school heads ' + cfg.headsMajorityVerb + ' ' + domHeadsPhrase.toLowerCase();
+      teachersMajority = (cfg.teachersMajorityVerb && domTeachersPhrase) ? 'The majority of the teachers ' + cfg.teachersMajorityVerb + ' ' + domTeachersPhrase.toLowerCase() : (domTeachersPhrase ? 'The majority of the teachers are ' + domTeachersPhrase.toLowerCase() : '');
+    } else {
+      headsMajority = domHeadsPhrase ? 'The majority of the school heads are ' + domHeadsPhrase.toLowerCase() : '';
+      teachersMajority = domTeachersPhrase ? 'The majority of the teachers are ' + domTeachersPhrase.toLowerCase() : '';
     }
-    return text.trim();
+
+    var headsIntro = cfg && cfg.headsIntro ? cfg.headsIntro : 'Regarding the respondents, ';
+    if (!cfg || !cfg.headsIntro) {
+      if (tableId === 'age') {
+      headsIntro = 'Age stratification reveals that among the school heads, ';
+    } else if (tableId === 'gender') {
+      headsIntro = 'The table reveals that among the school heads, ';
+    } else if (tableId === 'civilStatus') {
+      headsIntro = 'With regards to the civil status, the school heads consist of ';
+    } else if (tableId === 'education') {
+      headsIntro = 'As to the highest educational attainment, the school heads consist of ';
+    } else if (tableId === 'position') {
+      headsIntro = 'About the respondents’ present position, the school heads consist of ';
+    } else if (tableId === 'rating') {
+      headsIntro = 'Regarding the respondents’ latest performance rating, ';
+    } else if (tableId === 'yearsService') {
+      headsIntro = 'Pertaining to the respondents’ number of years in service, the school heads consist of ';
+    } else if (tableId === 'inServiceTraining') {
+      headsIntro = 'The table shows that, for the school head group, ';
+    } else {
+      // Fallback to varied academic opener if a new two-group table is added in the future.
+      var opener = Gen
+        ? Gen.getOpenerForVariant(vi, lastOpener)
+        : (Utils ? Utils.getVariedOpener() : 'Regarding ');
+      var subject = (table.title || 'the variable').toLowerCase().replace(/^table \d+\.\s*/i, '');
+      headsIntro = opener + subject + ', ';
+    }
+    } else if (Gen && cfg && cfg.headsIntroAlternatives && cfg.headsIntroAlternatives.length) {
+      headsIntro = cfg.headsIntroAlternatives[Math.abs(vi) % cfg.headsIntroAlternatives.length];
+    }
+
+    var impliesLead = (Gen && includeImplications) ? (Gen.getSynonym('indicatesLead', vi) || 'This indicates that') : 'This indicates that';
+    var teachersTransition = (Gen && includeImplications)
+      ? RP2_TEACHERS_TRANSITION_ALTERNATIVES[Math.abs(vi) % RP2_TEACHERS_TRANSITION_ALTERNATIVES.length]
+      : 'For the teachers, ';
+    var teachersImpliesLead = (Gen && includeImplications) ? (Gen.getSynonym('furtherLead', vi + 1) || 'This further implies that') : 'This implies that';
+
+    var headsParagraph = '';
+    if (sumH > 0 && distHeads && headsMajority && includeImplications && headsMeans && headsImplies) {
+      headsParagraph = headsIntro + distHeads + ' ' + headsMajority + ' which means that ' + headsMeans + '. ' + impliesLead + ' ' + headsImplies;
+    }
+
+    var teachersParagraph = '';
+    if (sumT > 0 && distTeachers && teachersMajority && includeImplications && teachersMeans && teachersImplies) {
+      teachersParagraph = teachersTransition + distTeachers + ' ' + teachersMajority + ' which means that ' + teachersMeans + '. ' + teachersImpliesLead + ' ' + teachersImplies;
+    }
+
+    var paragraphs = [];
+    if (headsParagraph) paragraphs.push(headsParagraph.trim());
+    if (teachersParagraph) paragraphs.push(teachersParagraph.trim());
+    return paragraphs.join('\n\n').trim();
   }
 
-  function buildInterpretationText(rows, tableTitle, variantIndex, lastOpener) {
+  /**
+   * Build majority sentence for RP1 Tables 2–9 using table-specific prefix/suffix.
+   */
+  function buildR31MajoritySentence(dominantLabels, cfg) {
+    var cat = dominantLabels.length === 1
+      ? dominantLabels[0]
+      : joinWithAnd(dominantLabels);
+    var catLower = cat.toLowerCase();
+    if (cfg.majorityReceived) {
+      var article = /^[aeiou]/.test(catLower) ? 'an ' : 'a ';
+      return 'The majority of the respondents received ' + article + catLower + ' rating.';
+    }
+    if (cfg.useAttendedFormat) {
+      return 'The majority of the respondents attended ' + catLower + '-level training.';
+    }
+    if (cfg.id === 'education' && /^with\s+/i.test(catLower)) {
+      return 'The majority of the respondents are those with ' + catLower.replace(/^with\s+/, '') + '.';
+    }
+    var prefix = cfg.majorityPrefix || 'are ';
+    var suffix = cfg.majoritySuffix || '.';
+    return 'The majority of the respondents ' + prefix + catLower + suffix;
+  }
+
+  function buildInterpretationText(rows, tableTitle, variantIndex, lastOpener, explicitTableKey) {
     if (!rows.length) return '';
 
     var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
@@ -790,6 +1194,59 @@
 
     var total = effectiveRows.reduce(function (sum, r) { return sum + r.frequency; }, 0);
     var vi = typeof variantIndex === 'number' ? variantIndex : 0;
+
+    var tableKey = explicitTableKey || (currentTableConfig && currentTableConfig.id ? currentTableConfig.id : '');
+    var rp1Cfg = tableKey && RP1_INTERPRETATION_CONFIG[tableKey] ? RP1_INTERPRETATION_CONFIG[tableKey] : null;
+
+    if (rp1Cfg) {
+      var opener = rp1Cfg.opener;
+      if (Gen && rp1Cfg.openerAlternatives && rp1Cfg.openerAlternatives.length) {
+        opener = rp1Cfg.openerAlternatives[Math.abs(vi) % rp1Cfg.openerAlternatives.length];
+      }
+      var distParts;
+      if (rp1Cfg.useAttendedFormat) {
+        distParts = effectiveRows.map(function (r) {
+          var n = r.frequency;
+          return n === 1
+            ? '1 respondent attended ' + r.category.toLowerCase() + ' training'
+            : n + ' attended ' + r.category.toLowerCase() + ' training';
+        });
+      } else {
+        distParts = effectiveRows.map(function (r) {
+          var pct = (r.frequency / total) * 100;
+          return formatFreqPercent(r.frequency, pct) + ' are ' + r.category.toLowerCase();
+        });
+      }
+      var sent1;
+      if (distParts.length === 2) {
+        sent1 = opener + distParts[0] + ' while ' + distParts[1] + '.';
+      } else if (distParts.length >= 3) {
+        sent1 = opener + distParts.slice(0, -1).join(', ') + ', and ' + distParts[distParts.length - 1] + '.';
+      } else {
+        sent1 = opener + distParts[0] + '.';
+      }
+
+      var maxFreq = 0;
+      effectiveRows.forEach(function (r) {
+        if (r.frequency > maxFreq) maxFreq = r.frequency;
+      });
+      var dominant = effectiveRows.filter(function (r) { return r.frequency === maxFreq; });
+      var dominantLabels = dominant.map(function (r) { return r.category; });
+      var sent2 = buildR31MajoritySentence(dominantLabels, rp1Cfg);
+
+      var text = sent1 + ' ' + sent2;
+      if (includeImplications && rp1Cfg.indicates) {
+        var lead1 = Gen ? (Gen.getSynonym('indicatesLead', vi) || 'This indicates that') : 'This indicates that';
+        var rest1 = rp1Cfg.indicates.replace(/^This (indicates|suggests|implies) that\s+/i, '');
+        text += ' ' + lead1 + ' ' + rest1;
+      }
+      if (includeImplications && rp1Cfg.implies) {
+        var lead2 = Gen ? (Gen.getSynonym('furtherLead', vi + 1) || 'This further implies that') : 'This further implies that';
+        var rest2 = rp1Cfg.implies.replace(/^This further (implies|suggests|indicates) that\s+/i, '');
+        text += ' ' + lead2 + ' ' + rest2;
+      }
+      return text.trim();
+    }
 
     var opener = Gen
       ? Gen.getOpenerForVariant(vi, lastOpener)
@@ -848,28 +1305,37 @@
   }
 
   function regenerateInterpretation() {
-    var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
-    if (!Gen) {
-      if (activeProjectId === 'rp2' && currentProject2Table) {
-        var t = buildTwoGroupProfileInterpretation(currentProject2Table);
-        var block = document.getElementById('pa-interpretation-block');
-        if (block) block.textContent = t;
-      } else if (computedRows.length) {
-        generateInterpretation(computedRows, currentTableTitle);
-      }
-      return;
-    }
-    var tableId = (currentTableTitle || (currentProject2Table && currentProject2Table.title) || 'profile').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
-    var generator = function (vi, lastOpener) {
-      if (activeProjectId === 'rp2' && currentProject2Table) {
-        return buildTwoGroupProfileInterpretation(currentProject2Table, vi, lastOpener);
-      }
-      return buildInterpretationText(computedRows, currentTableTitle, vi, lastOpener);
-    };
-    var result = Gen.generateWithVariation(generator, 'profile', tableId);
     var block = document.getElementById('pa-interpretation-block');
-    if (block) block.textContent = result.text;
-    showToast('Interpretation regenerated.');
+    if (!block) return;
+
+    try {
+      var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
+      if (!Gen) {
+        if (activeProjectId === 'rp2' && currentProject2Table) {
+          var t = buildTwoGroupProfileInterpretation(currentProject2Table);
+          block.textContent = t || '';
+        } else if (computedRows.length) {
+          generateInterpretation(computedRows, currentTableTitle);
+        }
+        showToast('Interpretation regenerated.');
+        return;
+      }
+
+      var tableId = (currentTableTitle || (currentProject2Table && currentProject2Table.title) || 'profile').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
+      var generator = function (vi, lastOpener) {
+        if (activeProjectId === 'rp2' && currentProject2Table) {
+          return buildTwoGroupProfileInterpretation(currentProject2Table, vi, lastOpener);
+        }
+        return buildInterpretationText(computedRows, currentTableTitle, vi, lastOpener);
+      };
+      var result = Gen.generateWithVariation(generator, 'profile', tableId);
+      var text = result && typeof result.text === 'string' ? result.text : '';
+      block.textContent = text;
+      showToast('Interpretation regenerated.');
+    } catch (e) {
+      if (typeof console !== 'undefined' && console.error) console.error('Regenerate error:', e);
+      showToast('Regenerate failed. Please try again.', true);
+    }
   }
 
   function copyInterpretation() {
@@ -895,6 +1361,7 @@
         sumT += (r.teachers && r.teachers.f) || 0;
       });
       toSave = {
+        projectId: activeProjectId || 'rp1',
         tableTitle: currentTableTitle,
         subject: 'respondents',
         type: 'twoGroup',
@@ -912,6 +1379,7 @@
     } else if (computedRows.length) {
       var totalFreq = computedRows.reduce(function (s, r) { return s + r.frequency; }, 0);
       toSave = {
+        projectId: activeProjectId || 'rp1',
         tableTitle: currentTableTitle,
         subject: 'respondents',
         type: 'singleGroup',
@@ -1241,9 +1709,10 @@
       r.rank = rankMap[r.category];
     });
 
-    var interpretation = buildInterpretationText(sorted, sample.defaultTitle);
+    var interpretation = buildInterpretationText(sorted, sample.defaultTitle, 0, null, sample.key);
 
     return {
+      projectId: activeProjectId || 'rp1',
       tableTitle: sample.defaultTitle,
       subject: sample.subject || 'respondents',
       rows: rows,
@@ -1722,32 +2191,15 @@
       projectSelect.addEventListener('change', function () {
         activeProjectId = this.value || 'rp1';
         clearInputs();
+        var tableSelectProj = document.getElementById('pa-table-select');
+        if (tableSelectProj) {
+          tableSelectProj.value = 'age';
+        }
         setGroupToggleVisibility();
         var inputSingle = document.getElementById('pa-input-single-group');
         if (inputSingle) inputSingle.hidden = activeProjectId === 'rp2';
         setInterpretationTabsVisibility(activeProjectId === 'rp2');
-        if (activeProjectId === 'rp2') {
-          var tableSelect = document.getElementById('pa-table-select');
-          if (tableSelect) {
-            tableSelect.value = 'age';
-            var cfg = PROJECT2_TABLES['age'];
-            if (cfg) {
-              currentProject2Table = JSON.parse(JSON.stringify(cfg));
-              currentTableConfig = null;
-              currentTableTitle = cfg.title;
-              var titleEl = document.getElementById('pa-table-title');
-              if (titleEl) titleEl.value = cfg.title;
-              renderTwoGroupTable(currentProject2Table);
-              updateLoadedSummary();
-              var computeBtn = document.getElementById('pa-compute');
-              var restoreBtn = document.getElementById('pa-restore-original');
-              var saveInputBtn = document.getElementById('pa-save-to-report-input');
-              if (computeBtn) computeBtn.disabled = false;
-              if (restoreBtn) restoreBtn.disabled = false;
-              if (saveInputBtn) saveInputBtn.disabled = false;
-            }
-          }
-        }
+        loadSelectedTable('age');
       });
     }
 
@@ -1782,34 +2234,7 @@
     if (tableSelect) {
       tableSelect.addEventListener('change', function () {
         var key = this.value;
-        if (!key) return;
-        updateLoadedSummary();
-        if (activeProjectId === 'rp2') {
-          var cfg = PROJECT2_TABLES[key];
-          if (!cfg) return;
-          currentProject2Table = JSON.parse(JSON.stringify(cfg));
-          currentTableConfig = null;
-          currentTableTitle = cfg.title;
-          var titleEl = document.getElementById('pa-table-title');
-          if (titleEl) titleEl.value = cfg.title;
-          var inputSingle = document.getElementById('pa-input-single-group');
-          if (inputSingle) inputSingle.hidden = true;
-          setGroupToggleVisibility();
-          setInterpretationTabsVisibility(true);
-          renderTwoGroupTable(currentProject2Table);
-          var computeBtn = document.getElementById('pa-compute');
-          var restoreBtn = document.getElementById('pa-restore-original');
-          var saveInputBtn = document.getElementById('pa-save-to-report-input');
-          if (computeBtn) computeBtn.disabled = false;
-          if (restoreBtn) restoreBtn.disabled = false;
-          if (saveInputBtn) saveInputBtn.disabled = false;
-        } else {
-          var inputSingle2 = document.getElementById('pa-input-single-group');
-          if (inputSingle2) inputSingle2.hidden = false;
-          setGroupToggleVisibility();
-          setInterpretationTabsVisibility(false);
-          applyProfileTableConfig(key);
-        }
+        loadSelectedTable(key);
       });
     }
 
@@ -1903,9 +2328,17 @@
     }
 
     setGroupToggleVisibility();
-    setInterpretationTabsVisibility(false);
+    setInterpretationTabsVisibility(activeProjectId === 'rp2');
     updateSessionProgress();
     renderSavedProfileTables();
+
+    // Auto-load selected table on init (sync, like Likert page)
+    var tableSelectInit = document.getElementById('pa-table-select');
+    if (tableSelectInit) {
+      var key = tableSelectInit.value || 'age';
+      if (key) loadSelectedTable(key);
+    }
+
     onInputChange();
   }
 

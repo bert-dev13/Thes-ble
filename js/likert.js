@@ -327,6 +327,179 @@
     scaleMapping: []
   };
 
+  // Research Paper 1: Table-specific interpretation format (Tables 10–22)
+  var RP1_LIKERT_INTERPRETATION_CONFIG = {
+    t10: {
+      id: 't10',
+      title: 'Interpretation for Extent of Use of Cooperative Learning Strategies in Enhancing the Performance of Grade 5 Pupils in Mathematics',
+      opener: 'Pertaining to the extent of use of cooperative learning strategies in enhancing the performance of Grade 5 pupils in Mathematics, ',
+      openerAlternatives: [
+        'Pertaining to the extent of use of cooperative learning strategies in enhancing the performance of Grade 5 pupils in Mathematics, ',
+        'Regarding the extent of use of cooperative learning strategies in enhancing the performance of Grade 5 pupils in Mathematics, ',
+        'As to the extent of use of cooperative learning strategies in enhancing the performance of Grade 5 pupils in Mathematics, '
+      ],
+      awmConstruct: 'the use of cooperative learning strategies',
+      indicates: 'This indicates that cooperative learning strategies are consistently practiced in Mathematics instruction.',
+      implies: 'This further implies that teachers actively integrate collaborative activities to enhance pupil engagement and learning outcomes.'
+    },
+    t11: {
+      id: 't11',
+      title: 'Interpretation for Extent of Effect of Cooperative Learning Strategies in Enhancing the Performance of Grade 5 Pupils in Mathematics',
+      opener: 'In relation to the extent of effect of cooperative learning strategies in enhancing the performance of Grade 5 pupils in Mathematics, ',
+      openerAlternatives: [
+        'In relation to the extent of effect of cooperative learning strategies in enhancing the performance of Grade 5 pupils in Mathematics, ',
+        'Regarding the extent of effect of cooperative learning strategies in enhancing the performance of Grade 5 pupils in Mathematics, ',
+        'As to the extent of effect of cooperative learning strategies in enhancing the performance of Grade 5 pupils in Mathematics, '
+      ],
+      awmConstruct: 'the effect of cooperative learning strategies',
+      indicates: 'This indicates that cooperative learning strategies positively influence pupils\' mathematical performance.',
+      implies: 'This further implies that collaborative instructional approaches contribute significantly to improving pupils\' understanding of mathematical concepts.'
+    },
+    t12: {
+      id: 't12',
+      title: 'Interpretation for Extent of Realization of Mathematics 5 Most Essential Learning Competencies for the First Quarter',
+      opener: 'Considering the extent of realization of Mathematics 5 most essential learning competencies through the use of cooperative learning strategies for the first quarter, ',
+      openerAlternatives: [
+        'Considering the extent of realization of Mathematics 5 most essential learning competencies through the use of cooperative learning strategies for the first quarter, ',
+        'Regarding the extent of realization of Mathematics 5 most essential learning competencies for the first quarter, ',
+        'As to the extent of realization of Mathematics 5 most essential learning competencies for the first quarter, '
+      ],
+      awmConstruct: 'the competencies',
+      indicates: 'This indicates that pupils demonstrate strong mastery of the first-quarter mathematics competencies.',
+      implies: 'This further implies that cooperative learning strategies support effective competency development among pupils.'
+    },
+    t13: {
+      id: 't13',
+      title: 'Interpretation for Second Quarter Competencies',
+      opener: 'Across the extent of realization of Mathematics 5 most essential learning competencies for the second quarter, ',
+      openerAlternatives: [
+        'Across the extent of realization of Mathematics 5 most essential learning competencies for the second quarter, ',
+        'Regarding the extent of realization of Mathematics 5 competencies for the second quarter, ',
+        'As to the extent of realization of Mathematics 5 competencies for the second quarter, '
+      ],
+      awmConstruct: 'the second-quarter competencies',
+      indicates: 'This indicates that pupils demonstrate a high level of mastery in the competencies during the second quarter.',
+      implies: 'This further implies that cooperative learning strategies effectively support continuous mathematics learning progression.'
+    },
+    t14: {
+      id: 't14',
+      title: 'Interpretation for Third Quarter Competencies',
+      opener: 'Focusing on the extent of realization of Mathematics 5 competencies during the third quarter, ',
+      openerAlternatives: [
+        'Focusing on the extent of realization of Mathematics 5 competencies during the third quarter, ',
+        'Regarding the extent of realization of Mathematics 5 competencies during the third quarter, ',
+        'As to the extent of realization of Mathematics 5 competencies during the third quarter, '
+      ],
+      awmConstruct: 'the third-quarter competencies',
+      indicates: 'This indicates that pupils demonstrate strong proficiency in mathematical concepts introduced during the third quarter.',
+      implies: 'This further implies that instructional strategies effectively support learners in mastering higher-level mathematical skills.'
+    },
+    t15: {
+      id: 't15',
+      title: 'Interpretation for Fourth Quarter Competencies',
+      opener: 'Relative to the extent of realization of Mathematics 5 competencies during the fourth quarter, ',
+      openerAlternatives: [
+        'Relative to the extent of realization of Mathematics 5 competencies during the fourth quarter, ',
+        'Regarding the extent of realization of Mathematics 5 competencies during the fourth quarter, ',
+        'As to the extent of realization of Mathematics 5 competencies during the fourth quarter, '
+      ],
+      awmConstruct: 'the fourth-quarter competencies',
+      indicates: 'This indicates that pupils maintain strong competence in mathematical skills during the final quarter.',
+      implies: 'This further implies that the learning outcomes across the academic year are consistently achieved.'
+    },
+    t16: {
+      id: 't16',
+      title: 'Interpretation for Executive Summary of Competency Realization',
+      opener: 'The executive summary of the extent of realization of Mathematics 5 most essential learning competencies shows that ',
+      openerAlternatives: [
+        'The executive summary of the extent of realization of Mathematics 5 most essential learning competencies shows that ',
+        'The executive summary of the extent of realization of Mathematics 5 competencies indicates that ',
+        'The executive summary of the extent of realization of Mathematics 5 competencies reveals that '
+      ],
+      isExecutiveSummary: true,
+      indicates: 'This indicates that pupils consistently demonstrate mastery of the required mathematics competencies throughout the school year.',
+      implies: 'This further implies that the instructional strategies implemented by teachers effectively support competency-based learning.'
+    },
+    t17: {
+      id: 't17',
+      title: 'Interpretation for Teacher-Related Challenges',
+      opener: 'Concerning the challenges encountered in using cooperative learning strategies in terms of teacher-related factors, ',
+      openerAlternatives: [
+        'Concerning the challenges encountered in using cooperative learning strategies in terms of teacher-related factors, ',
+        'Regarding the challenges encountered in terms of teacher-related factors, ',
+        'As to the challenges encountered in terms of teacher-related factors, '
+      ],
+      awmConstruct: 'the challenges',
+      indicates: 'This indicates that teachers experience notable difficulties in implementing cooperative learning strategies effectively.',
+      implies: 'This further implies that professional development and instructional support are necessary to address these challenges.'
+    },
+    t18: {
+      id: 't18',
+      title: 'Interpretation for Time Management Challenges',
+      opener: 'With reference to the challenges encountered in terms of time management, ',
+      openerAlternatives: [
+        'With reference to the challenges encountered in terms of time management, ',
+        'Regarding the challenges encountered in terms of time management, ',
+        'As to the challenges encountered in terms of time management, '
+      ],
+      awmConstruct: 'time management challenges',
+      indicates: 'This indicates that cooperative learning activities demand considerable time for preparation and monitoring.',
+      implies: 'This further implies that teachers must effectively organize instructional time to implement cooperative strategies successfully.'
+    },
+    t19: {
+      id: 't19',
+      title: 'Interpretation for Pupils\' Factors',
+      opener: 'In relation to the challenges encountered in terms of pupils\' factors, ',
+      openerAlternatives: [
+        'In relation to the challenges encountered in terms of pupils\' factors, ',
+        'Regarding the challenges encountered in terms of pupils\' factors, ',
+        'As to the challenges encountered in terms of pupils\' factors, '
+      ],
+      awmConstruct: 'these challenges',
+      indicates: 'This indicates that pupils\' behavioral and participation differences influence the effectiveness of cooperative learning.',
+      implies: 'This further implies that teachers must employ effective classroom management and grouping strategies to maintain productive collaboration.'
+    },
+    t20: {
+      id: 't20',
+      title: 'Interpretation for Resource-Related Factors',
+      opener: 'Pertaining to the challenges encountered in terms of resource-related factors, ',
+      openerAlternatives: [
+        'Pertaining to the challenges encountered in terms of resource-related factors, ',
+        'Regarding the challenges encountered in terms of resource-related factors, ',
+        'As to the challenges encountered in terms of resource-related factors, '
+      ],
+      awmConstruct: 'these challenges',
+      indicates: 'This indicates that limitations in resources affect the implementation of cooperative learning strategies.',
+      implies: 'This further implies that additional instructional materials and institutional support are needed to improve cooperative learning activities.'
+    },
+    t21: {
+      id: 't21',
+      title: 'Interpretation for Executive Summary of Challenges',
+      opener: 'The executive summary of the challenges encountered by Mathematics 5 teachers in using cooperative learning strategies shows that ',
+      openerAlternatives: [
+        'The executive summary of the challenges encountered by Mathematics 5 teachers in using cooperative learning strategies shows that ',
+        'The executive summary of the challenges encountered by Mathematics 5 teachers indicates that ',
+        'The executive summary of the challenges encountered by Mathematics 5 teachers reveals that '
+      ],
+      isExecutiveSummary: true,
+      indicates: 'This indicates that implementing cooperative learning strategies involves several practical difficulties.',
+      implies: 'This further implies that targeted support and training programs are necessary to assist teachers in overcoming these challenges.'
+    },
+    t22: {
+      id: 't22',
+      title: 'Interpretation for Effectiveness of Coping Mechanisms',
+      opener: 'As to the effectiveness of coping mechanisms used to address the challenges encountered in cooperative learning, ',
+      openerAlternatives: [
+        'As to the effectiveness of coping mechanisms used to address the challenges encountered in cooperative learning, ',
+        'Regarding the effectiveness of coping mechanisms used to address the challenges in cooperative learning, ',
+        'Concerning the effectiveness of coping mechanisms used to address the challenges in cooperative learning, '
+      ],
+      awmConstruct: 'the coping mechanisms',
+      indicates: 'This indicates that teachers employ effective strategies to address challenges in cooperative learning.',
+      implies: 'This further implies that these coping mechanisms contribute to improving instructional practices and classroom collaboration.'
+    }
+  };
+
   var currentLikertConfig = null;
   var usingPredefinedTable = false;
   var useLoadedQd = true;
@@ -334,6 +507,171 @@
   var laInterpretationT = '';
   var laInterpTwoGroup = false;
   var currentTwoGroupData = null;
+
+  // RP2 Likert interpretation config (Tables 10–20; T-test t21–t22 keep prewritten)
+  var RP2_LIKERT_INTERPRETATION_CONFIG = {
+    t10: {
+      sectionTitle: 'Level of Abilities of Grade 3 Pupils in Science in Terms of Curiosity',
+      headsOpener: 'Relative to the level of abilities of Grade 3 pupils in Science in terms of curiosity, ',
+      headsOpenerAlternatives: [
+        'Relative to the level of abilities of Grade 3 pupils in Science in terms of curiosity, ',
+        'Regarding the level of abilities of Grade 3 pupils in Science in terms of curiosity, ',
+        'As to the level of abilities of Grade 3 pupils in Science in terms of curiosity, '
+      ],
+      headsAwmConstruct: 'the pupils\' curiosity in Science 3',
+      headsIndicates: 'pupils generally demonstrate a strong inclination to explore and question scientific ideas.',
+      headsImplies: 'curiosity is evident in their participation and engagement in science learning activities.',
+      teachersIndicates: 'teachers likewise perceive pupils as interested and engaged in scientific exploration.',
+      teachersImplies: 'curiosity is a visible and consistent ability among Grade 3 pupils in Science.'
+    },
+    t11: {
+      sectionTitle: 'Level of Abilities of Grade 3 Pupils in Science in Terms of Creativity',
+      headsOpener: 'As to the level of abilities of Grade 3 pupils in Science in terms of creativity, ',
+      headsOpenerAlternatives: [
+        'As to the level of abilities of Grade 3 pupils in Science in terms of creativity, ',
+        'Regarding the level of abilities of Grade 3 pupils in Science in terms of creativity, ',
+        'In terms of the level of abilities of Grade 3 pupils in Science in terms of creativity, '
+      ],
+      headsAwmConstruct: 'the pupils\' creativity in Science 3',
+      headsIndicates: 'pupils are able to express original and flexible thinking in science activities.',
+      headsImplies: 'creativity is evident in the way pupils solve problems and present their scientific ideas.',
+      teachersIndicates: 'pupils show creativity in carrying out science tasks and expressing their ideas.',
+      teachersImplies: 'their science performance reflects originality and adaptability in learning situations.'
+    },
+    t12: {
+      sectionTitle: 'Level of Abilities of Grade 3 Pupils in Science in Terms of Communication',
+      headsOpener: 'About the level of abilities of Grade 3 pupils in Science in terms of communication, ',
+      headsOpenerAlternatives: [
+        'About the level of abilities of Grade 3 pupils in Science in terms of communication, ',
+        'Regarding the level of abilities of Grade 3 pupils in Science in terms of communication, ',
+        'As to the level of abilities of Grade 3 pupils in Science in terms of communication, '
+      ],
+      headsAwmConstruct: 'the pupils\' communication abilities in Science 3',
+      headsIndicates: 'pupils demonstrate strong skills in expressing and sharing scientific ideas.',
+      headsImplies: 'communication is one of their well-developed abilities in science learning.',
+      teachersIndicates: 'pupils are generally capable of communicating scientific ideas clearly and appropriately.',
+      teachersImplies: 'communication skills support their active participation in science activities and discussions.'
+    },
+    t13: {
+      sectionTitle: 'Level of Abilities of Grade 3 Pupils in Science in Terms of Collaboration',
+      headsOpener: 'Regarding the level of abilities of Grade 3 pupils in Science in terms of collaboration, ',
+      headsOpenerAlternatives: [
+        'Regarding the level of abilities of Grade 3 pupils in Science in terms of collaboration, ',
+        'As to the level of abilities of Grade 3 pupils in Science in terms of collaboration, ',
+        'In terms of the level of abilities of Grade 3 pupils in Science in terms of collaboration, '
+      ],
+      headsAwmConstruct: 'the pupils\' collaboration abilities in Science 3',
+      headsIndicates: 'pupils work effectively with others in carrying out science tasks.',
+      headsImplies: 'teamwork and shared responsibility are strongly evident in their learning behavior.',
+      teachersIndicates: 'pupils consistently display cooperative behavior in science-related group work.',
+      teachersImplies: 'collaborative learning is a strong aspect of their classroom performance.'
+    },
+    t14: {
+      sectionTitle: 'Executive Summary of the Level of Abilities of Grade 3 Pupils in Science',
+      headsOpener: 'The executive summary of the level of abilities of Grade 3 pupils in Science shows that ',
+      headsOpenerAlternatives: [
+        'The executive summary of the level of abilities of Grade 3 pupils in Science shows that ',
+        'The executive summary of the level of abilities of Grade 3 pupils in Science indicates that ',
+        'The executive summary of the level of abilities of Grade 3 pupils in Science reveals that '
+      ],
+      headsAwmConstruct: 'the pupils\' abilities in Science',
+      isExecutiveSummary: true,
+      headsIndicates: 'pupils demonstrate strong overall abilities across the measured domains.',
+      headsImplies: 'their science performance is supported by well-developed cognitive and social skills.',
+      teachersIndicates: 'teachers also perceive pupils as capable across major science-related abilities.',
+      teachersImplies: 'the learners possess a solid foundation for effective science learning.'
+    },
+    t15: {
+      sectionTitle: 'Extent of Constraints of Grade 3 Pupils in Science in Terms of Comprehension of Concepts',
+      headsOpener: 'In relation to the extent of constraints of Grade 3 pupils in Science in terms of comprehension of concepts, ',
+      headsOpenerAlternatives: [
+        'In relation to the extent of constraints of Grade 3 pupils in Science in terms of comprehension of concepts, ',
+        'Regarding the extent of constraints of Grade 3 pupils in Science in terms of comprehension of concepts, ',
+        'As to the extent of constraints of Grade 3 pupils in Science in terms of comprehension of concepts, '
+      ],
+      headsAwmConstruct: 'pupils\' comprehension-related constraints in Science 3',
+      headsIndicates: 'pupils experience noticeable difficulty in understanding and applying science concepts.',
+      headsImplies: 'conceptual comprehension remains an area that requires instructional support.',
+      teachersIndicates: 'teachers observe these comprehension difficulties at a less severe level.',
+      teachersImplies: 'although such constraints are present, they are generally manageable in classroom instruction.'
+    },
+    t16: {
+      sectionTitle: 'Extent of Constraints of Grade 3 Pupils in Science in Terms of Readiness for Inquiry-Based Tasks',
+      headsOpener: 'With respect to the extent of constraints of Grade 3 pupils in Science in terms of readiness for inquiry-based tasks, ',
+      headsOpenerAlternatives: [
+        'With respect to the extent of constraints of Grade 3 pupils in Science in terms of readiness for inquiry-based tasks, ',
+        'Regarding the extent of constraints of Grade 3 pupils in Science in terms of readiness for inquiry-based tasks, ',
+        'As to the extent of constraints of Grade 3 pupils in Science in terms of readiness for inquiry-based tasks, '
+      ],
+      headsAwmConstruct: 'readiness-related constraints',
+      headsIndicates: 'pupils encounter difficulties in carrying out inquiry-based science tasks independently.',
+      headsImplies: 'inquiry readiness still needs to be strengthened through guided practice.',
+      teachersIndicates: 'teachers also observe notable difficulty among pupils in inquiry-based activities.',
+      teachersImplies: 'learners need continuous support in developing investigative and reflective science skills.'
+    },
+    t17: {
+      sectionTitle: 'Extent of Constraints of Grade 3 Pupils in Science in Terms of Availability of Resources',
+      headsOpener: 'Concerning the extent of constraints of Grade 3 pupils in Science in terms of availability of resources, ',
+      headsOpenerAlternatives: [
+        'Concerning the extent of constraints of Grade 3 pupils in Science in terms of availability of resources, ',
+        'Regarding the extent of constraints of Grade 3 pupils in Science in terms of availability of resources, ',
+        'As to the extent of constraints of Grade 3 pupils in Science in terms of availability of resources, '
+      ],
+      headsAwmConstruct: 'resource-related constraints',
+      headsIndicates: 'limited materials and facilities affect pupils\' science learning experiences.',
+      headsImplies: 'improving access to resources is important for effective science instruction.',
+      teachersIndicates: 'teachers also recognize the effect of resource limitations on science learning.',
+      teachersImplies: 'adequate materials and facilities are necessary to support more effective classroom and home-based science activities.'
+    },
+    t18: {
+      sectionTitle: 'Extent of Constraints of Grade 3 Pupils in Science in Terms of Support from the Learning Environment',
+      headsOpener: 'Pertaining to the extent of constraints of Grade 3 pupils in Science in terms of support from the learning environment, ',
+      headsOpenerAlternatives: [
+        'Pertaining to the extent of constraints of Grade 3 pupils in Science in terms of support from the learning environment, ',
+        'Regarding the extent of constraints of Grade 3 pupils in Science in terms of support from the learning environment, ',
+        'As to the extent of constraints of Grade 3 pupils in Science in terms of support from the learning environment, '
+      ],
+      headsAwmConstruct: 'learning-environment constraints',
+      headsIndicates: 'the surrounding learning environment influences the pupils\' science performance.',
+      headsImplies: 'stronger classroom, school, and family support is needed to improve science learning conditions.',
+      teachersIndicates: 'teachers perceive these environmental constraints at a lower level than school heads do.',
+      teachersImplies: 'although such factors are present, they are not seen as the most serious barriers to science learning.'
+    },
+    t19: {
+      sectionTitle: 'Executive Summary of the Extent of Constraints of Grade 3 Pupils in Science',
+      headsOpener: 'The executive summary of the extent of constraints of Grade 3 pupils in Science shows that ',
+      headsOpenerAlternatives: [
+        'The executive summary of the extent of constraints of Grade 3 pupils in Science shows that ',
+        'The executive summary of the extent of constraints of Grade 3 pupils in Science indicates that ',
+        'The executive summary of the extent of constraints of Grade 3 pupils in Science reveals that '
+      ],
+      headsAwmConstruct: 'the constraints of Grade 3 pupils in Science',
+      isExecutiveSummary: true,
+      headsIndicates: 'school heads perceive several notable barriers affecting pupils\' science learning.',
+      headsImplies: 'these constraints require focused attention to improve pupil performance.',
+      teachersIndicates: 'teachers recognize the presence of constraints but at a generally lower degree.',
+      teachersImplies: 'from the teachers\' perspective, these challenges are present yet still manageable within instruction.'
+    },
+    t20: {
+      sectionTitle: 'Extent of the Challenges Encountered by Teachers in Science 3 Instruction',
+      headsOpener: 'The extent of the challenges encountered by teachers in Science 3 instruction, as assessed by school head respondents, includes ',
+      headsOpenerAlternatives: [
+        'The extent of the challenges encountered by teachers in Science 3 instruction, as assessed by school head respondents, includes ',
+        'The extent of the challenges encountered by teachers in Science 3 instruction, as reported by school head respondents, includes ',
+        'The extent of the challenges encountered by teachers in Science 3 instruction, as indicated by school head respondents, includes '
+      ],
+      headsAwmConstruct: 'these instructional challenges',
+      headsRated: false,
+      teachersOpener: 'Meanwhile, teacher respondents rated ',
+      teachersOpenerAlternatives: [
+        'Meanwhile, teacher respondents rated ', 'Similarly, teacher respondents rated ', 'For their part, teacher respondents rated '
+      ],
+      headsIndicates: 'teachers encounter substantial demands in delivering Science 3 instruction effectively.',
+      headsImplies: 'instructional support and resource enhancement are necessary to address these persistent challenges.',
+      teachersIndicates: 'teachers themselves acknowledge the significant difficulties they encounter in Science 3 instruction.',
+      teachersImplies: 'strengthening support systems and teaching resources is essential for more effective classroom implementation.'
+    }
+  };
 
   // ---------- Research Paper 2 (Science 3, School Heads vs Teachers) ----------
   // Two-group weighted tables and T-test tables (Tables 10–22)
@@ -402,8 +740,8 @@
         }
       ],
       prewritten: {
-        sh: 'Relative to the level of abilities of Grade 3 pupils in Science in terms of curiosity, school head respondents claim that the following indicators are high: “Explore new science concepts beyond the lesson.” and “Pay attention during science demonstrations.” each with a weighted mean of 4.20; “Show interest in discovering how things work.” “Express excitement when performing experiments.” and “Connect classroom concepts to real-life situations.” each with a weighted mean of 4.18; “Seek additional information about scientific topics.” with a weighted mean of 4.13; “Ask questions about phenomena observed in class.” and “Test own ideas in science activities.” each with a weighted mean of 4.10; “Notice patterns and relationships in observed phenomena.” with a weighted mean of 4.03; and “Initiate small science investigations independently.” with a weighted mean of 3.98. The average weighted mean of 4.13, interpreted as High, indicates that the pupils demonstrate a consistently high level of curiosity as assessed by the school heads.',
-        t: 'Meanwhile, teacher respondents report very high levels of curiosity for the indicators “Pay attention during science demonstrations.” with a weighted mean of 4.33 and “Show interest in discovering how things work.” with a weighted mean of 4.28. They further assess as high the following indicators: “Connect classroom concepts to real-life situations.” with a weighted mean of 4.18; “Explore new science concepts beyond the lesson.” and “Test own ideas in science activities.” each with a weighted mean of 4.15; “Express excitement when performing experiments.” with a weighted mean of 4.13; “Seek additional information about scientific topics.” with a weighted mean of 4.10; “Ask questions about phenomena observed in class.” with a weighted mean of 4.03; “Notice patterns and relationships in observed phenomena.” with a weighted mean of 3.98; and “Initiate small science investigations independently.” with a weighted mean of 3.95. The average weighted mean of 4.13, interpreted as High, denotes that teachers likewise perceive the pupils to possess a high level of curiosity in Science 3.'
+        sh: 'Relative to the level of abilities of Grade 3 pupils in Science in terms of curiosity, school head respondents rated all indicators as High, led by "Explore new science concepts beyond the lesson" and "Pay attention during science demonstrations," each with a weighted mean of 4.20. This was followed by "Show interest in discovering how things work," "Express excitement when performing experiments," and "Connect classroom concepts to real-life situations," each with a weighted mean of 4.18. The remaining indicators were also rated High, with weighted means ranging from 3.98 to 4.13. The average weighted mean of 4.13 (High) indicates that pupils demonstrate a consistently high level of curiosity as assessed by the school heads.',
+        t: 'Meanwhile, teacher respondents rated "Pay attention during science demonstrations" (4.33) and "Show interest in discovering how things work" (4.28) as Very High, while all other indicators were rated High, with weighted means ranging from 3.95 to 4.18. The average weighted mean of 4.13 (High) denotes that teachers likewise perceive the pupils to possess a high level of curiosity in Science 3.'
       }
     },
     t11: {
@@ -424,8 +762,8 @@
         { indicator: 'Generate multiple solutions to science challenges', sh: { wm: 4.05, qd: 'H', rank: 9 }, t: { wm: 4.10, qd: 'H', rank: 4.5 } }
       ],
       prewritten: {
-        sh: 'As to the level of abilities of Grade 3 pupils in Science in terms of creativity, school head respondents assess as high the indicators: "Present science projects imaginatively." with a weighted mean of 4.23; "Propose original ideas when solving science problems." with a weighted mean of 4.20; "Use materials inventively during hands-on activities." with a weighted mean of 4.15; "Design unique solutions during science activities." with a weighted mean of 4.13; "Combine prior knowledge with new concepts creatively." "Develop innovative explanations for observed phenomena." and "Adapt ideas when first attempts do not work." each with a weighted mean of 4.10; "Create drawings, models, or diagrams to explain concepts." with a weighted mean of 4.08; "Generate multiple solutions to science challenges." with a weighted mean of 4.05; and "Suggest alternative methods for experiments." with a weighted mean of 3.95. The average weighted mean of 4.11, interpreted as High, indicates that school heads perceive the pupils to consistently demonstrate strong creative abilities in Science 3.',
-        t: 'Meanwhile, teacher respondents assess as very high the indicator "Present science projects imaginatively." with a weighted mean of 4.25. They further rate as high the indicators: "Adapt ideas when first attempts do not work." with a weighted mean of 4.20; "Propose original ideas when solving science problems." with a weighted mean of 4.15; "Generate multiple solutions to science challenges." and "Create drawings, models, or diagrams to explain concepts." each with a weighted mean of 4.10; "Develop innovative explanations for observed phenomena." with a weighted mean of 4.08; "Combine prior knowledge with new concepts creatively." with a weighted mean of 4.05; "Use materials inventively during hands-on activities." with a weighted mean of 4.03; "Suggest alternative methods for experiments." with a weighted mean of 3.85; and "Design unique solutions during science activities." with a weighted mean of 3.75. The average weighted mean of 4.06, interpreted as High, denotes that teachers likewise perceive the pupils to exhibit a generally high level of creativity in their Science 3 performance.'
+        sh: 'As to the level of abilities of Grade 3 pupils in Science in terms of creativity, school head respondents rated all indicators as High, with "Present science projects imaginatively" obtaining the highest weighted mean of 4.23, followed by "Propose original ideas when solving science problems" (4.20) and "Use materials inventively during hands-on activities" (4.15). The remaining indicators were also assessed as High, with weighted means ranging from 3.95 to 4.13. The average weighted mean of 4.11 (High) indicates that school heads perceive the pupils to consistently demonstrate strong creative abilities in Science 3.',
+        t: 'Meanwhile, teacher respondents rated "Present science projects imaginatively" as Very High with a weighted mean of 4.25. All other indicators were assessed as High, led by "Adapt ideas when first attempts do not work" (4.20) and followed by weighted means ranging from 3.75 to 4.15. The average weighted mean of 4.06 (High) denotes that teachers likewise perceive the pupils to exhibit a generally high level of creativity in Science 3.'
       }
     },
     t12: {
@@ -446,8 +784,8 @@
         { indicator: 'Provide constructive feedback to peers during activities', sh: { wm: 4.23, qd: 'VH', rank: 7.5 }, t: { wm: 3.85, qd: 'H', rank: 8.5 } }
       ],
       prewritten: {
-        sh: 'About the level of abilities of Grade 3 pupils in Science in terms of communication, school head respondents report very high ratings for the indicators: "Use drawings or diagrams to communicate ideas." with a weighted mean of 4.48; "Ask clarifying questions to understand others\' explanations." and "Present science projects confidently to classmates." each with a weighted mean of 4.43 and 4.40; "Explain science concepts in own words." with a weighted mean of 4.33; "Listen attentively and respond appropriately." with a weighted mean of 4.30; "Express observations and findings clearly." with a weighted mean of 4.28; and "Participate actively in group discussions." and "Provide constructive feedback to peers during activities." each with a weighted mean of 4.23. They further assess as high the indicators "Use appropriate scientific vocabulary when speaking." with a weighted mean of 4.15 and "Summarize experimental results effectively." with a weighted mean of 4.13. The average weighted mean of 4.29, interpreted as Very High (VH), indicates that school heads perceive the pupils to possess very strong communication abilities in Science 3.',
-        t: 'Meanwhile, teacher respondents assess as high all communication indicators, led by: "Use drawings or diagrams to communicate ideas." with a weighted mean of 4.18; "Present science projects confidently to classmates." with a weighted mean of 4.13; "Explain science concepts in own words." and "Ask clarifying questions to understand others\' explanations." each with a weighted mean of 4.10; "Participate actively in group discussions." with a weighted mean of 3.95; "Express observations and findings clearly." with a weighted mean of 3.98; "Listen attentively and respond appropriately." with a weighted mean of 4.00; "Provide constructive feedback to peers during activities." and "Use appropriate scientific vocabulary when speaking." each with weighted means of 3.85; and "Summarize experimental results effectively." with a weighted mean of 3.78. The average weighted mean of 3.99, interpreted as High, denotes that teachers perceive the pupils to demonstrate generally strong communication abilities in Science 3.'
+        sh: 'Regarding the level of abilities of Grade 3 pupils in Science in terms of communication, school head respondents rated most indicators as Very High, led by "Use drawings or diagrams to communicate ideas" with a weighted mean of 4.48, followed by "Ask clarifying questions to understand others’ explanations" (4.43) and "Present science projects confidently to classmates" (4.40). The remaining indicators were also rated highly, with only "Use appropriate scientific vocabulary when speaking" (4.15) and "Summarize experimental results effectively" (4.13) interpreted as High. The average weighted mean of 4.29 (Very High) indicates that school heads perceive pupils to possess very strong communication abilities in Science 3.',
+        t: 'Meanwhile, teacher respondents assessed all indicators as High, led by "Use drawings or diagrams to communicate ideas" (4.18) and "Present science projects confidently to classmates" (4.13). The rest of the indicators were also rated High, with weighted means ranging from 3.78 to 4.10. The average weighted mean of 3.99 (High) denotes that teachers perceive pupils to demonstrate generally strong communication abilities in Science 3.'
       }
     },
     t13: {
@@ -468,8 +806,8 @@
         { indicator: 'Acknowledge contributions of teammates', sh: { wm: 4.45, qd: 'VH', rank: 6.5 }, t: { wm: 4.23, qd: 'VH', rank: 5.5 } }
       ],
       prewritten: {
-        sh: 'Regarding the level of abilities of Grade 3 pupils in Science in terms of collaboration, school head respondents assess as very high the following indicators: "Help peers who are struggling with tasks." and "Divide tasks efficiently during science projects." each with a weighted mean of 4.53; "Work together to solve science problems." with a weighted mean of 4.50; "Contribute ideas during group discussions." and "Encourage participation from all group members." each with a weighted mean of 4.48; "Share responsibilities equally in team tasks." and "Acknowledge contributions of teammates." each with a weighted mean of 4.45; "Respect opinions of other group members." and "Negotiate and reach agreements when conflicts arise." each with a weighted mean of 4.40; and "Cooperate with peers during group experiments." with a weighted mean of 4.33. The average weighted mean of 4.45 (Very High) indicates that school heads perceive the pupils to demonstrate very strong collaborative abilities in Science 3.',
-        t: 'Meanwhile, teacher respondents assess the following indicators as very high: "Encourage participation from all group members." with a weighted mean of 4.35, "Work together to solve science problems." and "Divide tasks efficiently during science projects." each with 4.33, "Help peers who are struggling with tasks." with 4.30, "Contribute ideas during group discussions." with 4.28, and "Share responsibilities equally in team tasks." and "Acknowledge contributions of teammates." each with 4.23. They further assess the following as high including "Respect opinions of other group members." with 4.20, "Cooperate with peers during group experiments." with 4.15, and "Negotiate and reach agreements when conflicts arise." with 4.10. The average weighted mean of 4.25, described as very high, indicates that teachers consistently perceive pupils\' collaborative abilities in Science 3 as highly developed across all indicators.'
+        sh: 'In terms of the level of abilities of Grade 3 pupils in Science in terms of collaboration, school head respondents rated all indicators as Very High, led by "Help peers who are struggling with tasks" and "Divide tasks efficiently during science projects," each with a weighted mean of 4.53. This was followed by "Work together to solve science problems" (4.50) and "Contribute ideas during group discussions" and "Encourage participation from all group members," each with 4.48. The remaining indicators were likewise assessed as Very High, with weighted means ranging from 4.33 to 4.45. The average weighted mean of 4.45 (Very High) indicates that school heads perceive pupils to demonstrate very strong collaborative abilities in Science 3.',
+        t: 'Meanwhile, teacher respondents also rated most indicators as Very High, led by "Encourage participation from all group members" (4.35) and "Work together to solve science problems" and "Divide tasks efficiently during science projects," each with 4.33. The remaining indicators were rated Very High or High, with weighted means ranging from 4.10 to 4.30. The average weighted mean of 4.25 (Very High) indicates that teachers consistently perceive pupils’ collaborative abilities in Science 3 as highly developed.'
       }
     },
     t14: {
@@ -484,8 +822,8 @@
         { indicator: 'Collaboration', sh: { wm: 4.45, qd: 'VH', rank: 1 }, t: { wm: 4.25, qd: 'VH', rank: 1 } }
       ],
       prewritten: {
-        sh: 'The Executive Summary of the Level of Abilities of Grade 3 Pupils in Science shows that school heads rated very high the following domains: Collaboration with a weighted mean of 4.45 and Communication with a weighted mean of 4.29. The other domains are rated high, including Curiosity with a weighted mean of 4.13 and Creativity with a weighted mean of 4.11. With an overall average weighted mean of 4.25, the school heads indicate that the abilities of Grade 3 pupils in Science are very high.',
-        t: 'Meanwhile, teacher respondents rated very high the domain of Collaboration, which obtained a weighted mean of 4.25. The remaining domains are rated high, including Curiosity with a weighted mean of 4.13, Creativity with a weighted mean of 4.06, and Communication with a weighted mean of 3.99. With an overall average weighted mean of 4.11, the teachers indicate that pupils\' abilities in Science are high.'
+        sh: 'The executive summary of the level of abilities of Grade 3 pupils in Science shows that school heads rated Collaboration (4.45) and Communication (4.29) as Very High, while Curiosity (4.13) and Creativity (4.11) were rated High. The overall average weighted mean of 4.25 (Very High) indicates that, overall, school heads perceive pupils’ abilities in Science as very high.',
+        t: 'Meanwhile, teacher respondents rated Collaboration as Very High (4.25), while Curiosity (4.13), Creativity (4.06), and Communication (3.99) were assessed as High. The overall average weighted mean of 4.11 (High) indicates that teachers generally perceive pupils’ abilities in Science as high.'
       }
     },
     t15: {
@@ -506,8 +844,8 @@
         { indicator: 'Find it hard to apply concepts to real-life situations', sh: { wm: 2.73, qd: 'MS', rank: 3.5 }, t: { wm: 2.05, qd: 'SS', rank: 9 } }
       ],
       prewritten: {
-        sh: 'In relation to the extent of constraints of Grade 3 pupils in Science in terms of comprehension of concepts, school head respondents claimed that the following constraints are moderately serious: "Struggle to understand abstract science concepts." with a weighted mean of 3.08; "Require repeated explanations to grasp concepts." with 2.80; "Confuse scientific terms frequently." and "Find it hard to apply concepts to real-life situations." each with 2.73; "Struggle to summarize scientific information." with 2.70; "Have difficulty solving problems based on scientific knowledge." with 2.68; and "Find it challenging to interpret graphs or tables." and "Have difficulty connecting prior knowledge to new topics." each with 2.63. They further assessed as slightly serious the constraints "Have difficulty explaining cause-and-effect relationships." with a weighted mean of 2.55 and "Fail to identify key information from science texts." with 2.45. The average weighted mean of 2.70, indicates that school heads perceive pupils\' comprehension-related constraints in Science 3 as moderately serious overall.',
-        t: 'Meanwhile, teacher respondents rated as moderately serious only the constraint "Struggle to understand abstract science concepts." with a weighted mean of 2.65. They further assessed the remaining constraints as slightly serious, including "Confuse scientific terms frequently." with 2.40; "Require repeated explanations to grasp concepts." with 2.35; "Struggle to summarize scientific information." with 2.28; "Have difficulty solving problems based on scientific knowledge." with 2.25; "Find it challenging to interpret graphs or tables." with 2.20; "Have difficulty connecting prior knowledge to new topics." with 2.15; "Have difficulty explaining cause-and-effect relationships." with 2.10; "Find it hard to apply concepts to real-life situations." with 2.05; and "Fail to identify key information from science texts." with 2.00. The average weighted mean of 2.24 denotes that teachers perceive comprehension-related constraints in Science 3 as present but only slightly serious.'
+        sh: 'In relation to the extent of constraints of Grade 3 pupils in Science in terms of comprehension of concepts, school head respondents assessed several constraints as Moderately Serious, led by "Struggle to understand abstract science concepts" with a weighted mean of 3.08, followed by "Require repeated explanations to grasp concepts" (2.80). The remaining constraints were generally rated Moderately Serious or Slightly Serious, with weighted means ranging from 2.45 to 2.73. The average weighted mean of 2.70 (Moderately Serious) indicates that school heads perceive comprehension-related constraints to be moderately serious overall.',
+        t: 'Meanwhile, teacher respondents rated only "Struggle to understand abstract science concepts" as Moderately Serious (2.65), while all remaining constraints were assessed as Slightly Serious, with weighted means ranging from 2.00 to 2.40. The average weighted mean of 2.24 (Slightly Serious) denotes that teachers perceive comprehension-related constraints as present but only slightly serious.'
       }
     },
     t16: {
@@ -528,8 +866,8 @@
         { indicator: 'Reluctantly share findings in group activities', sh: { wm: 2.95, qd: 'MS', rank: 10 }, t: { wm: 2.45, qd: 'SS', rank: 8.5 } }
       ],
       prewritten: {
-        sh: 'With respect to the extent of constraints of Grade 3 pupils in Science in terms of readiness for inquiry-based tasks, school head respondents assessed as moderately serious the indicators "Show discomfort making predictions before experiments." and "Find it challenging to draw conclusions from observations." each with a weighted mean of 3.38; "Struggle to design simple investigations." with a weighted mean of 3.28; "Have trouble analyzing results." and "Need frequent prompts to reflect on learning." each with a weighted mean of 3.18; "Require constant guidance during inquiry activities." with a weighted mean of 3.10; "Hesitate to participate in experiments." with a weighted mean of 3.03; "Reluctantly formulate own questions." and "Find it difficult to record and organize data." each with a weighted mean of 3.00; and "Reluctantly share findings in group activities." with a weighted mean of 2.95. The average weighted mean of 3.15 indicates that school heads view readiness-related constraints as moderately serious.',
-        t: 'Meanwhile, teacher respondents rated as moderately serious the constraints "Show discomfort making predictions before experiments." with a weighted mean of 2.93; "Find it challenging to draw conclusions from observations." with a weighted mean of 2.83; "Struggle to design simple investigations." with a weighted mean of 2.78; and "Need frequent prompts to reflect on learning." with a weighted mean of 2.68. The remaining indicators are assessed as slightly serious, including "Have trouble analyzing results." with a weighted mean of 2.60; "Require constant guidance during inquiry activities." with a weighted mean of 2.55; "Hesitate to participate in experiments." with a weighted mean of 2.48; "Reluctantly formulate own questions." and "Reluctantly share findings in group activities." each with a weighted mean of 2.45; and "Find it difficult to record and organize data." with a weighted mean of 2.40. The average weighted mean of 2.61 indicates that teachers view readiness-related constraints as moderately serious.'
+        sh: 'With respect to the extent of constraints of Grade 3 pupils in Science in terms of readiness for inquiry-based tasks, school head respondents assessed all indicators as Moderately Serious, led by "Show discomfort making predictions before experiments" and "Find it challenging to draw conclusions from observations," each with a weighted mean of 3.38. This was followed by "Struggle to design simple investigations" (3.28) and other indicators ranging from 2.95 to 3.18. The average weighted mean of 3.15 (Moderately Serious) indicates that school heads view readiness-related constraints as moderately serious.',
+        t: 'Meanwhile, teacher respondents rated as Moderately Serious the constraints "Show discomfort making predictions before experiments" (2.93), "Find it challenging to draw conclusions from observations" (2.83), "Struggle to design simple investigations" (2.78), and "Need frequent prompts to reflect on learning" (2.68). The remaining indicators were assessed as Slightly Serious, with weighted means ranging from 2.40 to 2.60. The average weighted mean of 2.61 (Moderately Serious) indicates that teachers also view readiness-related constraints as moderately serious.'
       }
     },
     t17: {
@@ -550,8 +888,8 @@
         { indicator: 'Experience delays in learning due to scarcity of instructional tools', sh: { wm: 2.98, qd: 'MS', rank: 9.5 }, t: { wm: 2.45, qd: 'SS', rank: 9.5 } }
       ],
       prewritten: {
-        sh: 'Concerning the extent of constraints of Grade 3 pupils in Science in terms of availability of resources, school head respondents assessed as moderately serious the indicators "Cannot perform hands-on activities due to resource shortages." and "Cannot practice experiments at home due to lack of materials." each with a weighted mean of 3.35; "Have limited access to reference books or educational materials." with a weighted mean of 3.18; "Experience limited laboratory space." with a weighted mean of 3.15; "Face difficulty conducting experiments due to insufficient equipment." with a weighted mean of 3.13; "Cannot use technology effectively for science tasks." and "Struggle to complete projects because of inadequate materials." each with a weighted mean of 3.08; "Lack access to necessary science materials." with a weighted mean of 3.00; and "Depend heavily on teacher-provided resources." and "Experience delays in learning due to scarcity of instructional tools." each with a weighted mean of 2.98. The average weighted mean of 3.13 indicates that school heads view resource-related constraints as moderately serious.',
-        t: 'Meanwhile, teacher respondents assessed as moderately serious the constraints "Cannot perform hands-on activities due to resource shortages." with a weighted mean of 3.05; "Cannot practice experiments at home due to lack of materials." with a weighted mean of 2.98; "Experience limited laboratory space." with a weighted mean of 2.80; "Face difficulty conducting experiments due to insufficient equipment." and "Have limited access to reference books or educational materials." each with a weighted mean of 2.70; and "Struggle to complete projects because of inadequate materials." with a weighted mean of 2.65. The remaining indicators are assessed as slightly serious, including "Cannot use technology effectively for science tasks." and "Depend heavily on teacher-provided resources." each with a weighted mean of 2.48, and "Lack access to necessary science materials." and "Experience delays in learning due to scarcity of instructional tools." each with a weighted mean of 2.45. The average weighted mean of 2.67 indicates that teachers view resource-related constraints as moderately serious.'
+        sh: 'Concerning the extent of constraints of Grade 3 pupils in Science in terms of availability of resources, school head respondents assessed all indicators as Moderately Serious, led by "Cannot perform hands-on activities due to resource shortages" and "Cannot practice experiments at home due to lack of materials," each with a weighted mean of 3.35. The remaining indicators were likewise rated Moderately Serious, with weighted means ranging from 2.98 to 3.18. The average weighted mean of 3.13 (Moderately Serious) indicates that school heads view resource-related constraints as moderately serious.',
+        t: 'Meanwhile, teacher respondents assessed as Moderately Serious the constraints "Cannot perform hands-on activities due to resource shortages" (3.05), "Cannot practice experiments at home due to lack of materials" (2.98), and "Experience limited laboratory space" (2.80), along with several indicators at 2.65–2.70. The remaining indicators were rated Slightly Serious, with weighted means of 2.45–2.48. The average weighted mean of 2.67 (Moderately Serious) indicates that teachers also view resource-related constraints as moderately serious.'
       }
     },
     t18: {
@@ -572,8 +910,8 @@
         { indicator: 'Perceive that the school environment does not fully support science exploration', sh: { wm: 2.78, qd: 'MS', rank: 10 }, t: { wm: 2.10, qd: 'SS', rank: 10 } }
       ],
       prewritten: {
-        sh: 'Pertaining to the extent of constraints of Grade 3 pupils in Science in terms of support from the learning environment, school head respondents assessed as moderately serious the indicator "Experience distractions in the classroom that affect learning." with a weighted mean of 3.18; "Receive minimal encouragement from peers during science activities." with a weighted mean of 3.10; "Receive limited guidance from teachers outside class hours." and "Have limited opportunities for collaborative learning." each with a weighted mean of 3.08; "Lack access to a conducive study area." with a weighted mean of 3.00; "Perceive that the school environment does not fully support science exploration." with a weighted mean of 2.95; "Feel unsafe handling science materials in the classroom." and "Experience interruptions due to classroom management issues." each with a weighted mean of 2.93; "Receive minimal support from family for science learning." with a weighted mean of 2.90; and "Lack motivation from classroom displays or learning aids." with a weighted mean of 2.78. The average weighted mean of 2.99 indicates that school heads view learning-environment constraints as moderately serious.',
-        t: 'Meanwhile, teacher respondents assessed as moderately serious the indicator "Experience distractions in the classroom that affect learning." with a weighted mean of 2.75. All remaining indicators are assessed as slightly serious, including "Receive minimal encouragement from peers during science activities." with a weighted mean of 2.60; "Receive limited guidance from teachers outside class hours." with a weighted mean of 2.58; "Have limited opportunities for collaborative learning." with a weighted mean of 2.48; "Lack motivation from classroom displays or learning aids." with a weighted mean of 2.43; "Experience interruptions due to classroom management issues." with a weighted mean of 2.38; "Receive minimal support from family for science learning." with a weighted mean of 2.35; "Feel unsafe handling science materials in the classroom." with a weighted mean of 2.30; and "Lack access to a conducive study area." with a weighted mean of 2.10. The average weighted mean of 2.42 indicates that teachers view learning-environment constraints as slightly serious.'
+        sh: 'Pertaining to the extent of constraints of Grade 3 pupils in Science in terms of support from the learning environment, school head respondents assessed all indicators as Moderately Serious, led by "Experience distractions in the classroom that affect learning" with a weighted mean of 3.18, followed by "Receive minimal encouragement from peers during science activities" (3.10). The remaining indicators were also rated Moderately Serious, with weighted means ranging from 2.78 to 3.08. The average weighted mean of 2.99 (Moderately Serious) indicates that school heads view learning-environment constraints as moderately serious.',
+        t: 'Meanwhile, teacher respondents assessed as Moderately Serious only "Experience distractions in the classroom that affect learning" (2.75), while the rest were rated Slightly Serious, with weighted means ranging from 2.10 to 2.60. The average weighted mean of 2.42 (Slightly Serious) indicates that teachers view learning-environment constraints as slightly serious overall.'
       }
     },
     t19: {
@@ -588,8 +926,8 @@
         { indicator: 'Support from the Learning Environment', sh: { wm: 2.99, qd: 'MS', rank: 4 }, t: { wm: 2.42, qd: 'SS', rank: 3 } }
       ],
       prewritten: {
-        sh: 'The Executive Summary of the Extent of Constraints of Grade 3 Pupils in Science shows that school heads rated the constraints as moderately serious across all domains. These include "Readiness for Inquiry-Based Tasks" with a weighted mean of 3.15, "Comprehension of Concepts" with 2.70, "Availability of Resources" with 3.13, and "Support from the Learning Environment" with 2.99. The average weighted mean of 2.99 indicates that school heads view the constraints experienced by Grade 3 pupils in Science as moderately serious.',
-        t: 'Meanwhile, teacher respondents assessed the constraints in "Readiness for Inquiry-Based Tasks" with a weighted mean of 2.61 and "Availability of Resources" with 2.67, both described as moderately serious. They further assessed "Support from the Learning Environment" with 2.42 and "Comprehension of Concepts" with 2.24, both described as slightly serious. The average weighted mean of 2.49 implies that teachers perceive the constraints of Grade 3 pupils in Science as slightly serious.'
+        sh: 'The executive summary of the extent of constraints of Grade 3 pupils in Science shows that school heads assessed all domains as Moderately Serious, led by Readiness for Inquiry-Based Tasks (3.15), followed by Availability of Resources (3.13), Comprehension of Concepts (2.70), and Support from the Learning Environment (2.99). The overall average weighted mean of 2.99 (Moderately Serious) indicates that school heads view the constraints experienced by pupils in Science as moderately serious.',
+        t: 'Meanwhile, teacher respondents assessed Readiness for Inquiry-Based Tasks (2.61) and Availability of Resources (2.67) as Moderately Serious, while Support from the Learning Environment (2.42) and Comprehension of Concepts (2.24) were assessed as Slightly Serious. The overall average weighted mean of 2.48 (Slightly Serious) indicates that teachers perceive pupils’ constraints in Science as slightly serious overall.'
       }
     },
     t20: {
@@ -615,8 +953,8 @@
         { indicator: 'Integrate technology and other instructional tools in science teaching', sh: { wm: 4.10, qd: 'S', rank: 2.5 }, t: { wm: 3.90, qd: 'S', rank: 2.5 } }
       ],
       prewritten: {
-        sh: 'The table shows the extent of the challenges encountered by teachers in Science 3 instruction, as assessed by school heads, all of which are described as serious. These include "Motivate unengaged or distracted learners." with a weighted mean of 4.13; "Implement hands-on or experimental tasks effectively." and "Integrate technology and other instructional tools in science teaching." each with a weighted mean of 4.10; and "Communicate effectively with school heads and parents regarding learners\' needs." with a weighted mean of 4.05. Also assessed as serious are "Address diverse learner abilities effectively," "Explain complex concepts in simple terms," "Provide individualized support for learners," and "Align lessons with students\' real-life experiences," each with a weighted mean of 4.03; "Manage group activities efficiently," "Monitor and assess learner progress accurately," and "Encourage learners to actively participate in inquiry-based tasks," each with a weighted mean of 4.00; "Manage insufficient teaching resources for inquiry-based activities." and "Attend professional development to improve inquiry-based instruction." each with a weighted mean of 3.98; and "Complete the science curriculum within limited time." and "Adapt lesson plans to accommodate learners\' constraints." each with a weighted mean of 3.88. The average weighted mean of 4.01 indicates that school heads view these instructional challenges in Science 3 as serious.',
-        t: 'Meanwhile, teacher respondents likewise assess all the challenges as serious. These include "Motivate unengaged or distracted learners." with a weighted mean of 3.93; "Implement hands-on or experimental tasks effectively." and "Integrate technology and other instructional tools in science teaching." each with a weighted mean of 3.90; "Explain complex concepts in simple terms," "Provide individualized support for learners," and "Communicate effectively with school heads and parents regarding learners\' needs," each with a weighted mean of 3.75; and "Align lessons with students\' real-life experiences," "Monitor and assess learner progress accurately," and "Encourage learners to actively participate in inquiry-based tasks," each with a weighted mean of 3.70. They also assess as serious "Address diverse learner abilities effectively," "Manage group activities efficiently," and "Attend professional development to improve inquiry-based instruction," each with a weighted mean of 3.68; "Complete the science curriculum within limited time." with 3.58; "Manage insufficient teaching resources for inquiry-based activities." with 3.55; and "Adapt lesson plans to accommodate learners\' constraints." with 3.50, which ranks last. The average weighted mean of 3.72 indicates that teachers experience these challenges in Science 3 instruction to a serious extent.'
+        sh: 'The extent of the challenges encountered by teachers in Science 3 instruction shows that school head respondents assessed all indicators as Serious, led by "Motivate unengaged or distracted learners" with a weighted mean of 4.13, followed by "Implement hands-on or experimental tasks effectively" and "Integrate technology and other instructional tools in science teaching," each with 4.10. The remaining indicators were likewise rated Serious, with weighted means ranging from 3.88 to 4.05. The average weighted mean of 4.01 (Serious) indicates that school heads view instructional challenges in Science 3 as serious.',
+        t: 'Meanwhile, teacher respondents also assessed all indicators as Serious, led by "Motivate unengaged or distracted learners" (3.93) and followed by "Implement hands-on or experimental tasks effectively" and "Integrate technology and other instructional tools in science teaching," each with 3.90. The remaining indicators were similarly rated Serious, with weighted means ranging from 3.50 to 3.75. The average weighted mean of 3.72 (Serious) indicates that teachers experience these challenges in Science 3 instruction to a serious extent.'
       }
     },
     t21: {
@@ -628,7 +966,7 @@
         { label: 'Teachers', tValue: '', tCritical: '', pValue: '', decision: '', description: '' }
       ],
       prewritten: {
-        sh: 'The T-test results show a significant difference between the perceptions of school heads and teachers regarding the constraints of learners in Science 3. For the school heads, the computed t-value exceeded the t-critical value and the null hypothesis was rejected, indicating that their perception of learner constraints differs significantly from that of the teachers. This implies that school heads tend to view the constraints of Grade 3 pupils as more substantial, suggesting that supervisory perspectives may heighten sensitivity to learners\' difficulties across classrooms.',
+        sh: 'The t-test results show a significant difference between the perceptions of school heads and teachers regarding the constraints of learners in Science 3. The computed t-value exceeded the t-critical value and the null hypothesis was rejected, indicating that the perceptions of the two groups differ significantly. This implies that school heads tend to view learners’ constraints as more substantial, suggesting that supervisory perspectives may heighten sensitivity to learners’ difficulties across classrooms.',
         t: ''
       }
     },
@@ -641,7 +979,7 @@
         { label: 'Teachers', tValue: '', tCritical: '', pValue: '', decision: '', description: '' }
       ],
       prewritten: {
-        sh: 'The T-test results reveal a significant difference between the perceptions of school heads and teachers regarding the challenges encountered in Science 3 instruction. For the school heads, the computed t-value exceeded the t-critical value and the null hypothesis was rejected, indicating that their perception of instructional challenges is significantly different from that of the teachers. This implies that school heads recognize a greater extent of challenges in Science 3 instruction, reflecting a wider administrative view of instructional demands, resource limitations, and curriculum expectations.',
+        sh: 'The t-test results reveal a significant difference between the perceptions of school heads and teachers regarding the challenges encountered in Science 3 instruction. The computed t-value exceeded the t-critical value and the null hypothesis was rejected, indicating that the two groups differ significantly in their assessment. This implies that school heads recognize a greater extent of instructional challenges, reflecting a broader administrative view of instructional demands, resource limitations, and curriculum expectations.',
         t: ''
       }
     }
@@ -1141,7 +1479,9 @@
       if (config.type !== 'tTest' && config.rows && config.rows.length) {
         generateTwoGroupInterpretations(0, '');
         laInterpTwoGroup = true;
-        if (block) block.textContent = laInterpretationSh;
+        if (block) {
+          block.textContent = laInterpretationSh + (laInterpretationT ? '\n\n' + laInterpretationT : '');
+        }
         if (interpTabs) interpTabs.hidden = false;
       } else if (config.prewritten) {
         var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
@@ -1614,6 +1954,175 @@
     return labels.slice(0, -1).join(', ') + ', and ' + labels[labels.length - 1];
   }
 
+  /**
+   * Build RP1 Likert interpretation in thesis-ready format (Tables 10–22).
+   * Format: Title + opener + indicators (grouped by WM) + AWM sentence + indicates + implies.
+   */
+  function buildRp1LikertInterpretation(rows, awm, awmDesc, tableId, variantIndex, lastOpener) {
+    var cfg = RP1_LIKERT_INTERPRETATION_CONFIG[tableId];
+    if (!cfg || !rows || !rows.length) return '';
+
+    var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
+    var vi = typeof variantIndex === 'number' ? variantIndex : 0;
+    var includeImplications = true;
+    var implEl = document.getElementById('la-include-implications');
+    if (implEl) includeImplications = implEl.checked;
+
+    var opener = cfg.opener;
+    if (Gen && cfg.openerAlternatives && cfg.openerAlternatives.length) {
+      opener = cfg.openerAlternatives[Math.abs(vi) % cfg.openerAlternatives.length];
+    }
+
+    var sorted = rows.slice().sort(function (a, b) {
+      return b.weightedMean - a.weightedMean;
+    });
+
+    var clauses = [];
+    var i = 0;
+    while (i < sorted.length) {
+      var j = i + 1;
+      while (j < sorted.length && sorted[j].weightedMean === sorted[i].weightedMean) {
+        j++;
+      }
+      var group = sorted.slice(i, j);
+      var labels = group.map(function (r) { return '"' + r.indicator + '"'; });
+      var wm = group[0].weightedMean.toFixed(2);
+      if (group.length === 1) {
+        clauses.push(labels[0] + ' with a weighted mean of ' + wm);
+      } else {
+        clauses.push(joinWithAnd(labels) + ' each with a weighted mean of ' + wm);
+      }
+      i = j;
+    }
+
+    var indicatorPart = 'the indicators include ' + clauses.join('; ') + '.';
+    var awmStr = awm.toFixed(2);
+    var desc = (awmDesc || '—').toLowerCase();
+
+    var text;
+    if (cfg.isExecutiveSummary) {
+      var areaParts = rows.map(function (r) {
+        return (r.indicator || '').toLowerCase() + ' having a weighted mean of ' + r.weightedMean.toFixed(2);
+      });
+      var areaList = rows.length >= 2
+        ? ', with ' + areaParts.slice(0, -1).join(', ') + ', and ' + areaParts[areaParts.length - 1]
+        : '';
+      var execBody = tableId === 't21'
+        ? 'all areas are considered serious' + areaList + '. '
+        : 'the competencies across all quarters are fully realized' + areaList + '. ';
+      var signifiesVerb = (Gen && includeImplications) ? (Gen.getSynonym('signifies', vi) || 'signifies') : 'signifies';
+      text = opener + execBody +
+        'The average weighted mean of ' + awmStr + ' ' + signifiesVerb + ' that teachers view the ' +
+        (tableId === 't21' ? 'challenges' : 'competencies') + ' as ' + desc + ' overall. ';
+    } else {
+      var sent1 = opener + indicatorPart;
+      var construct = cfg.awmConstruct || 'the construct';
+      var signifiesVerb = (Gen && includeImplications) ? (Gen.getSynonym('signifies', vi) || 'signifies') : 'signifies';
+      var sent2 = 'The average weighted mean of ' + awmStr + ' ' + signifiesVerb + ' that teachers view ' + construct + ' as ' + desc + '.';
+      text = sent1 + ' ' + sent2;
+    }
+
+    if (includeImplications && cfg.indicates) {
+      var lead1 = Gen ? (Gen.getSynonym('indicatesLead', vi) || 'This indicates that') : 'This indicates that';
+      var rest1 = cfg.indicates.replace(/^This (indicates|suggests|implies) that\s+/i, '');
+      text += ' ' + lead1 + ' ' + rest1;
+    }
+    if (includeImplications && cfg.implies) {
+      var lead2 = Gen ? (Gen.getSynonym('furtherLead', vi + 1) || 'This further implies that') : 'This further implies that';
+      var rest2 = cfg.implies.replace(/^This further (implies|suggests|indicates) that\s+/i, '');
+      text += ' ' + lead2 + ' ' + rest2;
+    }
+    return text.trim();
+  }
+
+  var RP2_LIKERT_TEACHERS_TRANSITION = [
+    'Meanwhile, teacher respondents ', 'Similarly, teacher respondents ', 'For their part, teacher respondents '
+  ];
+
+  /**
+   * Build RP2 two-group Likert interpretation (Tables 10–20).
+   * Format: section title + school heads paragraph + teachers paragraph.
+   * Returns { sectionTitle, shPara, tPara }.
+   */
+  function buildRp2TwoGroupLikertInterpretation(rowsSh, rowsT, awmSh, awmT, awmShDesc, awmTDesc, tableId, variantIndex) {
+    var cfg = RP2_LIKERT_INTERPRETATION_CONFIG[tableId];
+    if (!cfg || !rowsSh || !rowsT) return { sectionTitle: '', shPara: '', tPara: '' };
+
+    var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
+    var vi = typeof variantIndex === 'number' ? variantIndex : 0;
+    var includeImplications = true;
+    var implEl = document.getElementById('la-include-implications');
+    if (implEl) includeImplications = implEl.checked;
+
+    function buildClauses(rows) {
+      var sorted = rows.slice().sort(function (a, b) { return b.weightedMean - a.weightedMean; });
+      var clauses = [];
+      var i = 0;
+      while (i < sorted.length) {
+        var j = i + 1;
+        while (j < sorted.length && sorted[j].weightedMean === sorted[i].weightedMean) j++;
+        var group = sorted.slice(i, j);
+        var labels = group.map(function (r) { return '"' + r.indicator + '"'; });
+        var wm = group[0].weightedMean.toFixed(2);
+        if (group.length === 1) {
+          clauses.push(labels[0] + ' with a weighted mean of ' + wm);
+        } else {
+          clauses.push(joinWithAnd(labels) + ' each with a weighted mean of ' + wm);
+        }
+        i = j;
+      }
+      return clauses.join('; ') + '.';
+    }
+
+    var clausesSh = buildClauses(rowsSh);
+    var clausesT = buildClauses(rowsT);
+
+    var awmShStr = awmSh.toFixed(2);
+    var awmTStr = awmT.toFixed(2);
+    var descSh = (awmShDesc || '—').toLowerCase();
+    var descT = (awmTDesc || '—').toLowerCase();
+    var construct = cfg.headsAwmConstruct || 'the construct';
+
+    var shIntro = (cfg.headsRated === false)
+      ? cfg.headsOpener
+      : (cfg.headsOpener + 'school head respondents rated ');
+    if (Gen && cfg.headsOpenerAlternatives && cfg.headsOpenerAlternatives.length) {
+      var baseOpener = cfg.headsOpenerAlternatives[Math.abs(vi) % cfg.headsOpenerAlternatives.length];
+      shIntro = (cfg.headsRated === false) ? baseOpener : (baseOpener + 'school head respondents rated ');
+    }
+    var signifiesSh = Gen ? (Gen.getSynonym('signifies', vi) || 'signifies') : 'signifies';
+    var shPara = shIntro + clausesSh + ' ' +
+      'The average weighted mean of ' + awmShStr + ' ' + signifiesSh + ' that school heads view ' + construct + ' as ' + descSh + '.';
+    if (includeImplications && cfg.headsIndicates) {
+      var leadSh1 = Gen ? (Gen.getSynonym('indicatesLead', vi) || 'This indicates that') : 'This indicates that';
+      shPara += ' ' + leadSh1 + ' ' + cfg.headsIndicates;
+    }
+    if (includeImplications && cfg.headsImplies) {
+      var leadSh2 = Gen ? (Gen.getSynonym('furtherLead', vi) || 'This further implies that') : 'This further implies that';
+      shPara += ' ' + leadSh2 + ' ' + cfg.headsImplies;
+    }
+
+    var teachersOpener = cfg.teachersOpener || 'Meanwhile, teacher respondents ';
+    if (Gen && cfg.teachersOpenerAlternatives && cfg.teachersOpenerAlternatives.length) {
+      teachersOpener = cfg.teachersOpenerAlternatives[Math.abs(vi) % cfg.teachersOpenerAlternatives.length];
+    } else if (Gen && RP2_LIKERT_TEACHERS_TRANSITION) {
+      teachersOpener = RP2_LIKERT_TEACHERS_TRANSITION[Math.abs(vi) % RP2_LIKERT_TEACHERS_TRANSITION.length];
+    }
+    var signifiesT = Gen ? (Gen.getSynonym('signifies', vi + 1) || 'signifies') : 'signifies';
+    var tPara = teachersOpener + 'rated ' + clausesT + ' ' +
+      'The average weighted mean of ' + awmTStr + ' ' + signifiesT + ' that teachers view ' + construct + ' as ' + descT + '.';
+    if (includeImplications && cfg.teachersIndicates) {
+      var leadT1 = Gen ? (Gen.getSynonym('indicatesLead', vi + 1) || 'This indicates that') : 'This indicates that';
+      tPara += ' ' + leadT1 + ' ' + cfg.teachersIndicates;
+    }
+    if (includeImplications && cfg.teachersImplies) {
+      var leadT2 = Gen ? (Gen.getSynonym('furtherLead', vi + 1) || 'This further implies that') : 'This further implies that';
+      tPara += ' ' + leadT2 + ' ' + cfg.teachersImplies;
+    }
+
+    return { sectionTitle: cfg.sectionTitle || '', shPara: shPara.trim(), tPara: tPara.trim() };
+  }
+
   /** Build one interpretation for a group: opener + enumeration + AWM + implications. No rank, no Q.D. grouping. */
   function buildOneGroupInterpretation(rows, awm, awmDesc, theme, groupLabel, variantIndex, lastOpener) {
     if (!rows || !rows.length) return '';
@@ -1671,6 +2180,13 @@
   function generateInterpretationWithVariant(variantIndex, lastOpener) {
     var data = computedData;
     if (!data.indicators.length) return '';
+
+    var tableId = (activeProjectId === 'rp1' && currentLikertConfig) ? currentLikertConfig.id : '';
+    var rp1Cfg = tableId && RP1_LIKERT_INTERPRETATION_CONFIG[tableId];
+    if (rp1Cfg) {
+      return buildRp1LikertInterpretation(data.indicators, data.awm, data.awmDesc, tableId, variantIndex, lastOpener);
+    }
+
     var theme = data.theme || data.tableTitle || 'the theme';
     return buildOneGroupInterpretation(
       data.indicators,
@@ -1686,6 +2202,45 @@
   /** Generate two interpretations for two-group tables. Uses different openers for each group. */
   function generateTwoGroupInterpretations(variantIndex, lastOpener) {
     if (!currentLikertConfig || currentLikertConfig.type === 'tTest') return;
+
+    var tableId = currentLikertConfig.id || '';
+
+    // RP2 Tables 10–20: use dynamic thesis-ready format (section title + school heads + teachers)
+    if (activeProjectId === 'rp2' && RP2_LIKERT_INTERPRETATION_CONFIG[tableId]) {
+      var rowsSh, rowsT, awmSh, awmT, awmShDesc, awmTDesc;
+      if (currentTwoGroupData) {
+        rowsSh = currentTwoGroupData.rowsSh;
+        rowsT = currentTwoGroupData.rowsT;
+        awmSh = currentTwoGroupData.awmSh;
+        awmT = currentTwoGroupData.awmT;
+        awmShDesc = currentTwoGroupData.awmShDesc;
+        awmTDesc = currentTwoGroupData.awmTDesc;
+      } else {
+        var rows = currentLikertConfig.rows || [];
+        if (!rows.length) return;
+        rowsSh = rows.map(function (r) {
+          return { indicator: r.indicator, weightedMean: r.sh && typeof r.sh.wm === 'number' ? r.sh.wm : 0 };
+        });
+        rowsT = rows.map(function (r) {
+          return { indicator: r.indicator, weightedMean: r.t && typeof r.t.wm === 'number' ? r.t.wm : 0 };
+        });
+        awmSh = currentLikertConfig.awm && currentLikertConfig.awm.sh ? currentLikertConfig.awm.sh.value : 0;
+        awmT = currentLikertConfig.awm && currentLikertConfig.awm.t ? currentLikertConfig.awm.t.value : 0;
+        awmShDesc = currentLikertConfig.awm && currentLikertConfig.awm.sh ? currentLikertConfig.awm.sh.qd : '—';
+        awmTDesc = currentLikertConfig.awm && currentLikertConfig.awm.t ? currentLikertConfig.awm.t.qd : '—';
+      }
+      var rp2Result = buildRp2TwoGroupLikertInterpretation(rowsSh, rowsT, awmSh, awmT, awmShDesc, awmTDesc, tableId, variantIndex);
+      laInterpretationSh = rp2Result.shPara;
+      laInterpretationT = rp2Result.tPara;
+      return;
+    }
+
+    // RP2 T-test (t21, t22) and other prewritten: use stored paragraphs
+    if (activeProjectId === 'rp2' && currentLikertConfig.prewritten) {
+      laInterpretationSh = currentLikertConfig.prewritten.sh || '';
+      laInterpretationT = currentLikertConfig.prewritten.t || '';
+      return;
+    }
     var rowsSh, rowsT, awmSh, awmT, awmShDesc, awmTDesc, themeSh, themeT;
     if (currentTwoGroupData) {
       rowsSh = currentTwoGroupData.rowsSh;
@@ -1758,18 +2313,38 @@
 
     if (activeProjectId === 'rp2' && currentLikertConfig && currentLikertConfig.type !== 'tTest' && (currentLikertConfig.rows || currentTwoGroupData)) {
       var tableId = (currentLikertConfig.id || currentLikertConfig.title || 'likert').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
+      var interpTabs = document.getElementById('la-interp-tabs');
+
+      // For RP2 prewritten tables (Tables 10–22), use the dedicated
+      // applyRp2PrewrittenVariation helper so Regenerate varies openers
+      // and verbs but keeps the same paragraph structure.
+      if (Gen && currentLikertConfig.prewritten && typeof Gen.applyRp2PrewrittenVariation === 'function') {
+        var baseSh = currentLikertConfig.prewritten.sh || '';
+        var baseT = currentLikertConfig.prewritten.t || '';
+        var generatorPre = function (vi) {
+          return Gen.applyRp2PrewrittenVariation(baseSh, baseT, vi);
+        };
+        var resultPre = Gen.generateWithVariation(generatorPre, 'likert_rp2_pre', tableId);
+        setFullInterpretation(resultPre.text);
+        if (interpTabs) interpTabs.hidden = true;
+        showToast('Interpretation regenerated.');
+        return;
+      }
+
+      // Fallback for any other RP2 two-group tables: rebuild using the
+      // two-group generator and show both groups together.
       var generator = function (vi, lastOpener) {
         generateTwoGroupInterpretations(vi, lastOpener);
         return laInterpretationSh + '\n\n' + laInterpretationT;
       };
       if (Gen) {
-        Gen.generateWithVariation(generator, 'likert_rp2', tableId);
+        var resultTwo = Gen.generateWithVariation(generator, 'likert_rp2', tableId);
+        setFullInterpretation(resultTwo.text);
       } else {
         generateTwoGroupInterpretations(0, '');
+        setFullInterpretation((laInterpretationSh || '') + (laInterpretationT ? '\n\n' + laInterpretationT : ''));
       }
-      if (block) block.textContent = laInterpretationSh;
-      var interpTabs = document.getElementById('la-interp-tabs');
-      if (interpTabs) interpTabs.hidden = false;
+      if (interpTabs && laInterpTwoGroup) interpTabs.hidden = false;
       showToast('Interpretation regenerated.');
       return;
     }
@@ -1865,6 +2440,7 @@
           });
         });
         toSave = {
+          projectId: activeProjectId || 'rp1',
           type: 'tTest',
           tableTitle: (document.getElementById('la-table-title') && document.getElementById('la-table-title').value || '').trim() || currentLikertConfig.title,
           rows: tTestRows,
@@ -1905,6 +2481,7 @@
         var awmShDesc = awmShDescEl ? awmShDescEl.textContent : (currentLikertConfig.awm && currentLikertConfig.awm.sh ? currentLikertConfig.awm.sh.qd : '');
         var awmTDesc = awmTDescEl ? awmTDescEl.textContent : (currentLikertConfig.awm && currentLikertConfig.awm.t ? currentLikertConfig.awm.t.qd : '');
         toSave = {
+          projectId: activeProjectId || 'rp1',
           type: 'twoGroup',
           tableTitle: (document.getElementById('la-table-title') && document.getElementById('la-table-title').value || '').trim() || currentLikertConfig.title,
           rows: rows,
@@ -1915,6 +2492,7 @@
       }
     } else if (computedData.indicators.length) {
       toSave = {
+        projectId: activeProjectId || 'rp1',
         tableTitle: computedData.tableTitle,
         scaleMapping: computedData.scaleMapping,
         indicators: computedData.indicators.map(function (r) {
