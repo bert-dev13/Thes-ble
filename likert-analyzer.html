@@ -240,6 +240,13 @@
           <div class="la-card" id="la-output-card">
             <h2 class="la-card__title">Indicators and Weighted Means</h2>
             <div class="la-card__body">
+              <!-- Paste Table Data -->
+              <div class="la-paste-section" id="la-paste-section">
+                <h3 class="la-paste-section__title">Paste Table Data</h3>
+                <p class="la-paste-section__hint">Copy a table from Word or Excel, then paste it here using Ctrl + V.</p>
+                <div class="la-paste-zone" id="la-paste-zone" tabindex="0" role="textbox" aria-label="Paste table data from Word or Excel">Paste here (Ctrl + V)</div>
+                <p id="la-paste-table-error" class="la-field-error la-paste-section__error" role="alert" aria-live="polite"></p>
+              </div>
               <div class="la-table-toolbar">
                 <div class="la-table-density" aria-label="Row density">
                   <span class="la-table-density__label">Rows</span>
@@ -401,6 +408,7 @@
 
   <script src="js/interpretation-utils.js"></script>
   <script src="js/text-generator.js"></script>
+  <script src="js/paste-table-utils.js"></script>
   <script src="js/likert.js"></script>
 </body>
 </html>

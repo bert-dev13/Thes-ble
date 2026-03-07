@@ -123,6 +123,13 @@
 
               <!-- Single-group encoding table: shown when rp1 table selected -->
               <div class="pa-table-card" id="pa-table-card" hidden>
+                <!-- Paste Table Data -->
+                <div class="pa-paste-section" id="pa-paste-section">
+                  <h3 class="pa-paste-section__title">Paste Table Data</h3>
+                  <p class="pa-paste-section__hint">Copy a table from Word or Excel, then paste it here using Ctrl + V.</p>
+                  <div class="pa-paste-zone" id="pa-paste-zone" tabindex="0" role="textbox" aria-label="Paste table data from Word or Excel">Paste here (Ctrl + V)</div>
+                  <p id="pa-paste-table-error" class="pa-field-error pa-paste-section__error" role="alert" aria-live="polite"></p>
+                </div>
                 <div class="pa-table-wrap" id="pa-table-wrap">
                   <table class="pa-profile-table" id="pa-unified-table" role="grid">
                     <thead>
@@ -158,6 +165,13 @@
 
               <!-- Two-group table (rp2): shown when Research Paper 2 table selected -->
               <div class="pa-form-group" id="pa-output-section" hidden>
+                <!-- Paste Table Data (two-group) -->
+                <div class="pa-paste-section" id="pa-paste-section-two">
+                  <h3 class="pa-paste-section__title">Paste Table Data</h3>
+                  <p class="pa-paste-section__hint">Copy a table from Word or Excel, then paste it here using Ctrl + V. Columns: Particulars, School Heads (f), Teachers (f), or full 7 columns.</p>
+                  <div class="pa-paste-zone" id="pa-paste-zone-two" tabindex="0" role="textbox" aria-label="Paste table data (two-group)">Paste here (Ctrl + V)</div>
+                  <p id="pa-paste-table-error-two" class="pa-field-error pa-paste-section__error" role="alert" aria-live="polite"></p>
+                </div>
                 <div class="pa-table-wrap pa-thesis-table pa-thesis-table--two-group" id="pa-two-group-wrap">
                   <table class="pa-table pa-thesis-table__grid" id="pa-two-group-table">
                     <thead id="pa-output-thead"></thead>
@@ -302,6 +316,7 @@
 
   <script src="js/interpretation-utils.js"></script>
   <script src="js/text-generator.js"></script>
+  <script src="js/paste-table-utils.js"></script>
   <script src="js/profile.js"></script>
 </body>
 </html>

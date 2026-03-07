@@ -773,6 +773,48 @@ body {
   text-align: right;
 }
 
+/* Paste Table Data */
+.pa-paste-section {
+  margin-bottom: var(--space-md);
+  padding: var(--space-sm);
+  background: var(--bg-elevated);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+}
+.pa-paste-section__title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 0 0 var(--space-xs);
+  color: var(--text-secondary);
+}
+.pa-paste-section__hint {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin: 0 0 var(--space-sm);
+}
+.pa-paste-zone {
+  min-height: 52px;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.pa-paste-zone:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-bg);
+}
+.pa-paste-zone--has-content {
+  border-color: var(--accent);
+}
+.pa-paste-section__error {
+  margin-top: var(--space-xs);
+  margin-bottom: 0;
+}
+
 .pa-table-wrap {
   overflow-x: auto;
   margin: 0 0 var(--space-md);

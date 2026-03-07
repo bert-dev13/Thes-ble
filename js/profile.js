@@ -762,6 +762,118 @@
     }
   }
 
+  /**
+   * Apply pasted table data to the Profile table (Particulars, Frequency, Percentage, Rank).
+   * Only applies when single-group table is visible (rp1).
+   */
+  function applyPastedProfileData(mapped) {
+    var tbody = document.getElementById('pa-table-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    for (var i = 0; i < mapped.particulars.length; i++) {
+      var cat = mapped.particulars[i] || '';
+      var freqVal = mapped.frequency[i];
+      var freqNum = freqVal !== '' && freqVal != null ? (parseInt(String(freqVal), 10) || 0) : '';
+      var result = addRow(cat, freqNum === '' ? undefined : freqNum);
+      if (result && result.tr) {
+        var pctCell = result.tr.querySelector('[data-pa-pct]');
+        var rankCell = result.tr.querySelector('[data-pa-rank]');
+        if (pctCell && mapped.percentage[i]) pctCell.textContent = mapped.percentage[i];
+        if (rankCell && mapped.rank[i]) rankCell.textContent = mapped.rank[i];
+      }
+    }
+    onInputChange();
+  }
+
+  function handleProfilePaste(e) {
+    var clipboardData = e.clipboardData;
+    if (!clipboardData) return;
+    var Utils = typeof PasteTableUtils !== 'undefined' ? PasteTableUtils : null;
+    if (!Utils) return;
+    var parsed = Utils.parseClipboardToRows(clipboardData);
+    if (!parsed.rows.length) return;
+    e.preventDefault();
+    var rows = parsed.rows;
+    var skipHeader = Utils.isHeaderRow(rows[0], 'profile');
+    if (skipHeader) rows = rows.slice(1);
+    if (!rows.length) return;
+    var validation = Utils.validateProfilePaste(rows);
+    var errEl = document.getElementById('pa-paste-table-error');
+    var pasteZone = document.getElementById('pa-paste-zone');
+    if (!validation.valid) {
+      if (errEl) errEl.textContent = validation.message || 'Invalid format.';
+      return;
+    }
+    if (errEl) errEl.textContent = '';
+    var mapped = Utils.mapToProfileRows(rows, skipHeader);
+    if (mapped) {
+      applyPastedProfileData(mapped);
+      if (pasteZone) {
+        pasteZone.textContent = 'Paste here (Ctrl + V)';
+        pasteZone.classList.remove('pa-paste-zone--has-content');
+      }
+      showToast('Table data pasted. Review and click Compute.');
+    }
+  }
+
+  function applyPastedProfileTwoGroupData(mapped) {
+    if (!mapped) return;
+    var rows = [];
+    for (var i = 0; i < mapped.particulars.length; i++) {
+      var hF = mapped.headsF[i] !== '' ? (parseInt(mapped.headsF[i], 10) || 0) : 0;
+      var tF = mapped.teachersF[i] !== '' ? (parseInt(mapped.teachersF[i], 10) || 0) : 0;
+      var hPct = mapped.headsPct[i] !== '' ? (parseFloat(mapped.headsPct[i]) || 0) : 0;
+      var tPct = mapped.teachersPct[i] !== '' ? (parseFloat(mapped.teachersPct[i]) || 0) : 0;
+      rows.push({
+        category: mapped.particulars[i] || '',
+        heads: { f: hF, pct: hPct },
+        teachers: { f: tF, pct: tPct }
+      });
+    }
+    if (!currentProject2Table) {
+      currentProject2Table = {
+        id: 'pasted',
+        title: currentTableTitle || 'Pasted Table',
+        rows: rows,
+        type: 'twoGroupPercent'
+      };
+    } else {
+      currentProject2Table.rows = rows;
+    }
+    renderTwoGroupTable(currentProject2Table, { showComputed: false });
+    onInputChange();
+  }
+
+  function handleProfileTwoGroupPaste(e) {
+    var clipboardData = e.clipboardData;
+    if (!clipboardData) return;
+    var Utils = typeof PasteTableUtils !== 'undefined' ? PasteTableUtils : null;
+    if (!Utils) return;
+    var parsed = Utils.parseClipboardToRows(clipboardData);
+    if (!parsed.rows.length) return;
+    e.preventDefault();
+    var rows = parsed.rows;
+    var skipHeader = Utils.isHeaderRow(rows[0], 'profile-twogroup');
+    if (skipHeader) rows = rows.slice(1);
+    if (!rows.length) return;
+    var validation = Utils.validateProfileTwoGroupPaste(rows);
+    var errEl = document.getElementById('pa-paste-table-error-two');
+    var pasteZone = document.getElementById('pa-paste-zone-two');
+    if (!validation.valid) {
+      if (errEl) errEl.textContent = validation.message || 'Invalid format.';
+      return;
+    }
+    if (errEl) errEl.textContent = '';
+    var mapped = Utils.mapToProfileTwoGroupRows(rows);
+    if (mapped) {
+      applyPastedProfileTwoGroupData(mapped);
+      if (pasteZone) {
+        pasteZone.textContent = 'Paste here (Ctrl + V)';
+      }
+      showToast('Table data pasted. Review and click Compute.');
+    }
+  }
+
   function getInputRows() {
     var tbody = document.getElementById('pa-table-tbody');
     if (!tbody) return [];
@@ -2387,6 +2499,33 @@
 
     var addRowBtn = document.getElementById('pa-add-row');
     if (addRowBtn) addRowBtn.addEventListener('click', function () { addRow(); });
+
+    var pasteZone = document.getElementById('pa-paste-zone');
+    var tableWrap = document.getElementById('pa-table-wrap');
+    if (pasteZone) {
+      pasteZone.addEventListener('paste', handleProfilePaste);
+      pasteZone.addEventListener('focus', function () {
+        var errEl = document.getElementById('pa-paste-table-error');
+        if (errEl) errEl.textContent = '';
+      });
+    }
+    if (tableWrap) {
+      tableWrap.addEventListener('paste', handleProfilePaste);
+    }
+
+    var pasteZoneTwo = document.getElementById('pa-paste-zone-two');
+    var twoGroupWrap = document.getElementById('pa-two-group-wrap');
+    if (pasteZoneTwo) {
+      pasteZoneTwo.addEventListener('paste', handleProfileTwoGroupPaste);
+      pasteZoneTwo.addEventListener('focus', function () {
+        var errEl = document.getElementById('pa-paste-table-error-two');
+        if (errEl) errEl.textContent = '';
+      });
+    }
+    if (twoGroupWrap) {
+      twoGroupWrap.addEventListener('paste', handleProfileTwoGroupPaste);
+    }
+
     var computeBtn = document.getElementById('pa-compute');
     if (computeBtn) computeBtn.addEventListener('click', compute);
     var regenBtn = document.getElementById('pa-regenerate-interpretation');

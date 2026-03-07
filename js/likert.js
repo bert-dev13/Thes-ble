@@ -1542,6 +1542,173 @@
     onInputChange();
   }
 
+  /**
+   * Apply pasted table data to the Likert table (Particulars, W.M., Q.D., Rank).
+   * Only for single-group table (RP1). Builds currentLikertConfig and re-renders.
+   */
+  function applyPastedLikertData(mapped) {
+    var thead = document.getElementById('la-output-thead');
+    if (thead && thead.querySelector('.la-thesis-table__group-row')) return;
+    var rows = [];
+    for (var i = 0; i < mapped.particulars.length; i++) {
+      var wmVal = mapped.wm[i];
+      var rankVal = mapped.rank[i];
+      var wm = wmVal !== '' && wmVal != null ? parseFloat(String(wmVal)) : 0;
+      var rank = rankVal !== '' && rankVal != null ? (parseFloat(String(rankVal)) || 0) : 0;
+      if (isNaN(wm)) wm = 0;
+      rows.push({
+        indicator: (mapped.particulars[i] || '').trim(),
+        wm: wm,
+        qd: (mapped.qd[i] || '').trim(),
+        rank: rank
+      });
+    }
+    currentLikertConfig = {
+      rows: rows,
+      awm: null,
+      awmDesc: '',
+      title: (document.getElementById('la-table-title') && document.getElementById('la-table-title').value) || ''
+    };
+    usingPredefinedTable = true;
+    renderPredefinedTableRows(currentLikertConfig, { showComputed: false });
+    var block = document.getElementById('la-interpretation-block');
+    if (block) block.textContent = '';
+    updateLiveStats(null, null);
+    onInputChange();
+  }
+
+  function applyPastedLikertTwoGroupData(mapped) {
+    if (!mapped) return;
+    var rows = [];
+    for (var i = 0; i < mapped.particulars.length; i++) {
+      var shWm = mapped.shWm[i] !== '' ? (parseFloat(mapped.shWm[i]) || 0) : 0;
+      var tWm = mapped.tWm[i] !== '' ? (parseFloat(mapped.tWm[i]) || 0) : 0;
+      var shRank = mapped.shRank[i] !== '' ? (parseFloat(mapped.shRank[i]) || 0) : 0;
+      var tRank = mapped.tRank[i] !== '' ? (parseFloat(mapped.tRank[i]) || 0) : 0;
+      if (isNaN(shWm)) shWm = 0;
+      if (isNaN(tWm)) tWm = 0;
+      rows.push({
+        indicator: (mapped.particulars[i] || '').trim(),
+        sh: { wm: shWm, qd: (mapped.shQd[i] || '').trim(), rank: shRank },
+        t: { wm: tWm, qd: (mapped.tQd[i] || '').trim(), rank: tRank }
+      });
+    }
+    currentLikertConfig = {
+      rows: rows,
+      awm: null,
+      awmDesc: '',
+      title: (document.getElementById('la-table-title') && document.getElementById('la-table-title').value) || ''
+    };
+    if (currentLikertConfig.title && currentLikertConfig.rows.length) {
+      currentLikertConfig.id = activeTableId || 'pasted';
+    }
+    usingPredefinedTable = true;
+    renderTwoGroupWeighted(currentLikertConfig, { showComputed: false });
+    var block = document.getElementById('la-interpretation-block');
+    if (block) block.textContent = '';
+    updateLiveStats(null, null);
+    onInputChange();
+  }
+
+  function applyPastedLikertTTestData(mapped) {
+    if (!mapped) return;
+    var rows = [];
+    for (var i = 0; i < mapped.label.length; i++) {
+      rows.push({
+        label: (mapped.label[i] || '').trim(),
+        tValue: mapped.tValue[i] || '',
+        tCritical: mapped.tCritical[i] || '',
+        pValue: mapped.pValue[i] || '',
+        decision: mapped.decision[i] || '',
+        description: mapped.description[i] || ''
+      });
+    }
+    currentLikertConfig = {
+      type: 'tTest',
+      rows: rows,
+      title: (document.getElementById('la-table-title') && document.getElementById('la-table-title').value) || ''
+    };
+    usingPredefinedTable = true;
+    renderTTestTable(currentLikertConfig);
+    var block = document.getElementById('la-interpretation-block');
+    if (block) block.textContent = '';
+    onInputChange();
+  }
+
+  function handleLikertPaste(e) {
+    var clipboardData = e.clipboardData;
+    if (!clipboardData) return;
+    var Utils = typeof PasteTableUtils !== 'undefined' ? PasteTableUtils : null;
+    if (!Utils) return;
+    var thead = document.getElementById('la-output-thead');
+    var parsed = Utils.parseClipboardToRows(clipboardData);
+    if (!parsed.rows.length) return;
+    e.preventDefault();
+    var rows = parsed.rows;
+    var errEl = document.getElementById('la-paste-table-error');
+    var pasteZone = document.getElementById('la-paste-zone');
+
+    var isTwoGroup = thead && thead.querySelector('.la-thesis-table__group-row');
+    var isTTest = thead && (thead.textContent.indexOf('t-value') !== -1 || thead.textContent.indexOf('p-value') !== -1);
+
+    if (isTwoGroup) {
+      var skipHeaderTwo = Utils.isHeaderRow(rows[0], 'likert-twogroup');
+      if (skipHeaderTwo) rows = rows.slice(1);
+      if (!rows.length) return;
+      var validationTwo = Utils.validateLikertTwoGroupPaste(rows);
+      if (!validationTwo.valid) {
+        if (errEl) errEl.textContent = validationTwo.message || 'Invalid format.';
+        return;
+      }
+      if (errEl) errEl.textContent = '';
+      var mappedTwo = Utils.mapToLikertTwoGroupRows(rows);
+      if (mappedTwo) {
+        applyPastedLikertTwoGroupData(mappedTwo);
+        if (pasteZone) pasteZone.textContent = 'Paste here (Ctrl + V)';
+        showToast('Table data pasted. Review and click Compute.');
+      }
+      return;
+    }
+
+    if (isTTest) {
+      var skipHeaderT = Utils.isHeaderRow(rows[0], 'likert-ttest');
+      if (skipHeaderT) rows = rows.slice(1);
+      if (!rows.length) return;
+      var validationT = Utils.validateLikertTTestPaste(rows);
+      if (!validationT.valid) {
+        if (errEl) errEl.textContent = validationT.message || 'Invalid format.';
+        return;
+      }
+      if (errEl) errEl.textContent = '';
+      var mappedT = Utils.mapToLikertTTestRows(rows);
+      if (mappedT) {
+        applyPastedLikertTTestData(mappedT);
+        if (pasteZone) pasteZone.textContent = 'Paste here (Ctrl + V)';
+        showToast('Table data pasted.');
+      }
+      return;
+    }
+
+    var skipHeader = Utils.isHeaderRow(rows[0], 'likert');
+    if (skipHeader) rows = rows.slice(1);
+    if (!rows.length) return;
+    var validation = Utils.validateLikertPaste(rows);
+    if (!validation.valid) {
+      if (errEl) errEl.textContent = validation.message || 'Invalid format.';
+      return;
+    }
+    if (errEl) errEl.textContent = '';
+    var mapped = Utils.mapToLikertRows(rows, skipHeader);
+    if (mapped) {
+      applyPastedLikertData(mapped);
+      if (pasteZone) {
+        pasteZone.textContent = 'Paste here (Ctrl + V)';
+        pasteZone.classList.remove('la-paste-zone--has-content');
+      }
+      showToast('Table data pasted. Review and click Compute.');
+    }
+  }
+
   function addRow() {
     var tbody = document.getElementById('la-input-tbody');
     if (!tbody) return;
@@ -3007,6 +3174,19 @@
 
     var addRowBtn = document.getElementById('la-add-row');
     if (addRowBtn) addRowBtn.addEventListener('click', addLikertRow);
+
+    var pasteZone = document.getElementById('la-paste-zone');
+    var tableWrap = document.getElementById('la-table-wrap');
+    if (pasteZone) {
+      pasteZone.addEventListener('paste', handleLikertPaste);
+      pasteZone.addEventListener('focus', function () {
+        var errEl = document.getElementById('la-paste-table-error');
+        if (errEl) errEl.textContent = '';
+      });
+    }
+    if (tableWrap) {
+      tableWrap.addEventListener('paste', handleLikertPaste);
+    }
 
     var clearInputsBtn = document.getElementById('la-clear-inputs');
     if (clearInputsBtn) clearInputsBtn.addEventListener('click', openClearModal);
