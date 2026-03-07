@@ -12,6 +12,7 @@
   --teal-light: rgba(13, 148, 136, 0.12);
   --bg: #e8eef2;
   --bg-elevated: #ffffff;
+  --bg-subtle: #f0f4f7;
   --border: #c5d4de;
   --border-subtle: #dce4e9;
   --text: #0f2744;
@@ -581,50 +582,73 @@ body {
   gap: var(--space-xs);
   flex-wrap: wrap;
 }
+/* ---------- Scale Mapping table: thesis-friendly, readable ---------- */
 .la-scale-table-wrap {
   margin-top: var(--space-sm);
   overflow-x: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--bg-elevated);
+  box-shadow: 0 1px 3px rgba(10, 22, 40, 0.04);
 }
 .la-scale-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
+  table-layout: fixed;
+}
+.la-scale-table thead {
+  background: var(--ocean-navy);
+  color: #fff;
+}
+.la-scale-table thead tr:first-child th {
+  border-top: none;
 }
 .la-scale-table__th {
   padding: var(--space-sm) var(--space-md);
   text-align: left;
   font-weight: 600;
-  color: var(--text-secondary);
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-subtle);
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: none;
 }
+.la-scale-table__th:first-child { border-left: none; }
 .la-scale-table__th--scale {
   text-align: center;
-  width: 4rem;
+  width: 4.5rem;
 }
 .la-scale-table__th--range {
   text-align: center;
-  width: 7rem;
+  width: 8rem;
 }
 .la-scale-table__th--label {
-  min-width: 12rem;
+  min-width: 14rem;
 }
 .la-scale-table__td {
   padding: var(--space-sm) var(--space-md);
   vertical-align: middle;
-  border-bottom: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-subtle);
+  border-top: none;
+  background: var(--bg-elevated);
+  transition: background var(--transition);
 }
-.la-scale-table tbody tr:last-child .la-scale-table__td {
-  border-bottom: 0;
+.la-scale-table__td:first-child { border-left: none; }
+.la-scale-table tbody tr:nth-child(even) .la-scale-table__td {
+  background: var(--bg-subtle);
+}
+.la-scale-table tbody tr:hover .la-scale-table__td {
+  background: var(--teal-light);
 }
 .la-scale-table__td--scale {
   text-align: center;
   font-weight: 600;
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
+  background: var(--bg-subtle);
+}
+.la-scale-table tbody tr:nth-child(even) .la-scale-table__td--scale {
+  background: #e8ecf0;
 }
 .la-scale-table__td--range {
   text-align: center;
@@ -638,23 +662,32 @@ body {
   margin: 0;
   padding: var(--space-xs) var(--space-sm);
   box-sizing: border-box;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.la-scale-input:focus {
+  outline: none;
+  border-color: var(--teal);
+  box-shadow: 0 0 0 2px var(--teal-light);
 }
 .la-scale-input--num {
   min-width: 5.5rem;
   max-width: 6rem;
   text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 .la-scale-input--label {
   min-width: 10rem;
 }
 
-/* ========== Dynamic table (input rows) ========== */
+/* ========== Dynamic table wrapper ========== */
 .la-table-wrap {
   overflow-x: auto;
   margin: var(--space-md) 0;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--bg-elevated);
+  box-shadow: 0 1px 4px rgba(10, 22, 40, 0.06);
   -webkit-overflow-scrolling: touch;
 }
 .la-table .la-input {
@@ -663,19 +696,27 @@ body {
 }
 .la-table .la-input--indicator { min-width: 140px; }
 .la-table .la-input--count { max-width: 60px; text-align: center; }
+/* Remove row button: compact, clear on hover */
 .la-table .la-row-remove {
-  padding: var(--space-xs);
-  min-width: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 1.125rem;
+  line-height: 1;
   color: var(--text-muted);
   background: transparent;
-  border: none;
-  cursor: pointer;
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  transition: color var(--transition), background var(--transition);
+  cursor: pointer;
+  transition: color var(--transition), background var(--transition), border-color var(--transition);
 }
 .la-table .la-row-remove:hover {
   color: #dc2626;
   background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.2);
 }
 
 /* Row density toggle above table */
@@ -723,9 +764,11 @@ body {
 
 .la-table-toolbar {
   display: flex;
-  justify-content: flex-end;
+  flex-wrap: wrap;
+  justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-xs);
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
 }
 .la-table-density {
   display: inline-flex;
@@ -758,19 +801,19 @@ body {
   color: #fff;
 }
 
-/* ========== Thesis-style output table ========== */
+/* ========== Thesis-style output table: clean, structured, readable ========== */
 .la-thesis-table {
   --thesis-border: 1px solid var(--border);
-  --thesis-border-strong: 1px solid var(--ocean-mid);
+  --thesis-border-strong: 2px solid var(--ocean-mid);
   --thesis-th-bg: var(--ocean-navy);
   --thesis-th-color: #fff;
   --thesis-subhead-bg: var(--ocean-mid);
   --thesis-subhead-color: rgba(255, 255, 255, 0.95);
-  --thesis-cell-pad: var(--space-sm) var(--space-md);
-  --thesis-cell-pad-comfortable: var(--space-md) var(--space-lg);
-  --thesis-wm-width: 5.5rem;
-  --thesis-qd-width: 6rem;
-  --thesis-rank-width: 4rem;
+  --col-no: 56px;
+  --col-wm: 88px;
+  --col-qd: 100px;
+  --col-rank: 64px;
+  --col-action: 72px;
 }
 
 .la-thesis-table .la-table {
@@ -778,106 +821,172 @@ body {
   border-collapse: collapse;
   font-size: 0.9375rem;
   table-layout: fixed;
-  min-width: 520px;
+  min-width: 580px;
   font-variant-numeric: tabular-nums;
 }
 .la-thesis-table--two-group .la-table {
-  min-width: 720px;
+  min-width: 980px;
 }
 
 .la-thesis-table .la-table caption {
   padding: 0;
 }
 
-/* Header row */
-.la-thesis-table__th {
-  padding: var(--thesis-cell-pad);
+/* ----- Header row: clear hierarchy, readable labels ----- */
+.la-thesis-table .la-table thead tr:first-child th {
+  border-top: none;
+}
+.la-thesis-table .la-table thead th {
   font-weight: 600;
   font-size: 0.8125rem;
-  text-align: left;
-  border: var(--thesis-border);
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   vertical-align: middle;
+  box-sizing: border-box;
+}
+.la-thesis-table .la-table thead th:first-child { border-left: none; }
+
+.la-thesis-table__th--no {
+  width: var(--col-no);
+  min-width: var(--col-no);
+  max-width: var(--col-no);
+  text-align: center;
+  background: var(--thesis-th-bg);
+  color: var(--thesis-th-color);
+  padding: var(--space-sm) var(--space-xs);
 }
 .la-thesis-table__th--particulars {
-  min-width: 220px;
-  width: auto;
+  min-width: 280px;
+  width: 280px;
+  text-align: left;
   background: var(--thesis-th-bg);
-  color: #fff;
-  font-weight: 600;
+  color: var(--thesis-th-color);
+  padding: var(--space-sm) var(--space-md);
 }
 .la-thesis-table__th--num {
-  width: var(--thesis-wm-width);
-  min-width: var(--thesis-wm-width);
+  width: var(--col-wm);
+  min-width: var(--col-wm);
+  max-width: var(--col-wm);
   text-align: center;
   background: var(--thesis-th-bg);
-  color: #fff;
+  color: var(--thesis-th-color);
+  padding: var(--space-sm) var(--space-xs);
 }
 .la-thesis-table__th--qd {
-  width: var(--thesis-qd-width);
-  min-width: var(--thesis-qd-width);
+  width: var(--col-qd);
+  min-width: var(--col-qd);
+  max-width: var(--col-qd);
   text-align: center;
   background: var(--thesis-th-bg);
-  color: #fff;
+  color: var(--thesis-th-color);
+  padding: var(--space-sm) var(--space-xs);
 }
 .la-thesis-table__th--rank {
-  width: var(--thesis-rank-width);
-  min-width: var(--thesis-rank-width);
+  width: var(--col-rank);
+  min-width: var(--col-rank);
+  max-width: var(--col-rank);
   text-align: center;
   background: var(--thesis-th-bg);
-  color: #fff;
+  color: var(--thesis-th-color);
+  padding: var(--space-sm) var(--space-xs);
 }
+.la-thesis-table__th--action {
+  width: var(--col-action);
+  min-width: var(--col-action);
+  max-width: var(--col-action);
+  text-align: center;
+  background: var(--thesis-th-bg);
+  color: var(--thesis-th-color);
+  padding: var(--space-sm) var(--space-xs);
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+/* Two-group: group labels (School Heads / Teachers) */
 .la-thesis-table__th--group {
   text-align: center;
   background: var(--thesis-subhead-bg);
-  color: #fff;
+  color: var(--thesis-subhead-color);
+  padding: var(--space-sm) var(--space-md);
   border-left: var(--thesis-border-strong);
 }
 .la-thesis-table__th--group:first-of-type {
-  border-left: none;
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-/* Subhead row (W.M., Q.D., Rank under School Heads / Teachers) */
+/* Subhead row (W.M., Q.D., Rank under each group) */
 .la-thesis-table__subhead-row .la-thesis-table__th {
   background: var(--thesis-subhead-bg);
-  color: #fff;
+  color: var(--thesis-subhead-color);
   font-size: 0.75rem;
   padding: var(--space-xs) var(--space-sm);
-}
-.la-thesis-table__th--group + .la-thesis-table__th--group,
-.la-thesis-table__subhead-row .la-thesis-table__th:nth-child(n+2) {
-  border-left: var(--thesis-border);
+  font-weight: 500;
 }
 
-/* Body cells */
+/* ----- Body cells: comfortable padding, clear borders ----- */
 .la-thesis-table__td {
-  padding: var(--thesis-cell-pad);
-  border: var(--thesis-border);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border-subtle);
   vertical-align: middle;
+  box-sizing: border-box;
+  background: var(--bg-elevated);
+  transition: background var(--transition);
+}
+.la-thesis-table__td:first-child { border-left: none; }
+
+.la-thesis-table__td--no {
+  width: var(--col-no);
+  min-width: var(--col-no);
+  max-width: var(--col-no);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: var(--space-sm) var(--space-xs);
 }
 .la-thesis-table__td--indicator {
   text-align: left;
-  min-width: 220px;
-  width: auto;
   white-space: normal;
   word-wrap: break-word;
-  line-height: 1.5;
+  overflow-wrap: break-word;
+  line-height: 1.6;
+  padding: var(--space-sm) var(--space-md);
   color: var(--text);
+  min-width: 280px;
+  width: 280px;
+  vertical-align: top;
+  overflow: visible;
 }
 .la-thesis-table__td--num {
+  width: var(--col-wm);
+  min-width: var(--col-wm);
+  max-width: var(--col-wm);
   text-align: center;
-  width: var(--thesis-wm-width);
-  min-width: var(--thesis-wm-width);
+  padding: var(--space-sm) var(--space-xs);
 }
 .la-thesis-table__td--qd {
+  width: var(--col-qd);
+  min-width: var(--col-qd);
+  max-width: var(--col-qd);
   text-align: center;
-  width: var(--thesis-qd-width);
-  min-width: var(--thesis-qd-width);
+  padding: var(--space-sm) var(--space-xs);
 }
 .la-thesis-table__td--rank {
+  width: var(--col-rank);
+  min-width: var(--col-rank);
+  max-width: var(--col-rank);
   text-align: center;
-  width: var(--thesis-rank-width);
-  min-width: var(--thesis-rank-width);
   font-variant-numeric: tabular-nums;
+  padding: var(--space-sm) var(--space-xs);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+.la-thesis-table__td--action {
+  width: var(--col-action);
+  min-width: var(--col-action);
+  max-width: var(--col-action);
+  text-align: center;
+  padding: var(--space-xs);
 }
 
 /* Visual separator between School Heads and Teachers columns */
@@ -886,8 +995,9 @@ body {
   border-left: var(--thesis-border-strong);
 }
 
-/* Thesis-style inputs */
+/* Thesis-style inputs: contained, focus ring */
 .la-thesis-input {
+  display: block;
   width: 100%;
   max-width: 100%;
   min-width: 0;
@@ -901,6 +1011,8 @@ body {
   text-align: center;
   font-variant-numeric: tabular-nums;
   box-sizing: border-box;
+  margin: 0;
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
 .la-thesis-input:focus {
   outline: none;
@@ -908,50 +1020,79 @@ body {
   box-shadow: 0 0 0 2px var(--teal-light);
 }
 .la-thesis-input--wm {
-  width: 4.5rem;
-  min-width: 4.5rem;
+  text-align: center;
 }
 .la-thesis-input--qd {
-  width: 5rem;
-  min-width: 5rem;
   font-size: 0.8125rem;
+  text-align: center;
+}
+.la-thesis-input--indicator {
+  line-height: 1.6;
+  text-align: left;
+  padding: var(--space-sm) var(--space-md);
+  min-height: 2.75em;
+  resize: vertical;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.la-thesis-table__td--indicator textarea.la-thesis-input--indicator {
+  display: block;
+  width: 100%;
+  min-height: 2.75em;
+  max-height: 12em;
+  resize: vertical;
+  overflow: auto;
 }
 
-/* Footer row */
+/* ----- Footer row: strong visual separation ----- */
 .la-thesis-table__footer-row td {
-  padding: var(--thesis-cell-pad);
-  border: var(--thesis-border);
-  background: var(--bg);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--ocean-mid);
+  background: var(--bg-subtle);
   font-size: 0.875rem;
+  box-sizing: border-box;
+  font-variant-numeric: tabular-nums;
 }
+.la-thesis-table__footer-row td:first-child { border-left: none; }
 .la-thesis-table__footer-label {
   text-align: left;
   font-weight: 600;
   color: var(--text);
+  padding-left: var(--space-md);
 }
 .la-thesis-table__footer-value {
   text-align: center;
   font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text);
 }
 
-/* Row density */
+/* Row density: compact mode */
 .la-thesis-table__grid.la-table--compact .la-thesis-table__td,
 .la-thesis-table__grid.la-table--compact .la-thesis-table__th {
   padding-top: 6px;
   padding-bottom: 6px;
 }
-
 .la-thesis-table__grid.la-table--compact .la-thesis-table__td--indicator {
   padding: 6px var(--space-md);
 }
+.la-thesis-table__grid.la-table--compact .la-thesis-table__td--num,
+.la-thesis-table__grid.la-table--compact .la-thesis-table__td--qd,
+.la-thesis-table__grid.la-table--compact .la-thesis-table__td--rank {
+  padding-left: var(--space-xs);
+  padding-right: var(--space-xs);
+}
 
-/* ========== Output table overrides ========== */
+/* ========== Output table: sticky headers, zebra rows, hover ========== */
 .la-output-table .la-table thead th {
   position: sticky;
   top: 0;
   z-index: 2;
   background: var(--thesis-th-bg) !important;
   color: #fff !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 .la-output-table .la-table thead tr:nth-child(2) th {
   top: 40px;
@@ -964,12 +1105,18 @@ body {
   left: 0;
   z-index: 1;
   background: var(--bg-elevated) !important;
-  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.04);
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.06);
 }
 .la-output-table .la-table tbody tr:nth-child(even) .la-thesis-table__td {
-  background: rgba(13, 148, 136, 0.03);
+  background: var(--bg-subtle);
+}
+.la-output-table .la-table tbody tr:nth-child(even) .la-thesis-table__td--no {
+  background: #e6eaef;
 }
 .la-output-table .la-table tbody tr:hover .la-thesis-table__td {
+  background: var(--teal-light);
+}
+.la-output-table .la-table tbody tr:hover .la-thesis-table__td--no {
   background: var(--teal-light);
 }
 .la-output-table .la-table tbody tr:hover .la-thesis-table__td--indicator {
@@ -989,8 +1136,33 @@ body {
   color: var(--text-muted);
   font-style: italic;
   text-align: center;
-  padding: var(--space-lg);
+  padding: var(--space-xl) var(--space-lg);
   white-space: normal;
+  font-size: 0.9375rem;
+  border: 1px dashed var(--border);
+  border-top: none;
+  background: var(--bg-subtle);
+}
+
+/* Column legend: W.M., Q.D., Rank meanings */
+.la-table-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: var(--space-xs) 0;
+}
+.la-table-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.la-table-legend__abbr {
+  font-weight: 600;
+  color: var(--text-secondary);
 }
 
 /* ========== Formal Interpretation section ========== */

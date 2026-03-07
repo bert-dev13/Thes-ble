@@ -81,19 +81,49 @@
   }
 
   /**
+   * Normalize rows so every row has the same number of columns (pad with empty string).
+   * Ensures consistent structure for mapping regardless of source (Word, Excel, PDF text).
+   * @param {string[][]} rows
+   * @returns {string[][]}
+   */
+  function normalizeRowLengths(rows) {
+    if (!rows || !rows.length) return rows || [];
+    var maxCols = 0;
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i] && rows[i].length > maxCols) maxCols = rows[i].length;
+    }
+    if (maxCols === 0) return rows;
+    return rows.map(function (row) {
+      var r = row || [];
+      while (r.length < maxCols) r.push('');
+      return r;
+    });
+  }
+
+  /**
    * Parse clipboard content into rows of cells. Prefer HTML if present (Word/Excel).
+   * Normalizes row lengths so all rows have the same column count.
    * @param {DataTransfer} clipboardData
-   * @returns {{ rows: string[][], source: 'html'|'plain' }}
+   * @returns {{ rows: string[][], source: 'html'|'plain', rowCount: number, colCount: number }}
    */
   function parseClipboardToRows(clipboardData) {
-    if (!clipboardData) return { rows: [], source: 'plain' };
+    var empty = { rows: [], source: 'plain', rowCount: 0, colCount: 0 };
+    if (!clipboardData) return empty;
     var html = clipboardData.getData('text/html');
+    var rows = [];
+    var source = 'plain';
     if (html && html.trim()) {
-      var fromHtml = parseHtmlTable(html);
-      if (fromHtml.length > 0) return { rows: fromHtml, source: 'html' };
+      rows = parseHtmlTable(html);
+      if (rows.length > 0) source = 'html';
     }
-    var plain = clipboardData.getData('text/plain');
-    return { rows: parsePlainTable(plain), source: 'plain' };
+    if (rows.length === 0) {
+      var plain = clipboardData.getData('text/plain');
+      rows = parsePlainTable(plain);
+    }
+    rows = normalizeRowLengths(rows);
+    var rowCount = rows.length;
+    var colCount = rows[0] ? rows[0].length : 0;
+    return { rows: rows, source: source, rowCount: rowCount, colCount: colCount };
   }
 
   /**
@@ -166,33 +196,33 @@
   }
 
   /**
-   * Validate pasted data for Profile: at least one column (Particulars); max 4.
+   * Validate pasted data for Profile: at least one column (Particulars); dynamic column count (1–12).
    * @param {string[][]} rows
    * @returns {{ valid: boolean, message?: string }}
    */
   function validateProfilePaste(rows) {
     if (!rows || rows.length === 0) {
-      return { valid: false, message: 'The pasted table format does not match the required columns. Please check your copied data.' };
+      return { valid: false, message: 'No table data detected. Copy a table from Word, Excel, or PDF and paste again.' };
     }
     var colCount = rows[0] ? rows[0].length : 0;
-    if (colCount < 1 || colCount > 4) {
-      return { valid: false, message: 'The pasted table format does not match the required columns. Please check your copied data.' };
+    if (colCount < 1 || colCount > 12) {
+      return { valid: false, message: 'The pasted table format could not be used. Expect 1–12 columns (e.g. Particulars, Frequency, %, Rank).' };
     }
     return { valid: true };
   }
 
   /**
-   * Validate pasted data for Likert: at least one column; max 4.
+   * Validate pasted data for Likert: at least one column; dynamic column count (1–12).
    * @param {string[][]} rows
    * @returns {{ valid: boolean, message?: string }}
    */
   function validateLikertPaste(rows) {
     if (!rows || rows.length === 0) {
-      return { valid: false, message: 'The pasted table format does not match the required columns. Please check your copied data.' };
+      return { valid: false, message: 'No table data detected. Copy a table from Word, Excel, or PDF and paste again.' };
     }
     var colCount = rows[0] ? rows[0].length : 0;
-    if (colCount < 1 || colCount > 4) {
-      return { valid: false, message: 'The pasted table format does not match the required columns. Please check your copied data.' };
+    if (colCount < 1 || colCount > 12) {
+      return { valid: false, message: 'The pasted table format could not be used. Expect 1–12 columns (e.g. Particulars, W.M., Q.D., Rank).' };
     }
     return { valid: true };
   }
@@ -220,45 +250,93 @@
   }
 
   /**
-   * Validate Profile two-group paste: 3 cols (Part, H f, T f) or 7 cols.
+   * Validate Profile two-group paste: 2–12 columns (Particulars + at least one value column).
    */
   function validateProfileTwoGroupPaste(rows) {
     if (!rows || rows.length === 0) {
-      return { valid: false, message: 'The pasted table format does not match the required columns. Please check your copied data.' };
+      return { valid: false, message: 'No table data detected. Copy a table from Word, Excel, or PDF and paste again.' };
     }
     var colCount = rows[0] ? rows[0].length : 0;
-    if (colCount < 3 || colCount > 7) {
-      return { valid: false, message: 'The pasted table format does not match the required columns. Please check your copied data.' };
+    if (colCount < 2 || colCount > 12) {
+      return { valid: false, message: 'The pasted table format could not be used. Expect 2+ columns (e.g. Particulars, School Heads, Teachers).' };
     }
     return { valid: true };
   }
 
   /**
    * Map pasted rows to Likert two-group: Particulars, SH W.M., SH Q.D., SH Rank, T W.M., T Q.D., T Rank.
+   * Supports 2–8 columns:
+   * - 8 cols: No., Particulars, SH W.M., SH Q.D., SH Rank, T W.M., T Q.D., T Rank (first column skipped)
+   * - 7 cols: Particulars, SH W.M., SH Q.D., SH Rank, T W.M., T Q.D., T Rank
+   * - 3 cols: Particulars, SH W.M., T W.M.
+   * - 2 cols: Particulars, W.M. (used for both School Heads and Teachers)
    */
   function mapToLikertTwoGroupRows(rows) {
     if (!rows || !rows.length) return null;
+    var colCount = rows[0] ? rows[0].length : 0;
+    var hasNoCol = colCount === 8;
+    var off = hasNoCol ? 1 : 0;
     var particulars = [], shWm = [], shQd = [], shRank = [], tWm = [], tQd = [], tRank = [];
     for (var i = 0; i < rows.length; i++) {
       var c = rows[i];
-      particulars.push((c[0] != null ? String(c[0]).trim() : '') || '');
-      shWm.push(c[1] != null ? String(c[1]).trim() : '');
-      shQd.push(c[2] != null ? String(c[2]).trim() : '');
-      shRank.push(c[3] != null ? String(c[3]).trim() : '');
-      tWm.push(c[4] != null ? String(c[4]).trim() : '');
-      tQd.push(c[5] != null ? String(c[5]).trim() : '');
-      tRank.push(c[6] != null ? String(c[6]).trim() : '');
+      particulars.push((c[0 + off] != null ? String(c[0 + off]).trim() : '') || '');
+      if (colCount === 1) {
+        shWm.push('');
+        shQd.push('');
+        shRank.push('');
+        tWm.push('');
+        tQd.push('');
+        tRank.push('');
+      } else if (colCount >= 7) {
+        shWm.push(c[1 + off] != null ? String(c[1 + off]).trim() : '');
+        shQd.push(c[2 + off] != null ? String(c[2 + off]).trim() : '');
+        shRank.push(c[3 + off] != null ? String(c[3 + off]).trim() : '');
+        tWm.push(c[4 + off] != null ? String(c[4 + off]).trim() : '');
+        tQd.push(c[5 + off] != null ? String(c[5 + off]).trim() : '');
+        tRank.push(c[6 + off] != null ? String(c[6 + off]).trim() : '');
+      } else if (colCount === 3 || (colCount === 4 && !hasNoCol)) {
+        var shVal = c[1 + off] != null ? String(c[1 + off]).trim() : '';
+        var tVal = c[2 + off] != null ? String(c[2 + off]).trim() : '';
+        shWm.push(shVal);
+        shQd.push('');
+        shRank.push('');
+        tWm.push(tVal);
+        tQd.push('');
+        tRank.push('');
+      } else if (colCount === 2) {
+        var wmVal = c[1 + off] != null ? String(c[1 + off]).trim() : '';
+        shWm.push(wmVal);
+        shQd.push('');
+        shRank.push('');
+        tWm.push(wmVal);
+        tQd.push('');
+        tRank.push('');
+      } else if (colCount === 5 || colCount === 6) {
+        shWm.push(c[1 + off] != null ? String(c[1 + off]).trim() : '');
+        shQd.push(colCount >= 6 ? (c[2 + off] != null ? String(c[2 + off]).trim() : '') : '');
+        shRank.push('');
+        tWm.push(c[3 + off] != null ? String(c[3 + off]).trim() : '');
+        tQd.push(colCount >= 6 && c[4 + off] != null ? String(c[4 + off]).trim() : '');
+        tRank.push('');
+      } else {
+        shWm.push('');
+        shQd.push('');
+        shRank.push('');
+        tWm.push('');
+        tQd.push('');
+        tRank.push('');
+      }
     }
     return { particulars: particulars, shWm: shWm, shQd: shQd, shRank: shRank, tWm: tWm, tQd: tQd, tRank: tRank };
   }
 
   function validateLikertTwoGroupPaste(rows) {
     if (!rows || rows.length === 0) {
-      return { valid: false, message: 'The pasted table format does not match the required columns. Please check your copied data.' };
+      return { valid: false, message: 'No table data detected. Copy a table from Word, Excel, or PDF and paste again.' };
     }
     var colCount = rows[0] ? rows[0].length : 0;
-    if (colCount < 1 || colCount > 7) {
-      return { valid: false, message: 'The pasted table format does not match the required columns. Please check your copied data.' };
+    if (colCount < 1 || colCount > 12) {
+      return { valid: false, message: 'The pasted table format could not be used. Expect 1–12 columns.' };
     }
     return { valid: true };
   }
@@ -283,17 +361,18 @@
 
   function validateLikertTTestPaste(rows) {
     if (!rows || rows.length === 0) {
-      return { valid: false, message: 'The pasted table format does not match the required columns. Please check your copied data.' };
+      return { valid: false, message: 'No table data detected. Copy a table from Word, Excel, or PDF and paste again.' };
     }
     var colCount = rows[0] ? rows[0].length : 0;
-    if (colCount < 1 || colCount > 6) {
-      return { valid: false, message: 'The pasted table format does not match the required columns. Please check your copied data.' };
+    if (colCount < 1 || colCount > 10) {
+      return { valid: false, message: 'The pasted table format could not be used. Expect 1–10 columns (e.g. Label, t-value, p-value).' };
     }
     return { valid: true };
   }
 
   global.PasteTableUtils = {
     parseClipboardToRows: parseClipboardToRows,
+    normalizeRowLengths: normalizeRowLengths,
     parsePlainTable: parsePlainTable,
     parseHtmlTable: parseHtmlTable,
     isHeaderRow: isHeaderRow,

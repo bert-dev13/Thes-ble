@@ -1210,7 +1210,7 @@
     var tableSelect = document.getElementById('la-table-select');
     if (!pill || !projectSelect || !tableSelect) return;
     if (!tableSelect.value) {
-      pill.textContent = 'None selected';
+      pill.textContent = 'Manual table';
       return;
     }
     var projOpt = projectSelect.options[projectSelect.selectedIndex];
@@ -1247,10 +1247,12 @@
     if (thead) {
       thead.innerHTML =
         '<tr>' +
-          '<th class="la-thesis-table__th la-thesis-table__th--particulars">Particulars</th>' +
-          '<th class="la-thesis-table__th la-thesis-table__th--num">W.M.</th>' +
-          '<th class="la-thesis-table__th la-thesis-table__th--qd">Q.D.</th>' +
-          '<th class="la-thesis-table__th la-thesis-table__th--rank">Rank</th>' +
+          '<th class="la-thesis-table__th la-thesis-table__th--no" scope="col">No.</th>' +
+          '<th class="la-thesis-table__th la-thesis-table__th--particulars" scope="col">Particulars</th>' +
+          '<th class="la-thesis-table__th la-thesis-table__th--num" scope="col" title="Weighted Mean">W.M.</th>' +
+          '<th class="la-thesis-table__th la-thesis-table__th--qd" scope="col" title="Qualitative Description">Q.D.</th>' +
+          '<th class="la-thesis-table__th la-thesis-table__th--rank" scope="col">Rank</th>' +
+          '<th class="la-thesis-table__th la-thesis-table__th--action" scope="col">Remove</th>' +
         '</tr>';
     }
     var awmStr = showComputed && config.awm != null ? config.awm.toFixed(2) : '—';
@@ -1258,9 +1260,11 @@
     if (tfoot) {
       tfoot.innerHTML =
         '<tr class="la-thesis-table__footer-row">' +
+          '<td class="la-thesis-table__footer-value"></td>' +
           '<td class="la-thesis-table__footer-label"><strong>AVERAGE WEIGHTED MEAN</strong></td>' +
           '<td class="la-thesis-table__footer-value"><strong id="la-awm-value">' + awmStr + '</strong></td>' +
           '<td class="la-thesis-table__footer-value"><strong id="la-awm-desc">' + escapeHtml(awmDescStr) + '</strong></td>' +
+          '<td class="la-thesis-table__footer-value"></td>' +
           '<td class="la-thesis-table__footer-value"></td>' +
         '</tr>';
     }
@@ -1269,12 +1273,20 @@
     config.rows.forEach(function (row, idx) {
       var tr = document.createElement('tr');
       tr.setAttribute('data-la-row-index', String(idx));
+      var indVal = (row.indicator != null ? String(row.indicator) : '');
+      var indSafe = escapeHtml(indVal);
+      var qdVal = showComputed && row.qd ? escapeHtml(row.qd) : '';
+      var rankVal = showComputed && row.rank != null ? (row.rank % 1 === 0 ? row.rank : row.rank.toFixed(1)) : '—';
       tr.innerHTML =
-        '<td class="la-thesis-table__td la-thesis-table__td--indicator">' + escapeHtml(row.indicator) + '</td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--no">' + (idx + 1) + '</td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--indicator"><textarea class="la-thesis-input la-thesis-input--indicator" data-la-indicator placeholder="Indicator" rows="2">' + indSafe + '</textarea></td>' +
         '<td class="la-thesis-table__td la-thesis-table__td--num"><input type="number" step="0.01" class="la-thesis-input la-thesis-input--wm" data-la-wm value="' + row.wm.toFixed(2) + '"></td>' +
-        '<td class="la-thesis-table__td la-thesis-table__td--qd"><input type="text" class="la-thesis-input la-thesis-input--qd" data-la-qd value="' + escapeHtml(row.qd) + '"></td>' +
-        '<td class="la-thesis-table__td la-thesis-table__td--rank" data-la-rank>' + (row.rank % 1 === 0 ? row.rank : row.rank.toFixed(1)) + '</td>';
+        '<td class="la-thesis-table__td la-thesis-table__td--qd"><input type="text" class="la-thesis-input la-thesis-input--qd" data-la-qd value="' + qdVal + '" placeholder="Q.D."></td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--rank" data-la-rank>' + rankVal + '</td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--action"><button type="button" class="la-row-remove" aria-label="Remove row" data-la-remove>×</button></td>';
       tbody.appendChild(tr);
+      var removeBtn = tr.querySelector('[data-la-remove]');
+      if (removeBtn) removeBtn.addEventListener('click', function () { removeLikertOutputRow(tr); });
     });
 
     if (recomputeBtn) recomputeBtn.disabled = false;
@@ -1351,19 +1363,21 @@
 
     thead.innerHTML =
       '<tr>' +
-        '<th class="la-thesis-table__th la-thesis-table__th--particulars">Particulars</th>' +
-        '<th class="la-thesis-table__th la-thesis-table__th--num">t-value</th>' +
-        '<th class="la-thesis-table__th la-thesis-table__th--qd">t-critical</th>' +
-        '<th class="la-thesis-table__th la-thesis-table__th--rank">p-value</th>' +
-        '<th class="la-thesis-table__th">Decision</th>' +
-        '<th class="la-thesis-table__th">Description</th>' +
+        '<th class="la-thesis-table__th la-thesis-table__th--no" scope="col">No.</th>' +
+        '<th class="la-thesis-table__th la-thesis-table__th--particulars" scope="col">Particulars</th>' +
+        '<th class="la-thesis-table__th la-thesis-table__th--num" scope="col">t-value</th>' +
+        '<th class="la-thesis-table__th la-thesis-table__th--qd" scope="col">t-critical</th>' +
+        '<th class="la-thesis-table__th la-thesis-table__th--rank" scope="col">p-value</th>' +
+        '<th class="la-thesis-table__th" scope="col">Decision</th>' +
+        '<th class="la-thesis-table__th" scope="col">Description</th>' +
       '</tr>';
 
     tbody.innerHTML = '';
     (config.rows || []).forEach(function (row, idx) {
       var tr = document.createElement('tr');
       tr.innerHTML =
-        '<td class="la-thesis-table__td la-thesis-table__td--indicator">' + (idx + 1) + '. ' + escapeHtml(row.label) + '</td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--no">' + (idx + 1) + '</td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--indicator">' + escapeHtml(row.label) + '</td>' +
         '<td class="la-thesis-table__td la-thesis-table__td--num">' + escapeHtml(String(row.tValue || '')) + '</td>' +
         '<td class="la-thesis-table__td la-thesis-table__td--qd">' + escapeHtml(String(row.tCritical || '')) + '</td>' +
         '<td class="la-thesis-table__td la-thesis-table__td--rank">' + escapeHtml(String(row.pValue || '')) + '</td>' +
@@ -1374,7 +1388,7 @@
 
     tfoot.innerHTML =
       '<tr class="la-thesis-table__footer-row">' +
-        '<td colspan="6" class="la-thesis-table__footer-label"></td>' +
+        '<td colspan="7" class="la-thesis-table__footer-label"></td>' +
       '</tr>';
   }
 
@@ -1392,32 +1406,44 @@
 
     thead.innerHTML =
       '<tr class="la-thesis-table__group-row">' +
-        '<th rowspan="2" class="la-thesis-table__th la-thesis-table__th--particulars">Particulars</th>' +
-        '<th colspan="3" class="la-thesis-table__th la-thesis-table__th--group">School Heads</th>' +
-        '<th colspan="3" class="la-thesis-table__th la-thesis-table__th--group">Teachers</th>' +
+        '<th rowspan="2" class="la-thesis-table__th la-thesis-table__th--no" scope="col">No.</th>' +
+        '<th rowspan="2" class="la-thesis-table__th la-thesis-table__th--particulars" scope="col">Particulars</th>' +
+        '<th colspan="3" class="la-thesis-table__th la-thesis-table__th--group" scope="colgroup">School Heads</th>' +
+        '<th colspan="3" class="la-thesis-table__th la-thesis-table__th--group" scope="colgroup">Teachers</th>' +
+        '<th rowspan="2" class="la-thesis-table__th la-thesis-table__th--action" scope="col">Remove</th>' +
       '</tr>' +
       '<tr class="la-thesis-table__subhead-row">' +
-        '<th class="la-thesis-table__th la-thesis-table__th--num">W.M.</th>' +
-        '<th class="la-thesis-table__th la-thesis-table__th--qd">Q.D.</th>' +
-        '<th class="la-thesis-table__th la-thesis-table__th--rank">Rank</th>' +
-        '<th class="la-thesis-table__th la-thesis-table__th--num">W.M.</th>' +
-        '<th class="la-thesis-table__th la-thesis-table__th--qd">Q.D.</th>' +
-        '<th class="la-thesis-table__th la-thesis-table__th--rank">Rank</th>' +
+        '<th class="la-thesis-table__th la-thesis-table__th--num" scope="col" title="Weighted Mean">W.M.</th>' +
+        '<th class="la-thesis-table__th la-thesis-table__th--qd" scope="col" title="Qualitative Description">Q.D.</th>' +
+        '<th class="la-thesis-table__th la-thesis-table__th--rank" scope="col">Rank</th>' +
+        '<th class="la-thesis-table__th la-thesis-table__th--num" scope="col" title="Weighted Mean">W.M.</th>' +
+        '<th class="la-thesis-table__th la-thesis-table__th--qd" scope="col" title="Qualitative Description">Q.D.</th>' +
+        '<th class="la-thesis-table__th la-thesis-table__th--rank" scope="col">Rank</th>' +
       '</tr>';
 
     tbody.innerHTML = '';
     config.rows.forEach(function (row, idx) {
       var tr = document.createElement('tr');
       tr.setAttribute('data-la-row-index', String(idx));
+      var indVal = (row.indicator != null ? String(row.indicator) : '');
+      var indSafe = escapeHtml(indVal);
+      var shQdVal = showComputed && row.sh.qd ? escapeHtml(row.sh.qd) : '';
+      var tQdVal = showComputed && row.t.qd ? escapeHtml(row.t.qd) : '';
+      var shRankVal = showComputed && row.sh.rank != null ? (row.sh.rank % 1 === 0 ? row.sh.rank : row.sh.rank.toFixed(1)) : '—';
+      var tRankVal = showComputed && row.t.rank != null ? (row.t.rank % 1 === 0 ? row.t.rank : row.t.rank.toFixed(1)) : '—';
       tr.innerHTML =
-        '<td class="la-thesis-table__td la-thesis-table__td--indicator">' + escapeHtml(row.indicator) + '</td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--no">' + (idx + 1) + '</td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--indicator"><textarea class="la-thesis-input la-thesis-input--indicator" data-la-indicator placeholder="Indicator" rows="2">' + indSafe + '</textarea></td>' +
         '<td class="la-thesis-table__td la-thesis-table__td--num"><input type="number" step="0.01" class="la-thesis-input la-thesis-input--wm" data-la-sh-wm value="' + row.sh.wm.toFixed(2) + '"></td>' +
-        '<td class="la-thesis-table__td la-thesis-table__td--qd"><input type="text" class="la-thesis-input la-thesis-input--qd" data-la-sh-qd value="' + escapeHtml(row.sh.qd) + '"></td>' +
-        '<td class="la-thesis-table__td la-thesis-table__td--rank" data-la-sh-rank>' + (row.sh.rank % 1 === 0 ? row.sh.rank : row.sh.rank.toFixed(1)) + '</td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--qd"><input type="text" class="la-thesis-input la-thesis-input--qd" data-la-sh-qd value="' + shQdVal + '" placeholder="Q.D."></td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--rank" data-la-sh-rank>' + shRankVal + '</td>' +
         '<td class="la-thesis-table__td la-thesis-table__td--num"><input type="number" step="0.01" class="la-thesis-input la-thesis-input--wm" data-la-t-wm value="' + row.t.wm.toFixed(2) + '"></td>' +
-        '<td class="la-thesis-table__td la-thesis-table__td--qd"><input type="text" class="la-thesis-input la-thesis-input--qd" data-la-t-qd value="' + escapeHtml(row.t.qd) + '"></td>' +
-        '<td class="la-thesis-table__td la-thesis-table__td--rank" data-la-t-rank>' + (row.t.rank % 1 === 0 ? row.t.rank : row.t.rank.toFixed(1)) + '</td>';
+        '<td class="la-thesis-table__td la-thesis-table__td--qd"><input type="text" class="la-thesis-input la-thesis-input--qd" data-la-t-qd value="' + tQdVal + '" placeholder="Q.D."></td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--rank" data-la-t-rank>' + tRankVal + '</td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--action"><button type="button" class="la-row-remove" aria-label="Remove row" data-la-remove>×</button></td>';
       tbody.appendChild(tr);
+      var removeBtn = tr.querySelector('[data-la-remove]');
+      if (removeBtn) removeBtn.addEventListener('click', function () { removeLikertOutputRow(tr); });
     });
 
     var awmShVal = showComputed && config.awm && config.awm.sh ? config.awm.sh.value.toFixed(2) : '—';
@@ -1426,12 +1452,14 @@
     var awmTDesc = showComputed && config.awm && config.awm.t ? escapeHtml(config.awm.t.qd) : '—';
     tfoot.innerHTML =
       '<tr class="la-thesis-table__footer-row">' +
+        '<td class="la-thesis-table__footer-value"></td>' +
         '<td class="la-thesis-table__footer-label"><strong>AVERAGE WEIGHTED MEAN</strong></td>' +
         '<td class="la-thesis-table__footer-value"><strong id="la-awm-sh-value">' + awmShVal + '</strong></td>' +
         '<td class="la-thesis-table__footer-value"><strong id="la-awm-sh-desc">' + awmShDesc + '</strong></td>' +
         '<td class="la-thesis-table__footer-value"></td>' +
         '<td class="la-thesis-table__footer-value"><strong id="la-awm-t-value">' + awmTVal + '</strong></td>' +
         '<td class="la-thesis-table__footer-value"><strong id="la-awm-t-desc">' + awmTDesc + '</strong></td>' +
+        '<td class="la-thesis-table__footer-value"></td>' +
         '<td class="la-thesis-table__footer-value"></td>' +
       '</tr>';
   }
@@ -1516,30 +1544,85 @@
     onInputChange();
   }
 
+  function addLikertRowTwoGroup() {
+    if (!currentLikertConfig || !currentLikertConfig.rows) return;
+    currentLikertConfig.rows.push({
+      indicator: '',
+      sh: { wm: 0, qd: '', rank: 0 },
+      t: { wm: 0, qd: '', rank: 0 }
+    });
+    renderTwoGroupWeighted(currentLikertConfig, { showComputed: false });
+    var block = document.getElementById('la-interpretation-block');
+    if (block) block.textContent = '';
+    onInputChange();
+    showToast('Row added. Click Compute to update ranks and AWM.');
+  }
+
   function addLikertRow() {
     var tbody = document.getElementById('la-output-tbody');
     var thead = document.getElementById('la-output-thead');
     if (!tbody || !thead) return;
     var isTwoGroup = thead.querySelector('.la-thesis-table__group-row');
-    if (isTwoGroup) return;
+    if (isTwoGroup) {
+      addLikertRowTwoGroup();
+      return;
+    }
     var emptyRow = tbody.querySelector('.la-output-empty');
     if (emptyRow) tbody.removeChild(emptyRow);
     var tr = document.createElement('tr');
     var nextIdx = tbody.querySelectorAll('tr').length;
     tr.setAttribute('data-la-row-index', String(nextIdx));
     tr.innerHTML =
-      '<td class="la-thesis-table__td la-thesis-table__td--indicator"><input type="text" class="la-thesis-input la-thesis-input--indicator" data-la-indicator placeholder="New indicator"></td>' +
+      '<td class="la-thesis-table__td la-thesis-table__td--no">' + (nextIdx + 1) + '</td>' +
+      '<td class="la-thesis-table__td la-thesis-table__td--indicator"><textarea class="la-thesis-input la-thesis-input--indicator" data-la-indicator placeholder="New indicator" rows="2"></textarea></td>' +
       '<td class="la-thesis-table__td la-thesis-table__td--num"><input type="number" step="0.01" class="la-thesis-input la-thesis-input--wm" data-la-wm placeholder="0.00"></td>' +
       '<td class="la-thesis-table__td la-thesis-table__td--qd"><input type="text" class="la-thesis-input la-thesis-input--qd" data-la-qd placeholder="Q.D."></td>' +
-      '<td class="la-thesis-table__td la-thesis-table__td--rank" data-la-rank>—</td>';
+      '<td class="la-thesis-table__td la-thesis-table__td--rank" data-la-rank>—</td>' +
+      '<td class="la-thesis-table__td la-thesis-table__td--action"><button type="button" class="la-row-remove" aria-label="Remove row" data-la-remove>×</button></td>';
     tbody.appendChild(tr);
     if (currentLikertConfig && currentLikertConfig.rows) {
       currentLikertConfig.rows.push({ indicator: '', wm: 0, qd: '', rank: 0 });
+    } else {
+      syncLikertConfigFromDom();
     }
-    tr.querySelectorAll('input').forEach(function (inp) {
+    var removeBtn = tr.querySelector('[data-la-remove]');
+    if (removeBtn) removeBtn.addEventListener('click', function () { removeLikertOutputRow(tr); });
+    tr.querySelectorAll('input, textarea').forEach(function (inp) {
       inp.addEventListener('input', onInputChange);
     });
     onInputChange();
+  }
+
+  function syncLikertConfigFromDom() {
+    var tbody = document.getElementById('la-output-tbody');
+    var thead = document.getElementById('la-output-thead');
+    if (!tbody || !thead || thead.querySelector('.la-thesis-table__group-row')) return;
+    var rows = [];
+    tbody.querySelectorAll('tr').forEach(function (tr) {
+      var indInput = tr.querySelector('[data-la-indicator]');
+      var wmInput = tr.querySelector('[data-la-wm]');
+      var qdInput = tr.querySelector('[data-la-qd]');
+      var wm = wmInput && wmInput.value !== '' ? parseFloat(wmInput.value) : 0;
+      if (isNaN(wm)) wm = 0;
+      rows.push({
+        indicator: (indInput && indInput.value || '').trim(),
+        wm: wm,
+        qd: (qdInput && qdInput.value || '').trim(),
+        rank: 0
+      });
+    });
+    if (rows.length === 0) return;
+    currentLikertConfig = {
+      rows: rows,
+      awm: null,
+      awmDesc: '',
+      title: (document.getElementById('la-table-title') && document.getElementById('la-table-title').value) || ''
+    };
+    usingPredefinedTable = true;
+    var recomputeBtn = document.getElementById('la-recompute');
+    var restoreBtn = document.getElementById('la-restore-original');
+    if (recomputeBtn) recomputeBtn.disabled = false;
+    if (restoreBtn) restoreBtn.disabled = false;
   }
 
   /**
@@ -1665,7 +1748,9 @@
       if (mappedTwo) {
         applyPastedLikertTwoGroupData(mappedTwo);
         if (pasteZone) pasteZone.textContent = 'Paste here (Ctrl + V)';
-        showToast('Table data pasted. Review and click Compute.');
+        var r2 = rows.length;
+        var c2 = rows[0] ? rows[0].length : 0;
+        showToast('Detected ' + r2 + ' row' + (r2 !== 1 ? 's' : '') + ' × ' + c2 + ' column' + (c2 !== 1 ? 's' : '') + '. Table updated. You can edit cells and click Compute.');
       }
       return;
     }
@@ -1684,7 +1769,9 @@
       if (mappedT) {
         applyPastedLikertTTestData(mappedT);
         if (pasteZone) pasteZone.textContent = 'Paste here (Ctrl + V)';
-        showToast('Table data pasted.');
+        var rT = rows.length;
+        var cT = rows[0] ? rows[0].length : 0;
+        showToast('Detected ' + rT + ' row' + (rT !== 1 ? 's' : '') + ' × ' + cT + ' column' + (cT !== 1 ? 's' : '') + '. Table updated. You can edit cells.');
       }
       return;
     }
@@ -1705,7 +1792,9 @@
         pasteZone.textContent = 'Paste here (Ctrl + V)';
         pasteZone.classList.remove('la-paste-zone--has-content');
       }
-      showToast('Table data pasted. Review and click Compute.');
+      var r1 = rows.length;
+      var c1 = rows[0] ? rows[0].length : 0;
+      showToast('Detected ' + r1 + ' row' + (r1 !== 1 ? 's' : '') + ' × ' + c1 + ' column' + (c1 !== 1 ? 's' : '') + '. Table updated. You can edit cells and click Compute.');
     }
   }
 
@@ -1736,6 +1825,34 @@
     if (tbody && tr.parentNode === tbody) {
       tbody.removeChild(tr);
       onInputChange();
+    }
+  }
+
+  /** Remove a row from the output table (la-output-tbody) and update config. */
+  function removeLikertOutputRow(tr) {
+    var tbody = document.getElementById('la-output-tbody');
+    if (!tbody || tr.parentNode !== tbody) return;
+    var idx = parseInt(tr.getAttribute('data-la-row-index'), 10);
+    if (isNaN(idx)) idx = Array.prototype.indexOf.call(tbody.querySelectorAll('tr'), tr);
+    tbody.removeChild(tr);
+    if (currentLikertConfig && currentLikertConfig.rows && idx >= 0 && idx < currentLikertConfig.rows.length) {
+      currentLikertConfig.rows.splice(idx, 1);
+    }
+    updateLikertOutputRowNumbers();
+    onInputChange();
+  }
+
+  /** Update No. column and data-la-row-index for all rows in la-output-tbody. */
+  function updateLikertOutputRowNumbers() {
+    var tbody = document.getElementById('la-output-tbody');
+    if (!tbody) return;
+    var rows = tbody.querySelectorAll('tr');
+    for (var i = 0; i < rows.length; i++) {
+      var tr = rows[i];
+      if (tr.classList.contains('la-output-empty')) continue;
+      tr.setAttribute('data-la-row-index', String(i));
+      var noCell = tr.querySelector('.la-thesis-table__td--no');
+      if (noCell) noCell.textContent = i + 1;
     }
   }
 
@@ -1872,7 +1989,8 @@
     if (activeProjectId === 'rp1') {
       var rows = [];
       tbody.querySelectorAll('tr').forEach(function (tr, idx) {
-        var ind = currentLikertConfig.rows[idx] && currentLikertConfig.rows[idx].indicator;
+        var indInput = tr.querySelector('[data-la-indicator]');
+        var ind = (indInput && indInput.value != null) ? indInput.value.trim() : (currentLikertConfig.rows[idx] && currentLikertConfig.rows[idx].indicator) || '';
         var wmInput = tr.querySelector('[data-la-wm]');
         var qdInput = tr.querySelector('[data-la-qd]');
         var wmVal = wmInput && wmInput.value !== '' ? parseFloat(wmInput.value) : NaN;
@@ -1964,8 +2082,8 @@
 
     tbody.querySelectorAll('tr').forEach(function (tr, idx) {
       var base = currentLikertConfig.rows[idx];
-      if (!base) return;
-      var ind = base.indicator;
+      var indInput = tr.querySelector('[data-la-indicator]');
+      var ind = (indInput && indInput.value != null) ? indInput.value.trim() : (base && base.indicator) || '';
       var shWmInput = tr.querySelector('[data-la-sh-wm]');
       var shQdInput = tr.querySelector('[data-la-sh-qd]');
       var tWmInput = tr.querySelector('[data-la-t-wm]');
@@ -1982,10 +2100,9 @@
 
     var mapping2 = getScaleMapping();
 
-    if (doAutoRank) {
-      computeRanks(rowsSh.slice().sort(function (a, b) { return b.weightedMean - a.weightedMean; }));
-      computeRanks(rowsT.slice().sort(function (a, b) { return b.weightedMean - a.weightedMean; }));
-    }
+    // Always compute ranks from W.M. (descending) so Rank column shows 1, 2, 3...
+    computeRanks(rowsSh.slice().sort(function (a, b) { return b.weightedMean - a.weightedMean; }));
+    computeRanks(rowsT.slice().sort(function (a, b) { return b.weightedMean - a.weightedMean; }));
     if (doAutoQd) {
       rowsSh.forEach(function (r) { r.qualitativeDescription = getQualitativeDescription(r.weightedMean, mapping2); });
       rowsT.forEach(function (r) { r.qualitativeDescription = getQualitativeDescription(r.weightedMean, mapping2); });
@@ -2756,23 +2873,24 @@
         var rows = [];
         tbody.querySelectorAll('tr').forEach(function (tr, idx) {
           var base = currentLikertConfig.rows[idx];
-          if (!base) return;
+          var indInput = tr.querySelector('[data-la-indicator]');
+          var ind = (indInput && indInput.value != null) ? indInput.value.trim() : (base && base.indicator) || '';
           var shWmInput = tr.querySelector('[data-la-sh-wm]');
           var shQdInput = tr.querySelector('[data-la-sh-qd]');
           var tWmInput = tr.querySelector('[data-la-t-wm]');
           var tQdInput = tr.querySelector('[data-la-t-qd]');
-          var shWm = shWmInput && shWmInput.value !== '' ? parseFloat(shWmInput.value) : base.sh.wm;
-          var tWm = tWmInput && tWmInput.value !== '' ? parseFloat(tWmInput.value) : base.t.wm;
+          var shWm = shWmInput && shWmInput.value !== '' ? parseFloat(shWmInput.value) : (base && base.sh) ? base.sh.wm : 0;
+          var tWm = tWmInput && tWmInput.value !== '' ? parseFloat(tWmInput.value) : (base && base.t) ? base.t.wm : 0;
           if (isNaN(shWm)) shWm = 0;
           if (isNaN(tWm)) tWm = 0;
-          var shQd = shQdInput && shQdInput.value ? shQdInput.value.trim() : base.sh.qd;
-          var tQd = tQdInput && tQdInput.value ? tQdInput.value.trim() : base.t.qd;
+          var shQd = shQdInput && shQdInput.value ? shQdInput.value.trim() : (base && base.sh) ? base.sh.qd : '';
+          var tQd = tQdInput && tQdInput.value ? tQdInput.value.trim() : (base && base.t) ? base.t.qd : '';
           var shRankCell = tr.querySelector('[data-la-sh-rank]');
           var tRankCell = tr.querySelector('[data-la-t-rank]');
-          var shRank = shRankCell && shRankCell.textContent ? parseFloat(shRankCell.textContent) : base.sh.rank;
-          var tRank = tRankCell && tRankCell.textContent ? parseFloat(tRankCell.textContent) : base.t.rank;
+          var shRank = shRankCell && shRankCell.textContent ? parseFloat(shRankCell.textContent) : (base && base.sh) ? base.sh.rank : 0;
+          var tRank = tRankCell && tRankCell.textContent ? parseFloat(tRankCell.textContent) : (base && base.t) ? base.t.rank : 0;
           rows.push({
-            indicator: base.indicator,
+            indicator: ind,
             sh: { wm: shWm, qd: shQd, rank: shRank },
             t: { wm: tWm, qd: tQd, rank: tRank }
           });
@@ -2900,24 +3018,83 @@
     if (thead) {
       thead.innerHTML =
         '<tr>' +
-          '<th class="la-thesis-table__th la-thesis-table__th--particulars">Particulars</th>' +
-          '<th class="la-thesis-table__th la-thesis-table__th--num">W.M.</th>' +
-          '<th class="la-thesis-table__th la-thesis-table__th--qd">Q.D.</th>' +
-          '<th class="la-thesis-table__th la-thesis-table__th--rank">Rank</th>' +
+          '<th class="la-thesis-table__th la-thesis-table__th--no" scope="col">No.</th>' +
+          '<th class="la-thesis-table__th la-thesis-table__th--particulars" scope="col">Particulars</th>' +
+          '<th class="la-thesis-table__th la-thesis-table__th--num" scope="col" title="Weighted Mean">W.M.</th>' +
+          '<th class="la-thesis-table__th la-thesis-table__th--qd" scope="col" title="Qualitative Description">Q.D.</th>' +
+          '<th class="la-thesis-table__th la-thesis-table__th--rank" scope="col">Rank</th>' +
+          '<th class="la-thesis-table__th la-thesis-table__th--action" scope="col">Remove</th>' +
         '</tr>';
     }
     if (tfoot) {
       tfoot.innerHTML =
         '<tr class="la-thesis-table__footer-row">' +
+          '<td class="la-thesis-table__footer-value"></td>' +
           '<td class="la-thesis-table__footer-label"><strong>AVERAGE WEIGHTED MEAN</strong></td>' +
           '<td class="la-thesis-table__footer-value"><strong id="la-awm-value">—</strong></td>' +
           '<td class="la-thesis-table__footer-value"><strong id="la-awm-desc">—</strong></td>' +
           '<td class="la-thesis-table__footer-value"></td>' +
+          '<td class="la-thesis-table__footer-value"></td>' +
         '</tr>';
     }
     if (tbody) {
-      tbody.innerHTML = '<tr><td colspan="4" class="la-output-empty">Select a table above to load indicators and values.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="la-output-empty">You may select a predefined table or manually enter your own indicators.</td></tr>';
     }
+  }
+
+  /** Manual table mode: one empty row, Compute enabled (no predefined table selected). */
+  function renderManualLikertTable() {
+    var tbody = document.getElementById('la-output-tbody');
+    var thead = document.getElementById('la-output-thead');
+    var tfoot = document.getElementById('la-output-tfoot');
+    var tableWrap = document.getElementById('la-table-wrap');
+    if (!tbody || !thead) return;
+    if (tableWrap) tableWrap.classList.remove('la-thesis-table--two-group');
+    thead.innerHTML =
+      '<tr>' +
+        '<th class="la-thesis-table__th la-thesis-table__th--no" scope="col">No.</th>' +
+        '<th class="la-thesis-table__th la-thesis-table__th--particulars" scope="col">Particulars</th>' +
+        '<th class="la-thesis-table__th la-thesis-table__th--num" scope="col" title="Weighted Mean">W.M.</th>' +
+        '<th class="la-thesis-table__th la-thesis-table__th--qd" scope="col" title="Qualitative Description">Q.D.</th>' +
+        '<th class="la-thesis-table__th la-thesis-table__th--rank" scope="col">Rank</th>' +
+        '<th class="la-thesis-table__th la-thesis-table__th--action" scope="col">Remove</th>' +
+      '</tr>';
+    tfoot.innerHTML =
+      '<tr class="la-thesis-table__footer-row">' +
+        '<td class="la-thesis-table__footer-value"></td>' +
+        '<td class="la-thesis-table__footer-label"><strong>AVERAGE WEIGHTED MEAN</strong></td>' +
+        '<td class="la-thesis-table__footer-value"><strong id="la-awm-value">—</strong></td>' +
+        '<td class="la-thesis-table__footer-value"><strong id="la-awm-desc">—</strong></td>' +
+        '<td class="la-thesis-table__footer-value"></td>' +
+        '<td class="la-thesis-table__footer-value"></td>' +
+      '</tr>';
+    tbody.innerHTML = '';
+    var tr = document.createElement('tr');
+    tr.setAttribute('data-la-row-index', '0');
+    tr.innerHTML =
+      '<td class="la-thesis-table__td la-thesis-table__td--no">1</td>' +
+      '<td class="la-thesis-table__td la-thesis-table__td--indicator"><textarea class="la-thesis-input la-thesis-input--indicator" data-la-indicator placeholder="New indicator" rows="2"></textarea></td>' +
+      '<td class="la-thesis-table__td la-thesis-table__td--num"><input type="number" step="0.01" class="la-thesis-input la-thesis-input--wm" data-la-wm placeholder="0.00"></td>' +
+      '<td class="la-thesis-table__td la-thesis-table__td--qd"><input type="text" class="la-thesis-input la-thesis-input--qd" data-la-qd placeholder="Q.D."></td>' +
+      '<td class="la-thesis-table__td la-thesis-table__td--rank" data-la-rank>—</td>' +
+      '<td class="la-thesis-table__td la-thesis-table__td--action"><button type="button" class="la-row-remove" aria-label="Remove row" data-la-remove>×</button></td>';
+    tbody.appendChild(tr);
+    var removeBtn = tr.querySelector('[data-la-remove]');
+    if (removeBtn) removeBtn.addEventListener('click', function () { removeLikertOutputRow(tr); });
+    tr.querySelectorAll('input, textarea').forEach(function (inp) {
+      inp.addEventListener('input', onInputChange);
+    });
+    syncLikertConfigFromDom();
+    var recomputeBtn = document.getElementById('la-recompute');
+    var restoreBtn = document.getElementById('la-restore-original');
+    if (recomputeBtn) recomputeBtn.disabled = false;
+    if (restoreBtn) restoreBtn.disabled = false;
+    var titleEl = document.getElementById('la-table-title');
+    if (titleEl) titleEl.value = '';
+    var block = document.getElementById('la-interpretation-block');
+    if (block) block.textContent = '';
+    updateLiveStats(null, null);
+    onInputChange();
   }
 
   function clearInputs() {
@@ -2932,7 +3109,7 @@
     laInterpretationSh = '';
     laInterpretationT = '';
     computedData = { indicators: [], awm: 0, awmDesc: '', tableTitle: '', theme: '', scaleMapping: [] };
-    renderOutputPlaceholder();
+    renderManualLikertTable();
     var block = document.getElementById('la-interpretation-block');
     if (block) block.textContent = '';
     var interpTabs = document.getElementById('la-interp-tabs');
@@ -3025,12 +3202,7 @@
             loadRp2Table('t10');
           } else {
             if (titleEl) titleEl.value = '';
-            renderOutputPlaceholder();
-            var block = document.getElementById('la-interpretation-block');
-            if (block) block.textContent = '';
-            var saveTableBtn = document.getElementById('la-save-table');
-            if (saveTableBtn) saveTableBtn.disabled = true;
-            updateLiveStats(null, null);
+            renderManualLikertTable();
           }
         }
         updateSelectedTableSummary();
@@ -3041,7 +3213,11 @@
     if (selectEl) {
       selectEl.addEventListener('change', function () {
         var id = this.value;
-        if (!id) return;
+        if (!id) {
+          renderManualLikertTable();
+          updateSelectedTableSummary();
+          return;
+        }
         if (activeProjectId === 'rp2') {
           loadRp2Table(id);
         } else {
@@ -3186,6 +3362,7 @@
     }
     if (tableWrap) {
       tableWrap.addEventListener('paste', handleLikertPaste);
+      tableWrap.addEventListener('input', onInputChange);
     }
 
     var clearInputsBtn = document.getElementById('la-clear-inputs');
@@ -3245,6 +3422,11 @@
     updateScalePreview();
     updateSessionProgress();
     renderRecentActivity();
+    var tableSelectInit = document.getElementById('la-table-select');
+    if (tableSelectInit && tableSelectInit.value === '' && activeProjectId === 'rp1') {
+      renderManualLikertTable();
+    }
+    updateSelectedTableSummary();
     onInputChange();
     updateScaleSectionVisibility();
   }

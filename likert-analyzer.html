@@ -79,7 +79,7 @@
                   <div class="la-form-group la-form-group--inline">
                     <label class="la-label" for="la-table-select">Select Likert Table</label>
                     <select id="la-table-select" class="la-select">
-                      <option value="" selected disabled>Select Tables 10–22</option>
+                      <option value="" selected>— Create manual table —</option>
                       <option value="t10">Table 10 — Curiosity</option>
                       <option value="t11">Table 11 — Creativity</option>
                       <option value="t12">Table 12 — Communication</option>
@@ -94,7 +94,7 @@
                       <option value="t21">Table 21 — T-test: Constraints perceptions</option>
                       <option value="t22">Table 22 — T-test: Challenges perceptions</option>
                     </select>
-                    <p class="la-field-hint">Selecting a table loads indicators and sample values. AWM and interpretation appear after you click Compute.</p>
+                    <p class="la-field-hint">You can either select a predefined table or manually create your own table by adding rows below. AWM and interpretation appear after you click Compute.</p>
                   </div>
                 </div>
                 <div class="la-top-controls__summary" aria-live="polite">
@@ -160,10 +160,10 @@
                     <table class="la-scale-table" role="grid" aria-label="Scale mapping configuration">
                       <thead>
                         <tr>
-                          <th class="la-scale-table__th la-scale-table__th--scale">Scale</th>
-                          <th class="la-scale-table__th la-scale-table__th--range">Range From</th>
-                          <th class="la-scale-table__th la-scale-table__th--range">Range To</th>
-                          <th class="la-scale-table__th la-scale-table__th--label">Qualitative Description</th>
+                          <th class="la-scale-table__th la-scale-table__th--scale" scope="col">Scale</th>
+                          <th class="la-scale-table__th la-scale-table__th--range" scope="col">Range From</th>
+                          <th class="la-scale-table__th la-scale-table__th--range" scope="col">Range To</th>
+                          <th class="la-scale-table__th la-scale-table__th--label" scope="col">Qualitative Description</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -240,14 +240,20 @@
           <div class="la-card" id="la-output-card">
             <h2 class="la-card__title">Indicators and Weighted Means</h2>
             <div class="la-card__body">
+              <p class="la-field-hint la-manual-mode-note">You may select a predefined table or manually enter your own indicators.</p>
               <!-- Paste Table Data -->
               <div class="la-paste-section" id="la-paste-section">
                 <h3 class="la-paste-section__title">Paste Table Data</h3>
-                <p class="la-paste-section__hint">Copy a table from Word or Excel, then paste it here using Ctrl + V.</p>
+                <p class="la-paste-section__hint">Copy a table from Word, Excel, or PDF text, then paste here (Ctrl + V). Rows and columns are detected automatically; the table is built from your paste and you can edit any cell afterward.</p>
                 <div class="la-paste-zone" id="la-paste-zone" tabindex="0" role="textbox" aria-label="Paste table data from Word or Excel">Paste here (Ctrl + V)</div>
                 <p id="la-paste-table-error" class="la-field-error la-paste-section__error" role="alert" aria-live="polite"></p>
               </div>
               <div class="la-table-toolbar">
+                <div class="la-table-legend" aria-hidden="true">
+                  <span class="la-table-legend__item"><span class="la-table-legend__abbr">W.M.</span> = Weighted Mean</span>
+                  <span class="la-table-legend__item"><span class="la-table-legend__abbr">Q.D.</span> = Qualitative Description</span>
+                  <span class="la-table-legend__item"><span class="la-table-legend__abbr">Rank</span> = Computed rank</span>
+                </div>
                 <div class="la-table-density" aria-label="Row density">
                   <span class="la-table-density__label">Rows</span>
                   <button type="button" class="la-chip la-chip--active" data-row-density="comfortable">Comfortable</button>
@@ -259,20 +265,24 @@
                   <caption class="la-thesis-table__caption visually-hidden">Indicators with weighted means, qualitative descriptions, and ranks</caption>
                   <thead id="la-output-thead">
                     <tr>
+                      <th class="la-thesis-table__th la-thesis-table__th--no">No.</th>
                       <th class="la-thesis-table__th la-thesis-table__th--particulars">Particulars</th>
                       <th class="la-thesis-table__th la-thesis-table__th--num">W.M.</th>
                       <th class="la-thesis-table__th la-thesis-table__th--qd">Q.D.</th>
                       <th class="la-thesis-table__th la-thesis-table__th--rank">Rank</th>
+                      <th class="la-thesis-table__th la-thesis-table__th--action">Remove</th>
                     </tr>
                   </thead>
                   <tbody id="la-output-tbody">
-                    <tr><td colspan="4" class="la-output-empty">Select a table above to load indicators and values.</td></tr>
+                    <tr><td colspan="6" class="la-output-empty">Select a table above to load indicators and values.</td></tr>
                   </tbody>
                   <tfoot id="la-output-tfoot">
                     <tr class="la-thesis-table__footer-row">
+                      <td class="la-thesis-table__footer-value"></td>
                       <td class="la-thesis-table__footer-label"><strong>AVERAGE WEIGHTED MEAN</strong></td>
                       <td class="la-thesis-table__footer-value"><strong id="la-awm-value">—</strong></td>
                       <td class="la-thesis-table__footer-value"><strong id="la-awm-desc">—</strong></td>
+                      <td class="la-thesis-table__footer-value"></td>
                       <td class="la-thesis-table__footer-value"></td>
                     </tr>
                   </tfoot>

@@ -78,7 +78,7 @@
                   <div class="pa-form-group pa-form-group--inline">
                     <label class="pa-label" for="pa-table-select">Select Profile Table</label>
                     <select id="pa-table-select" class="pa-select">
-                      <option value="" selected disabled>Select Profile Table</option>
+                      <option value="" selected>— Create manual table —</option>
                       <option value="age">Table 2 — Age</option>
                       <option value="gender">Table 3 — Gender</option>
                       <option value="civilStatus">Table 4 — Civil Status</option>
@@ -88,7 +88,7 @@
                       <option value="yearsService">Table 8 — Years in Service</option>
                       <option value="inServiceTraining">Table 9 — In-Service Training</option>
                     </select>
-                    <p class="pa-field-hint">Selecting a table loads categories and sample frequencies (f). Percentage, Rank, and totals appear after you click Compute.</p>
+                    <p class="pa-field-hint">You can either select a predefined table or manually create your own table by adding rows below. Percentage, Rank, and totals appear after you click Compute.</p>
                   </div>
                 </div>
                 <div class="pa-top-controls__summary" aria-live="polite">
@@ -116,34 +116,42 @@
                 <p class="pa-field-hint"><strong>Workflow:</strong> Encode values → Click Compute → Review results → Save table.</p>
               </div>
 
-              <!-- Empty state: shown when no table selected -->
-              <div class="pa-encode-empty" id="pa-encode-empty">
-                <p class="pa-encode-empty__text">Select a profile table to begin encoding values.</p>
+              <!-- Manual-table hint: shown when no predefined table selected (rp1) -->
+              <div class="pa-encode-empty pa-manual-hint" id="pa-encode-empty" hidden>
+                <p class="pa-encode-empty__text">You may select a predefined table or manually enter your own data.</p>
               </div>
 
-              <!-- Single-group encoding table: shown when rp1 table selected -->
+              <!-- Single-group encoding table: shown when rp1 (with or without table selected) -->
               <div class="pa-table-card" id="pa-table-card" hidden>
                 <!-- Paste Table Data -->
                 <div class="pa-paste-section" id="pa-paste-section">
                   <h3 class="pa-paste-section__title">Paste Table Data</h3>
-                  <p class="pa-paste-section__hint">Copy a table from Word or Excel, then paste it here using Ctrl + V.</p>
+                  <p class="pa-paste-section__hint">Copy a table from Word, Excel, or PDF text, then paste here (Ctrl + V). Rows and columns are detected automatically; the table is built from your paste and you can edit any cell afterward.</p>
                   <div class="pa-paste-zone" id="pa-paste-zone" tabindex="0" role="textbox" aria-label="Paste table data from Word or Excel">Paste here (Ctrl + V)</div>
                   <p id="pa-paste-table-error" class="pa-field-error pa-paste-section__error" role="alert" aria-live="polite"></p>
+                </div>
+                <div class="pa-table-toolbar">
+                  <div class="pa-table-legend" aria-hidden="true">
+                    <span class="pa-table-legend__item"><span class="pa-table-legend__abbr">f</span> = Frequency</span>
+                    <span class="pa-table-legend__item">Percentage and Rank computed after Compute</span>
+                  </div>
                 </div>
                 <div class="pa-table-wrap" id="pa-table-wrap">
                   <table class="pa-profile-table" id="pa-unified-table" role="grid">
                     <thead>
                       <tr>
-                        <th class="pa-profile-table__th pa-profile-table__th--particulars">Particulars</th>
-                        <th class="pa-profile-table__th pa-profile-table__th--f">Frequency (f)</th>
-                        <th class="pa-profile-table__th pa-profile-table__th--pct">Percentage</th>
-                        <th class="pa-profile-table__th pa-profile-table__th--rank">Rank</th>
-                        <th class="pa-profile-table__th pa-profile-table__th--action">Remove</th>
+                        <th class="pa-profile-table__th pa-profile-table__th--no" scope="col">No.</th>
+                        <th class="pa-profile-table__th pa-profile-table__th--particulars" scope="col">Particulars</th>
+                        <th class="pa-profile-table__th pa-profile-table__th--f" scope="col" title="Frequency">Frequency (f)</th>
+                        <th class="pa-profile-table__th pa-profile-table__th--pct" scope="col">Percentage</th>
+                        <th class="pa-profile-table__th pa-profile-table__th--rank" scope="col">Rank</th>
+                        <th class="pa-profile-table__th pa-profile-table__th--action" scope="col">Remove</th>
                       </tr>
                     </thead>
                     <tbody id="pa-table-tbody"></tbody>
                     <tfoot id="pa-table-tfoot">
                       <tr class="pa-profile-table__footer-row">
+                        <td class="pa-profile-table__footer-value"></td>
                         <td class="pa-profile-table__footer-label"><strong>TOTAL</strong></td>
                         <td class="pa-profile-table__footer-value"><strong id="pa-total-freq">0</strong></td>
                         <td class="pa-profile-table__footer-value"><strong id="pa-total-pct">100.00</strong></td>
@@ -168,11 +176,11 @@
                 <!-- Paste Table Data (two-group) -->
                 <div class="pa-paste-section" id="pa-paste-section-two">
                   <h3 class="pa-paste-section__title">Paste Table Data</h3>
-                  <p class="pa-paste-section__hint">Copy a table from Word or Excel, then paste it here using Ctrl + V. Columns: Particulars, School Heads (f), Teachers (f), or full 7 columns.</p>
+                  <p class="pa-paste-section__hint">Copy a table from Word, Excel, or PDF text, then paste here (Ctrl + V). Rows and columns are detected automatically; the table is built from your paste and you can edit any cell afterward.</p>
                   <div class="pa-paste-zone" id="pa-paste-zone-two" tabindex="0" role="textbox" aria-label="Paste table data (two-group)">Paste here (Ctrl + V)</div>
                   <p id="pa-paste-table-error-two" class="pa-field-error pa-paste-section__error" role="alert" aria-live="polite"></p>
                 </div>
-                <div class="pa-table-wrap pa-thesis-table pa-thesis-table--two-group" id="pa-two-group-wrap">
+                <div class="pa-table-wrap pa-thesis-table pa-thesis-table--two-group pa-output-table" id="pa-two-group-wrap">
                   <table class="pa-table pa-thesis-table__grid" id="pa-two-group-table">
                     <thead id="pa-output-thead"></thead>
                     <tbody id="pa-output-tbody"></tbody>

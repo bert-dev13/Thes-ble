@@ -12,6 +12,7 @@
   --teal-light: rgba(13, 148, 136, 0.12);
   --bg: #e8eef2;
   --bg-elevated: #ffffff;
+  --bg-subtle: #f0f4f7;
   --border: #c5d4de;
   --border-subtle: #dce4e9;
   --text: #0f2744;
@@ -398,6 +399,17 @@ body {
   font-size: 0.9375rem;
   color: var(--text-muted);
 }
+.pa-manual-hint.pa-encode-empty {
+  margin-top: 0;
+  margin-bottom: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--accent-bg);
+  border-color: var(--accent);
+}
+.pa-manual-hint .pa-encode-empty__text {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
 .pa-top-controls__summary {
   display: flex;
   align-items: center;
@@ -635,142 +647,176 @@ body {
   box-shadow: 0 1px 4px rgba(10, 22, 40, 0.06);
 }
 
+/* ---------- Single-group profile table: thesis-friendly (matches Likert UI) ---------- */
 .pa-profile-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9375rem;
   table-layout: fixed;
   font-variant-numeric: tabular-nums;
+  min-width: 520px;
 }
 
+.pa-profile-table thead tr:first-child th {
+  border-top: none;
+}
 .pa-profile-table__th {
-  padding: 12px 16px;
+  padding: var(--space-sm) var(--space-md);
   font-weight: 600;
   font-size: 0.8125rem;
-  border-bottom: 2px solid var(--border);
-  background: var(--bg);
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--ocean-navy);
+  color: #fff;
   vertical-align: middle;
 }
+.pa-profile-table__th:first-child { border-left: none; }
 
-.pa-profile-table__th--particulars {
-  width: 40%;
-  min-width: 180px;
-  text-align: left;
-  color: var(--text-secondary);
+.pa-profile-table__th--no {
+  width: 56px;
+  min-width: 56px;
+  max-width: 56px;
+  text-align: center;
 }
-
+.pa-profile-table__th--particulars {
+  min-width: 200px;
+  width: 200px;
+  text-align: left;
+}
 .pa-profile-table__th--f {
   width: 100px;
+  min-width: 100px;
+  max-width: 100px;
   text-align: center;
-  color: var(--text-secondary);
 }
-
 .pa-profile-table__th--pct {
   width: 100px;
+  min-width: 100px;
+  max-width: 100px;
   text-align: center;
-  color: var(--text-secondary);
 }
-
 .pa-profile-table__th--rank {
-  width: 80px;
+  width: 72px;
+  min-width: 72px;
+  max-width: 72px;
   text-align: center;
-  color: var(--text-secondary);
 }
-
 .pa-profile-table__th--action {
   width: 72px;
-  text-align: right;
-  color: var(--text-muted);
+  min-width: 72px;
+  max-width: 72px;
+  text-align: center;
   font-weight: 500;
+  font-size: 0.75rem;
 }
 
-.pa-profile-table__td {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border-subtle);
+.pa-profile-table tbody td {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border-subtle);
   vertical-align: middle;
+  background: var(--bg-elevated);
+  transition: background var(--transition);
+  box-sizing: border-box;
+}
+.pa-profile-table tbody td:first-child { border-left: none; }
+.pa-profile-table tbody tr:nth-child(even) td {
+  background: var(--bg-subtle);
+}
+.pa-profile-table tbody tr:hover td {
+  background: var(--teal-light);
 }
 
 .pa-profile-table tbody td:nth-child(1) {
+  text-align: center;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.pa-profile-table tbody td:nth-child(2) {
   text-align: left;
   white-space: normal;
   word-wrap: break-word;
 }
-
-.pa-profile-table tbody td:nth-child(2),
 .pa-profile-table tbody td:nth-child(3),
-.pa-profile-table tbody td:nth-child(4) {
+.pa-profile-table tbody td:nth-child(4),
+.pa-profile-table tbody td:nth-child(5) {
   text-align: center;
 }
-
-.pa-profile-table tbody td:nth-child(5) {
-  text-align: right;
-}
-
-.pa-profile-table tbody tr:hover .pa-profile-table__td {
-  background: rgba(13, 148, 136, 0.04);
+.pa-profile-table tbody td:nth-child(6) {
+  text-align: center;
+  padding: var(--space-xs);
 }
 
 .pa-profile-table .pa-input {
   width: 100%;
   margin: 0;
-  padding: 8px 12px;
+  padding: var(--space-xs) var(--space-sm);
   font-size: 0.9375rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   box-sizing: border-box;
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
-
+.pa-profile-table .pa-input:focus {
+  outline: none;
+  border-color: var(--teal);
+  box-shadow: 0 0 0 2px var(--teal-light);
+}
 .pa-profile-table .pa-input--category {
   min-width: 0;
   text-align: left;
 }
-
 .pa-profile-table .pa-input--freq {
   text-align: center;
   max-width: 80px;
+  font-variant-numeric: tabular-nums;
 }
 
 .pa-profile-table .pa-row-remove {
-  padding: 6px 10px;
-  min-width: 36px;
-  color: var(--text-muted);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   font-size: 1.125rem;
   line-height: 1;
-  transition: color var(--transition), background var(--transition);
-  margin-left: auto;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color var(--transition), background var(--transition), border-color var(--transition);
 }
-
 .pa-profile-table .pa-row-remove:hover {
   color: #dc2626;
   background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.2);
 }
 
 .pa-profile-table__footer-row td {
-  padding: 14px 16px;
-  border-bottom: none;
-  border-top: 2px solid var(--border);
-  background: var(--bg);
-  font-size: 0.9375rem;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--ocean-mid);
+  background: var(--bg-subtle);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
 }
-
+.pa-profile-table__footer-row td:first-child { border-left: none; }
 .pa-profile-table__footer-label {
   text-align: left;
   font-weight: 600;
   color: var(--text);
+  padding-left: var(--space-md);
 }
-
 .pa-profile-table__footer-value {
   text-align: center;
   font-weight: 600;
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
-
 .pa-profile-table__footer-value:last-of-type {
-  text-align: right;
+  text-align: center;
 }
 
 /* Paste Table Data */
@@ -815,9 +861,40 @@ body {
   margin-bottom: 0;
 }
 
+.pa-table-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+.pa-table-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: var(--space-xs) 0;
+}
+.pa-table-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.pa-table-legend__abbr {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
 .pa-table-wrap {
   overflow-x: auto;
   margin: 0 0 var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  box-shadow: 0 1px 4px rgba(10, 22, 40, 0.06);
   -webkit-overflow-scrolling: touch;
 }
 
@@ -825,23 +902,62 @@ body {
   min-width: 520px;
 }
 
-/* ========== Thesis-style table (legacy, two-group) ========== */
+/* Sticky header and first column for single-group profile table */
+.pa-table-wrap#pa-table-wrap .pa-profile-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--ocean-navy) !important;
+  color: #fff !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+.pa-table-wrap#pa-table-wrap .pa-profile-table tbody td:first-child,
+.pa-table-wrap#pa-table-wrap .pa-profile-table thead th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--bg-elevated) !important;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.06);
+}
+.pa-table-wrap#pa-table-wrap .pa-profile-table tbody tr:nth-child(even) td:first-child {
+  background: var(--bg-subtle) !important;
+}
+.pa-table-wrap#pa-table-wrap .pa-profile-table tbody tr:hover td:first-child {
+  background: var(--teal-light) !important;
+}
+
+/* ========== Thesis-style table (two-group): clean, matches Likert UI ========== */
 .pa-thesis-table {
   --thesis-border: 1px solid var(--border);
-  --thesis-border-strong: 1px solid var(--ocean-mid);
+  --thesis-border-strong: 2px solid var(--ocean-mid);
   --thesis-th-bg: var(--ocean-navy);
   --thesis-th-color: #fff;
-  --thesis-subhead-bg: var(--ocean-navy);
-  --thesis-subhead-color: #fff;
+  --thesis-subhead-bg: var(--ocean-mid);
+  --thesis-subhead-color: rgba(255, 255, 255, 0.95);
+  --col-no: 56px;
+  --col-action: 72px;
 }
 .pa-thesis-table .pa-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9375rem;
   table-layout: fixed;
-  min-width: 680px;
+  min-width: 760px;
   font-variant-numeric: tabular-nums;
 }
+.pa-thesis-table--two-group .pa-table { min-width: 980px; }
+.pa-thesis-table .pa-table thead tr:first-child th {
+  border-top: none;
+}
+.pa-thesis-table .pa-table thead th {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+.pa-thesis-table .pa-table thead th:first-child { border-left: none; }
 .pa-thesis-table .pa-table thead th {
   background: var(--thesis-th-bg) !important;
   color: #fff !important;
@@ -850,45 +966,52 @@ body {
   background: var(--thesis-subhead-bg) !important;
   color: var(--thesis-subhead-color) !important;
 }
-.pa-thesis-table__th {
-  padding: var(--space-sm) var(--space-md);
-  font-weight: 600;
-  font-size: 0.8125rem;
-  text-align: left;
-  border: var(--thesis-border);
-  vertical-align: middle;
+.pa-thesis-table__th--no {
+  width: var(--col-no);
+  min-width: var(--col-no);
+  max-width: var(--col-no);
+  text-align: center;
 }
 .pa-thesis-table__th--particulars {
-  min-width: 360px;
-  width: auto;
-  background: var(--thesis-th-bg);
-  color: #fff;
+  min-width: 240px;
+  width: 240px;
+  text-align: left;
 }
 .pa-thesis-table__th--f {
-  width: 90px;
-  min-width: 90px;
-  text-align: right;
-  background: var(--thesis-th-bg);
-  color: #fff;
+  width: 88px;
+  min-width: 88px;
+  max-width: 88px;
+  text-align: center;
 }
 .pa-thesis-table__th--pct {
-  width: 110px;
-  min-width: 110px;
-  text-align: right;
-  background: var(--thesis-th-bg);
-  color: #fff;
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
+  text-align: center;
 }
 .pa-thesis-table__th--rank {
-  width: 90px;
-  min-width: 90px;
-  text-align: right;
-  background: var(--thesis-th-bg);
-  color: #fff;
+  width: 64px;
+  min-width: 64px;
+  max-width: 64px;
+  text-align: center;
+}
+.pa-thesis-table__th--action {
+  width: var(--col-action);
+  min-width: var(--col-action);
+  max-width: var(--col-action);
+  text-align: center;
+  font-weight: 500;
+  font-size: 0.75rem;
 }
 .pa-thesis-table__th--group {
   text-align: center;
   background: var(--thesis-subhead-bg);
   color: var(--thesis-subhead-color);
+  padding: var(--space-sm) var(--space-md);
+  border-left: var(--thesis-border-strong);
+}
+.pa-thesis-table__th--group:first-of-type {
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
 }
 .pa-thesis-table__subhead-row .pa-thesis-table__th {
   background: var(--thesis-subhead-bg);
@@ -898,11 +1021,29 @@ body {
 }
 .pa-thesis-table__td {
   padding: var(--space-sm) var(--space-md);
-  border: var(--thesis-border);
+  border: 1px solid var(--border-subtle);
   vertical-align: middle;
+  background: var(--bg-elevated);
+  transition: background var(--transition);
+  box-sizing: border-box;
+}
+.pa-thesis-table__td:first-child { border-left: none; }
+.pa-thesis-table .pa-table tbody tr:nth-child(even) .pa-thesis-table__td {
+  background: var(--bg-subtle);
+}
+.pa-thesis-table .pa-table tbody tr:hover .pa-thesis-table__td {
+  background: var(--teal-light);
+}
+.pa-thesis-table__td--no {
+  width: var(--col-no);
+  text-align: center;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 .pa-thesis-table__td--particulars {
-  min-width: 360px;
+  min-width: 240px;
+  width: 240px;
   text-align: left;
   white-space: normal;
   word-wrap: break-word;
@@ -910,16 +1051,41 @@ body {
 .pa-thesis-table__td--f,
 .pa-thesis-table__td--pct,
 .pa-thesis-table__td--rank {
-  text-align: right;
+  text-align: center;
   font-variant-numeric: tabular-nums;
 }
-.pa-thesis-table__td--f { width: 90px; min-width: 90px; }
-.pa-thesis-table__td--pct { width: 110px; min-width: 110px; }
-.pa-thesis-table__td--rank { width: 90px; min-width: 90px; }
-.pa-thesis-table--two-group .pa-table { min-width: 900px; }
+.pa-thesis-table__td--f { width: 88px; min-width: 88px; }
+.pa-thesis-table__td--pct { width: 100px; min-width: 100px; }
+.pa-thesis-table__td--rank { width: 64px; min-width: 64px; }
+.pa-thesis-table__td--action {
+  width: var(--col-action);
+  text-align: center;
+  padding: var(--space-xs);
+}
 .pa-thesis-table--two-group .pa-thesis-table__td:nth-child(4),
 .pa-thesis-table--two-group .pa-thesis-table__th:nth-child(4) {
   border-left: var(--thesis-border-strong);
+}
+.pa-thesis-table .pa-row-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 1.125rem;
+  line-height: 1;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color var(--transition), background var(--transition), border-color var(--transition);
+}
+.pa-thesis-table .pa-row-remove:hover {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.2);
 }
 .pa-thesis-input {
   width: 100%;
@@ -927,7 +1093,7 @@ body {
   padding: var(--space-xs) var(--space-sm);
   font-family: var(--font-sans);
   font-size: 0.9375rem;
-  text-align: right;
+  text-align: center;
   font-variant-numeric: tabular-nums;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -938,14 +1104,21 @@ body {
   border-color: var(--teal);
   box-shadow: 0 0 0 2px var(--teal-light);
 }
+.pa-thesis-input--category {
+  text-align: left;
+  min-height: 2.25em;
+}
 .pa-thesis-table__footer-row td {
   padding: var(--space-sm) var(--space-md);
-  border: var(--thesis-border);
-  background: var(--bg);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--ocean-mid);
+  background: var(--bg-subtle);
   font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
 }
-.pa-thesis-table__footer-label { text-align: left; font-weight: 600; }
-.pa-thesis-table__footer-value { text-align: right; }
+.pa-thesis-table__footer-row td:first-child { border-left: none; }
+.pa-thesis-table__footer-label { text-align: left; font-weight: 600; color: var(--text); padding-left: var(--space-md); }
+.pa-thesis-table__footer-value { text-align: center; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
 
 /* Totals strip */
 .pa-totals-strip {
@@ -1095,9 +1268,15 @@ body {
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.04);
 }
 .pa-output-table .pa-table tbody tr:nth-child(even) .pa-thesis-table__td {
-  background: rgba(13, 148, 136, 0.03);
+  background: var(--bg-subtle);
+}
+.pa-output-table .pa-table tbody tr:nth-child(even) .pa-thesis-table__td--no {
+  background: #e6eaef;
 }
 .pa-output-table .pa-table tbody tr:hover .pa-thesis-table__td {
+  background: var(--teal-light);
+}
+.pa-output-table .pa-table tbody tr:hover .pa-thesis-table__td--no {
   background: var(--teal-light);
 }
 

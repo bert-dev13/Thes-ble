@@ -523,7 +523,7 @@
     if (!tableSelect) return;
     var key = tableSelect.value;
     if (!key) {
-      if (pill) pill.textContent = 'None selected';
+      if (pill) pill.textContent = activeProjectId === 'rp1' ? 'Manual table' : 'None selected';
       return;
     }
     var cfg = activeProjectId === 'rp2' ? PROJECT2_TABLES[key] : PROFILE_TABLE_CONFIGS[key];
@@ -550,14 +550,17 @@
     }, 2500);
   }
 
-  /** Show empty state when no table selected. */
+  /** Show empty state when no table selected (rp2 or error). */
   function showEmptyState() {
     var emptyEl = document.getElementById('pa-encode-empty');
     var tableCard = document.getElementById('pa-table-card');
     var tbody = document.getElementById('pa-table-tbody');
     var titleEl = document.getElementById('pa-table-title');
     var twoGroupSection = document.getElementById('pa-output-section');
-    if (emptyEl) emptyEl.hidden = false;
+    if (emptyEl) {
+      emptyEl.hidden = false;
+      emptyEl.classList.remove('pa-manual-hint');
+    }
     if (tableCard) tableCard.hidden = true;
     if (twoGroupSection) twoGroupSection.hidden = true;
     if (tbody) tbody.innerHTML = '';
@@ -575,7 +578,46 @@
     onInputChange();
   }
 
-  /** Show table state when a table is selected. */
+  /** Show manual table state: no predefined table selected, user can enter data (rp1 only). */
+  function showManualTableState() {
+    var emptyEl = document.getElementById('pa-encode-empty');
+    var tableCard = document.getElementById('pa-table-card');
+    var tbody = document.getElementById('pa-table-tbody');
+    var titleEl = document.getElementById('pa-table-title');
+    var twoGroupSection = document.getElementById('pa-output-section');
+    if (emptyEl) {
+      emptyEl.hidden = false;
+      emptyEl.classList.add('pa-manual-hint');
+      var textEl = emptyEl.querySelector('.pa-encode-empty__text');
+      if (textEl) textEl.textContent = 'You may select a predefined table or manually enter your own data.';
+    }
+    if (tableCard) tableCard.hidden = false;
+    if (twoGroupSection) twoGroupSection.hidden = true;
+    if (titleEl) {
+      titleEl.value = '';
+      titleEl.disabled = false;
+      titleEl.placeholder = 'e.g. Age stratification of the respondents';
+    }
+    currentTableConfig = null;
+    currentProject2Table = null;
+    currentTableTitle = '';
+    computedRows = [];
+    if (tbody) {
+      tbody.innerHTML = '';
+      addRow();
+      updateProfileRowNumbers();
+    }
+    renderOutputPlaceholder();
+    var totalFreqEl = document.getElementById('pa-total-freq');
+    var totalPctEl = document.getElementById('pa-total-pct');
+    if (totalFreqEl) totalFreqEl.textContent = '—';
+    if (totalPctEl) totalPctEl.textContent = '—';
+    setInterpretationTabsVisibility(false);
+    updateLoadedSummary();
+    onInputChange();
+  }
+
+  /** Show table state when a predefined table is selected. */
   function showTableState() {
     var emptyEl = document.getElementById('pa-encode-empty');
     var tableCard = document.getElementById('pa-table-card');
@@ -588,7 +630,11 @@
   /** Load table by key. Call on init and when table select changes. */
   function loadSelectedTable(key) {
     if (!key) {
-      showEmptyState();
+      if (activeProjectId === 'rp1') {
+        showManualTableState();
+      } else {
+        showEmptyState();
+      }
       hideTwoGroupSection();
       updateLoadedSummary();
       return;
@@ -691,10 +737,24 @@
     onInputChange();
   }
 
+  function updateProfileRowNumbers() {
+    var tbody = document.getElementById('pa-table-tbody');
+    if (!tbody) return;
+    var rows = tbody.querySelectorAll('tr');
+    for (var i = 0; i < rows.length; i++) {
+      var noCell = rows[i].querySelector('[data-pa-no]');
+      if (noCell) noCell.textContent = i + 1;
+    }
+  }
+
   function addRow(initialCategory, initialFrequency) {
     var tbody = document.getElementById('pa-table-tbody');
     if (!tbody) return null;
     var tr = document.createElement('tr');
+    var tdNo = document.createElement('td');
+    tdNo.setAttribute('data-pa-no', '');
+    tdNo.textContent = tbody.querySelectorAll('tr').length + 1;
+    tr.appendChild(tdNo);
     var tdCat = document.createElement('td');
     var catInput = document.createElement('input');
     catInput.type = 'text';
@@ -741,6 +801,7 @@
     tr.appendChild(tdRemove);
 
     tbody.appendChild(tr);
+    updateProfileRowNumbers();
     removeBtn.addEventListener('click', function () {
       removeRow(tr);
     });
@@ -758,6 +819,7 @@
     var tbody = document.getElementById('pa-table-tbody');
     if (tbody && tr.parentNode === tbody) {
       tbody.removeChild(tr);
+      updateProfileRowNumbers();
       onInputChange();
     }
   }
@@ -782,6 +844,7 @@
         if (rankCell && mapped.rank[i]) rankCell.textContent = mapped.rank[i];
       }
     }
+    updateProfileRowNumbers();
     onInputChange();
   }
 
@@ -812,7 +875,9 @@
         pasteZone.textContent = 'Paste here (Ctrl + V)';
         pasteZone.classList.remove('pa-paste-zone--has-content');
       }
-      showToast('Table data pasted. Review and click Compute.');
+      var r = rows.length;
+      var c = rows[0] ? rows[0].length : 0;
+      showToast('Detected ' + r + ' row' + (r !== 1 ? 's' : '') + ' × ' + c + ' column' + (c !== 1 ? 's' : '') + '. Table updated. You can edit cells and click Compute.');
     }
   }
 
@@ -870,7 +935,9 @@
       if (pasteZone) {
         pasteZone.textContent = 'Paste here (Ctrl + V)';
       }
-      showToast('Table data pasted. Review and click Compute.');
+      var r = rows.length;
+      var c = rows[0] ? rows[0].length : 0;
+      showToast('Detected ' + r + ' row' + (r !== 1 ? 's' : '') + ' × ' + c + ' column' + (c !== 1 ? 's' : '') + '. Table updated. You can edit cells and click Compute.');
     }
   }
 
@@ -1648,6 +1715,7 @@
     var toSave = null;
 
     if (activeProjectId === 'rp2' && currentProject2Table) {
+      syncTwoGroupFromDom();
       var sumH = 0, sumT = 0;
       currentProject2Table.rows.forEach(function (r) {
         sumH += (r.heads && r.heads.f) || 0;
@@ -1746,6 +1814,13 @@
   // ---------- Two-group (School Heads vs Teachers) rendering ----------
   var profileTwoGroupComputed = false;
 
+  function removeTwoGroupRow(rowIndex) {
+    if (!currentProject2Table || !currentProject2Table.rows || rowIndex < 0 || rowIndex >= currentProject2Table.rows.length) return;
+    currentProject2Table.rows.splice(rowIndex, 1);
+    renderTwoGroupTable(currentProject2Table, { showComputed: profileTwoGroupComputed });
+    showToast('Row removed.');
+  }
+
   function renderTwoGroupTable(table, opts) {
     opts = opts || {};
     var showComputed = opts.showComputed === true;
@@ -1761,17 +1836,19 @@
 
     thead.innerHTML =
       '<tr class="pa-thesis-table__group-row">' +
-        '<th rowspan="2" class="pa-thesis-table__th pa-thesis-table__th--particulars">Particulars</th>' +
-        '<th colspan="3" class="pa-thesis-table__th pa-thesis-table__th--group">School Heads</th>' +
-        '<th colspan="3" class="pa-thesis-table__th pa-thesis-table__th--group">Teachers</th>' +
+        '<th rowspan="2" class="pa-thesis-table__th pa-thesis-table__th--no" scope="col">No.</th>' +
+        '<th rowspan="2" class="pa-thesis-table__th pa-thesis-table__th--particulars" scope="col">Particulars</th>' +
+        '<th colspan="3" class="pa-thesis-table__th pa-thesis-table__th--group" scope="colgroup">School Heads</th>' +
+        '<th colspan="3" class="pa-thesis-table__th pa-thesis-table__th--group" scope="colgroup">Teachers</th>' +
+        '<th rowspan="2" class="pa-thesis-table__th pa-thesis-table__th--action" scope="col">Remove</th>' +
       '</tr>' +
       '<tr class="pa-thesis-table__subhead-row">' +
-        '<th class="pa-thesis-table__th pa-thesis-table__th--f">f</th>' +
-        '<th class="pa-thesis-table__th pa-thesis-table__th--pct">Percentage</th>' +
-        '<th class="pa-thesis-table__th pa-thesis-table__th--rank">Rank</th>' +
-        '<th class="pa-thesis-table__th pa-thesis-table__th--f">f</th>' +
-        '<th class="pa-thesis-table__th pa-thesis-table__th--pct">Percentage</th>' +
-        '<th class="pa-thesis-table__th pa-thesis-table__th--rank">Rank</th>' +
+        '<th class="pa-thesis-table__th pa-thesis-table__th--f" scope="col">f</th>' +
+        '<th class="pa-thesis-table__th pa-thesis-table__th--pct" scope="col">Percentage</th>' +
+        '<th class="pa-thesis-table__th pa-thesis-table__th--rank" scope="col">Rank</th>' +
+        '<th class="pa-thesis-table__th pa-thesis-table__th--f" scope="col">f</th>' +
+        '<th class="pa-thesis-table__th pa-thesis-table__th--pct" scope="col">Percentage</th>' +
+        '<th class="pa-thesis-table__th pa-thesis-table__th--rank" scope="col">Rank</th>' +
       '</tr>';
 
     tbody.innerHTML = '';
@@ -1797,17 +1874,28 @@
       var tRank = showComputed ? (rankMapT[idx] || '') : '—';
       if (!showComputed) { hPct = '—'; tPct = '—'; }
 
+      var catVal = (row.category != null ? String(row.category) : '');
+      var catAttr = escapeHtml(catVal).replace(/"/g, '&quot;');
+
       var tr = document.createElement('tr');
       tr.setAttribute('data-pa-two-row', String(idx));
       tr.innerHTML =
-        '<td class="pa-thesis-table__td pa-thesis-table__td--particulars">' + escapeHtml(row.category) + '</td>' +
+        '<td class="pa-thesis-table__td pa-thesis-table__td--no">' + (idx + 1) + '</td>' +
+        '<td class="pa-thesis-table__td pa-thesis-table__td--particulars"><input type="text" class="pa-thesis-input pa-thesis-input--category" data-pa-category value="' + catAttr + '" placeholder="Particulars"></td>' +
         '<td class="pa-thesis-table__td pa-thesis-table__td--f"><input type="number" class="pa-thesis-input" step="1" min="0" data-pa-h-f value="' + hF + '"></td>' +
         '<td class="pa-thesis-table__td pa-thesis-table__td--pct"><input type="text" class="pa-thesis-input" readonly data-pa-h-pct value="' + (hPct || '—') + '"></td>' +
         '<td class="pa-thesis-table__td pa-thesis-table__td--rank">' + (hRank || '—') + '</td>' +
         '<td class="pa-thesis-table__td pa-thesis-table__td--f"><input type="number" class="pa-thesis-input" step="1" min="0" data-pa-t-f value="' + tF + '"></td>' +
         '<td class="pa-thesis-table__td pa-thesis-table__td--pct"><input type="text" class="pa-thesis-input" readonly data-pa-t-pct value="' + (tPct || '—') + '"></td>' +
-        '<td class="pa-thesis-table__td pa-thesis-table__td--rank">' + (tRank || '—') + '</td>';
+        '<td class="pa-thesis-table__td pa-thesis-table__td--rank">' + (tRank || '—') + '</td>' +
+        '<td class="pa-thesis-table__td pa-thesis-table__td--action"><button type="button" class="pa-row-remove" aria-label="Remove row" data-pa-two-remove>×</button></td>';
       tbody.appendChild(tr);
+      var removeBtn = tr.querySelector('[data-pa-two-remove]');
+      if (removeBtn) {
+        removeBtn.addEventListener('click', function () {
+          removeTwoGroupRow(idx);
+        });
+      }
     });
 
     if (showComputed && autoPercentTwoGroup && table.type === 'twoGroupPercent' && (sumHeads > 0 || sumTeachers > 0)) {
@@ -1851,12 +1939,14 @@
 
     tfoot.innerHTML =
       '<tr class="pa-thesis-table__footer-row">' +
+        '<td class="pa-thesis-table__footer-value"></td>' +
         '<td class="pa-thesis-table__footer-label"><strong>TOTAL</strong></td>' +
         '<td class="pa-thesis-table__footer-value"><strong id="pa-total-heads-f">' + totalHeadsF + '</strong></td>' +
         '<td class="pa-thesis-table__footer-value"><strong id="pa-total-heads-pct">' + shPctText + '</strong></td>' +
         '<td class="pa-thesis-table__footer-value"></td>' +
         '<td class="pa-thesis-table__footer-value"><strong id="pa-total-teachers-f">' + totalTeachersF + '</strong></td>' +
         '<td class="pa-thesis-table__footer-value"><strong id="pa-total-teachers-pct">' + tPctText + '</strong></td>' +
+        '<td class="pa-thesis-table__footer-value"></td>' +
         '<td class="pa-thesis-table__footer-value"></td>' +
       '</tr>';
 
@@ -1878,10 +1968,28 @@
     if (regenBtn) regenBtn.disabled = !interpText;
   }
 
+  function syncTwoGroupFromDom() {
+    if (!currentProject2Table || !currentProject2Table.rows) return;
+    var tbody = document.getElementById('pa-output-tbody');
+    if (!tbody) return;
+    tbody.querySelectorAll('tr').forEach(function (tr, idx) {
+      var row = currentProject2Table.rows[idx];
+      if (!row) return;
+      var catInp = tr.querySelector('[data-pa-category]');
+      var hFInp = tr.querySelector('[data-pa-h-f]');
+      var tFInp = tr.querySelector('[data-pa-t-f]');
+      if (catInp && catInp.value != null) row.category = (catInp.value || '').trim();
+      row.heads = row.heads || {};
+      row.teachers = row.teachers || {};
+      row.heads.f = hFInp ? (parseInt(hFInp.value || '0', 10) || 0) : (row.heads.f || 0);
+      row.teachers.f = tFInp ? (parseInt(tFInp.value || '0', 10) || 0) : (row.teachers.f || 0);
+    });
+  }
+
   function bindTwoGroupInputListeners() {
     var tbody = document.getElementById('pa-output-tbody');
     if (!tbody || !currentProject2Table) return;
-    tbody.querySelectorAll('input[data-pa-h-f], input[data-pa-t-f]').forEach(function (inp) {
+    tbody.querySelectorAll('input[data-pa-h-f], input[data-pa-t-f], input[data-pa-category]').forEach(function (inp) {
       inp.removeEventListener('input', onTwoGroupInputChange);
       inp.addEventListener('input', onTwoGroupInputChange);
     });
@@ -1890,16 +1998,11 @@
     if (!currentProject2Table) return;
     var tbody = document.getElementById('pa-output-tbody');
     if (!tbody) return;
+    syncTwoGroupFromDom();
     var sumHeads = 0, sumTeachers = 0;
-    tbody.querySelectorAll('tr').forEach(function (tr, idx) {
-      var row = currentProject2Table.rows[idx];
-      if (!row) return;
-      var hF = parseInt(tr.querySelector('[data-pa-h-f]').value || '0', 10) || 0;
-      var tF = parseInt(tr.querySelector('[data-pa-t-f]').value || '0', 10) || 0;
-      sumHeads += hF;
-      sumTeachers += tF;
-      row.heads.f = hF;
-      row.teachers.f = tF;
+    currentProject2Table.rows.forEach(function (row) {
+      sumHeads += (row.heads && typeof row.heads.f === 'number' ? row.heads.f : 0);
+      sumTeachers += (row.teachers && typeof row.teachers.f === 'number' ? row.teachers.f : 0);
     });
     if (profileTwoGroupComputed) {
       profileTwoGroupComputed = false;
@@ -2560,6 +2663,7 @@
     var computeBtnTwo = document.getElementById('pa-compute-two');
     if (computeBtnTwo) computeBtnTwo.addEventListener('click', function () {
       if (currentProject2Table) {
+        syncTwoGroupFromDom();
         renderTwoGroupTable(currentProject2Table, { showComputed: true });
         showToast('Table updated.');
       }
@@ -2631,7 +2735,7 @@
     var tableSelectInit = document.getElementById('pa-table-select');
     if (tableSelectInit) {
       var key = tableSelectInit.value || '';
-      if (key) loadSelectedTable(key);
+      loadSelectedTable(key);
     }
 
     onInputChange();
