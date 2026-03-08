@@ -1113,6 +1113,144 @@
     updateScalePreview();
   }
 
+  function copyScaleMapping() {
+    var mapping = getScaleMapping();
+    var header = 'Scale\tRange From\tRange To\tQualitative Description';
+    var rows = mapping.map(function (m) {
+      var min = m.min != null ? String(m.min) : '';
+      var max = m.max != null ? String(m.max) : '';
+      return m.scaleValue + '\t' + min + '\t' + max + '\t' + (m.label || '');
+    });
+    var text = header + '\n' + rows.join('\n');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        showToast('Scale mapping copied to clipboard.');
+      }).catch(function () {
+        showToast('Copy failed.', true);
+      });
+    } else {
+      showToast('Clipboard not available.', true);
+    }
+  }
+
+  function applyPastedScaleData(rows) {
+    if (!rows || !rows.length) return false;
+    rows.forEach(function (r) {
+      var minEl = document.getElementById('la-scale-' + r.scaleValue + '-min');
+      var maxEl = document.getElementById('la-scale-' + r.scaleValue + '-max');
+      var labelEl = document.getElementById('la-scale-' + r.scaleValue + '-label');
+      if (minEl) minEl.value = r.min != null ? r.min : '';
+      if (maxEl) maxEl.value = r.max != null ? r.max : '';
+      if (labelEl) labelEl.value = r.label || '';
+    });
+    updateScalePreview();
+    onInputChange();
+    return true;
+  }
+
+  function parseScalePasteData(text) {
+    var lines = text.split(/\r?\n/).filter(function (l) { return l.trim(); });
+    if (!lines.length) return [];
+    var rows = [];
+    var header = lines[0].toLowerCase();
+    var startIdx = (header.indexOf('scale') >= 0 || header.indexOf('range') >= 0) ? 1 : 0;
+    for (var i = startIdx; i < lines.length; i++) {
+      var parts = lines[i].split(/\t/).map(function (p) { return p.trim(); });
+      if (parts.length >= 1) {
+        var scaleVal = parseInt(parts[0], 10);
+        var minVal = null;
+        var maxVal = null;
+        var labelVal = '';
+        if (parts.length >= 4) {
+          minVal = parts[1] !== '' ? parseFloat(parts[1]) : null;
+          maxVal = parts[2] !== '' ? parseFloat(parts[2]) : null;
+          labelVal = parts[3] || '';
+        } else if (parts.length === 3) {
+          var rangeStr = parts[1];
+          var labelStr = parts[2];
+          var rangeNums = rangeStr.match(/[\d.]+/g);
+          if (rangeNums && rangeNums.length >= 2) {
+            minVal = parseFloat(rangeNums[0]);
+            maxVal = parseFloat(rangeNums[1]);
+            labelVal = labelStr || '';
+          } else {
+            minVal = rangeStr !== '' ? parseFloat(rangeStr) : null;
+            maxVal = null;
+            labelVal = labelStr || '';
+          }
+        } else if (parts.length === 2) {
+          minVal = parts[1] !== '' ? parseFloat(parts[1]) : null;
+          labelVal = '';
+        }
+        if (scaleVal >= 1 && scaleVal <= 5 && !isNaN(scaleVal)) {
+          rows.push({ scaleValue: scaleVal, min: isNaN(minVal) ? null : minVal, max: isNaN(maxVal) ? null : maxVal, label: labelVal });
+        }
+      }
+    }
+    return rows;
+  }
+
+  function handleScalePaste(e) {
+    var clipboardData = e.clipboardData;
+    if (!clipboardData) return;
+    var html = clipboardData.getData('text/html');
+    var plain = clipboardData.getData('text/plain');
+    var text = '';
+    if (html && html.indexOf('<table') >= 0) {
+      var parser = typeof DOMParser !== 'undefined' ? new DOMParser() : null;
+      if (parser) {
+        var doc = parser.parseFromString(html, 'text/html');
+        var table = doc.querySelector('table');
+        if (table) {
+          var trs = table.querySelectorAll('tr');
+          var lines = [];
+          trs.forEach(function (tr) {
+            var cells = tr.querySelectorAll('td, th');
+            var vals = [];
+            cells.forEach(function (c) { vals.push((c.textContent || '').trim()); });
+            if (vals.some(function (v) { return v; })) lines.push(vals.join('\t'));
+          });
+          text = lines.join('\n');
+        }
+      }
+    }
+    if (!text) text = plain;
+    if (!text || !text.trim()) return;
+    e.preventDefault();
+    var rows = parseScalePasteData(text);
+    var errEl = document.getElementById('la-scale-paste-error');
+    var pasteZone = document.getElementById('la-scale-paste-zone');
+    if (!rows.length) {
+      if (errEl) errEl.textContent = 'No valid scale rows found. Expect: Scale, Range From, Range To, Qualitative Description (tab-separated).';
+      return;
+    }
+    if (errEl) errEl.textContent = '';
+    applyPastedScaleData(rows);
+    if (pasteZone) {
+      pasteZone.textContent = 'Paste here (Ctrl + V)';
+      pasteZone.classList.remove('la-paste-zone--has-content');
+    }
+    showToast('Scale mapping pasted. Rows and columns detected automatically.');
+  }
+
+  function pasteScaleMapping() {
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+      showToast('Clipboard not available.', true);
+      return;
+    }
+    navigator.clipboard.readText().then(function (text) {
+      var rows = parseScalePasteData(text);
+      if (!rows.length) {
+        showToast('No valid scale rows found. Copy from Scale Mapping first, or use tab-separated: Scale, Range From, Range To, Label', true);
+        return;
+      }
+      applyPastedScaleData(rows);
+      showToast('Scale mapping pasted.');
+    }).catch(function () {
+      showToast('Paste failed.', true);
+    });
+  }
+
   function updateScalePreview() {
     var list = document.getElementById('la-scale-preview');
     if (!list) return;
@@ -2131,8 +2269,8 @@
     // Recompute AWM per group
     var awmSh = rowsSh.length ? Math.round(rowsSh.reduce(function (s, r) { return s + r.weightedMean; }, 0) / rowsSh.length * 100) / 100 : 0;
     var awmT = rowsT.length ? Math.round(rowsT.reduce(function (s, r) { return s + r.weightedMean; }, 0) / rowsT.length * 100) / 100 : 0;
-    var awmShDesc = doAutoQd ? getQualitativeDescription(awmSh, mapping2) : (currentLikertConfig.awm && currentLikertConfig.awm.sh && currentLikertConfig.awm.sh.qd) || '';
-    var awmTDesc = doAutoQd ? getQualitativeDescription(awmT, mapping2) : (currentLikertConfig.awm && currentLikertConfig.awm.t && currentLikertConfig.awm.t.qd) || '';
+    var awmShDesc = doAutoQd ? getQualitativeDescription(awmSh, mapping2) : (currentLikertConfig.awm && currentLikertConfig.awm.sh && currentLikertConfig.awm.sh.qd) || getQualitativeDescription(awmSh, mapping2) || '';
+    var awmTDesc = doAutoQd ? getQualitativeDescription(awmT, mapping2) : (currentLikertConfig.awm && currentLikertConfig.awm.t && currentLikertConfig.awm.t.qd) || getQualitativeDescription(awmT, mapping2) || '';
 
     var awmShValEl = document.getElementById('la-awm-sh-value');
     var awmShDescEl = document.getElementById('la-awm-sh-desc');
@@ -2278,7 +2416,7 @@
 
   /**
    * Build RP1 Likert interpretation in thesis-ready format (Tables 10–22).
-   * Format: Title + opener + indicators (grouped by WM) + AWM sentence + indicates + implies.
+   * Format: opener + indicators grouped by Q.D. (scale first, then enumerate) + AWM sentence + indicates + implies.
    */
   function buildRp1LikertInterpretation(rows, awm, awmDesc, tableId, variantIndex, lastOpener) {
     var cfg = RP1_LIKERT_INTERPRETATION_CONFIG[tableId];
@@ -2295,29 +2433,7 @@
       opener = cfg.openerAlternatives[Math.abs(vi) % cfg.openerAlternatives.length];
     }
 
-    var sorted = rows.slice().sort(function (a, b) {
-      return b.weightedMean - a.weightedMean;
-    });
-
-    var clauses = [];
-    var i = 0;
-    while (i < sorted.length) {
-      var j = i + 1;
-      while (j < sorted.length && sorted[j].weightedMean === sorted[i].weightedMean) {
-        j++;
-      }
-      var group = sorted.slice(i, j);
-      var labels = group.map(function (r) { return '"' + r.indicator + '"'; });
-      var wm = group[0].weightedMean.toFixed(2);
-      if (group.length === 1) {
-        clauses.push(labels[0] + ' with a weighted mean of ' + wm);
-      } else {
-        clauses.push(joinWithAnd(labels) + ' each with a weighted mean of ' + wm);
-      }
-      i = j;
-    }
-
-    var indicatorPart = 'the indicators include ' + clauses.join('; ') + '.';
+    var indicatorPart = buildIndicatorsByQdGroups(rows);
     var awmStr = awm.toFixed(2);
     var desc = (awmDesc || '—').toLowerCase();
 
@@ -2376,28 +2492,12 @@
     var implEl = document.getElementById('la-include-implications');
     if (implEl) includeImplications = implEl.checked;
 
-    function buildClauses(rows) {
-      var sorted = rows.slice().sort(function (a, b) { return b.weightedMean - a.weightedMean; });
-      var clauses = [];
-      var i = 0;
-      while (i < sorted.length) {
-        var j = i + 1;
-        while (j < sorted.length && sorted[j].weightedMean === sorted[i].weightedMean) j++;
-        var group = sorted.slice(i, j);
-        var labels = group.map(function (r) { return '"' + r.indicator + '"'; });
-        var wm = group[0].weightedMean.toFixed(2);
-        if (group.length === 1) {
-          clauses.push(labels[0] + ' with a weighted mean of ' + wm);
-        } else {
-          clauses.push(joinWithAnd(labels) + ' each with a weighted mean of ' + wm);
-        }
-        i = j;
-      }
-      return clauses.join('; ') + '.';
+    function buildClausesByQd(rows) {
+      return buildIndicatorsByQdGroups(rows);
     }
 
-    var clausesSh = buildClauses(rowsSh);
-    var clausesT = buildClauses(rowsT);
+    var clausesSh = buildClausesByQd(rowsSh);
+    var clausesT = buildClausesByQd(rowsT);
 
     var awmShStr = awmSh.toFixed(2);
     var awmTStr = awmT.toFixed(2);
@@ -2445,7 +2545,56 @@
     return { sectionTitle: cfg.sectionTitle || '', shPara: shPara.trim(), tPara: tPara.trim() };
   }
 
-  /** Build one interpretation for a group: opener + enumeration + AWM + implications. No rank, no Q.D. grouping. */
+  /**
+   * Build enumeration string for a group of indicators (descending W.M., semicolon-separated, "and" before last).
+   * Format: "Indicator1" with a weighted mean of X.XX; "Indicator2" with a weighted mean of Y.YY; and "Indicator3" with a weighted mean of Z.ZZ
+   */
+  function formatIndicatorsEnumeration(indicatorRows) {
+    var sorted = indicatorRows.slice().sort(function (a, b) { return b.weightedMean - a.weightedMean; });
+    var parts = sorted.map(function (r) { return '"' + (r.indicator || '').trim() + '" with a weighted mean of ' + (r.weightedMean != null ? r.weightedMean.toFixed(2) : '—'); });
+    if (parts.length <= 1) return parts.join('');
+    return parts.slice(0, -1).join('; ') + '; and ' + parts[parts.length - 1];
+  }
+
+  /**
+   * Group indicators by Q.D., sort groups by scale level (highest W.M. first), and build interpretation body.
+   * Returns the enumeration text with Q.D. groups introduced first.
+   */
+  function buildIndicatorsByQdGroups(rows) {
+    var qdMap = {};
+    rows.forEach(function (r) {
+      var qd = (r.qualitativeDescription || r.qd || '').trim() || '—';
+      if (!qdMap[qd]) qdMap[qd] = [];
+      qdMap[qd].push(r);
+    });
+    var qdKeys = Object.keys(qdMap).filter(function (k) { return k !== '—'; });
+    qdKeys.sort(function (a, b) {
+      var maxA = Math.max.apply(null, qdMap[a].map(function (r) { return r.weightedMean || 0; }));
+      var maxB = Math.max.apply(null, qdMap[b].map(function (r) { return r.weightedMean || 0; }));
+      return maxB - maxA;
+    });
+    if (qdMap['—'] && qdMap['—'].length) qdKeys.push('—');
+
+    var segments = [];
+    qdKeys.forEach(function (qd, idx) {
+      var groupRows = qdMap[qd];
+      if (!groupRows || !groupRows.length) return;
+      var enumText = formatIndicatorsEnumeration(groupRows);
+      if (idx === 0) {
+        segments.push('the indicators rated as ' + qd + ' include the following: ' + enumText);
+      } else {
+        segments.push('While other indicators were rated as ' + qd + '. These include: ' + enumText);
+      }
+    });
+
+    if (segments.length === 0) {
+      var sorted = rows.slice().sort(function (a, b) { return b.weightedMean - a.weightedMean; });
+      return 'the indicators include ' + formatIndicatorsEnumeration(sorted);
+    }
+    return segments.join('. ');
+  }
+
+  /** Build one interpretation for a group: opener + Q.D.-grouped enumeration + AWM + implications. */
   function buildOneGroupInterpretation(rows, awm, awmDesc, theme, groupLabel, variantIndex, lastOpener) {
     if (!rows || !rows.length) return '';
     var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
@@ -2460,35 +2609,15 @@
       : getOpener();
     if (!Gen && !Utils) openingIndex += 1;
 
-    var sorted = rows.slice().sort(function (a, b) {
-      return b.weightedMean - a.weightedMean;
-    });
+    var indicatorBody = buildIndicatorsByQdGroups(rows);
 
-    var clauses = [];
-    var i = 0;
-    while (i < sorted.length) {
-      var j = i + 1;
-      while (j < sorted.length && sorted[j].weightedMean === sorted[i].weightedMean) {
-        j++;
-      }
-      var group = sorted.slice(i, j);
-      var labels = group.map(function (r) { return '"' + r.indicator + '"'; });
-      var wm = group[0].weightedMean.toFixed(2);
-      if (group.length === 1) {
-        clauses.push(labels[0] + ' with a weighted mean of ' + wm);
-      } else {
-        clauses.push(joinWithAnd(labels) + ' each with a weighted mean of ' + wm);
-      }
-      i = j;
-    }
-
-    var sent1 = opening + theme + ', ';
-    var sent2 = 'the indicators include ' + clauses.join('; ') + '.';
+    var sent1 = opening + theme + ', ' + indicatorBody + '.';
     var awmStr = awm.toFixed(2);
     var desc = (awmDesc || '—').toLowerCase();
-    var themeForAwm = theme.indexOf('the ') === 0 ? theme : 'the ' + theme;
-    var sent3 = 'The average weighted mean of ' + awmStr + ' signifies that ' + groupLabel + ' view ' + themeForAwm + ' as ' + desc + '.';
-    var text = sent1 + sent2 + ' ' + sent3;
+    var sent3 = groupLabel
+      ? 'The average weighted mean of ' + awmStr + ' signifies that ' + groupLabel + ' view ' + (theme.indexOf('the ') === 0 ? theme : 'the ' + theme) + ' as ' + desc + '.'
+      : 'The average weighted mean of ' + awmStr + ' signifies that the indicators are generally assessed as ' + desc + '.';
+    var text = sent1 + ' ' + sent3;
     if (includeImplications) {
       var impl = Gen
         ? Gen.buildImplicationsWithVariant('likert', vi)
@@ -3353,6 +3482,16 @@
     if (scaleToggleBtn) scaleToggleBtn.addEventListener('click', toggleScaleCollapse);
     var saveScaleBtn = document.getElementById('la-save-scale');
     if (saveScaleBtn) saveScaleBtn.addEventListener('click', saveScaleToStorage);
+    var copyScaleBtn = document.getElementById('la-copy-scale');
+    if (copyScaleBtn) copyScaleBtn.addEventListener('click', copyScaleMapping);
+    var scalePasteZone = document.getElementById('la-scale-paste-zone');
+    if (scalePasteZone) {
+      scalePasteZone.addEventListener('paste', handleScalePaste);
+      scalePasteZone.addEventListener('focus', function () {
+        var errEl = document.getElementById('la-scale-paste-error');
+        if (errEl) errEl.textContent = '';
+      });
+    }
     var recomputeBtn = document.getElementById('la-recompute');
     if (recomputeBtn) {
       recomputeBtn.addEventListener('click', function () {

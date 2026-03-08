@@ -150,11 +150,19 @@
                     <span class="la-scale-toggle__chevron" aria-hidden="true"></span>
                   </button>
                   <div class="la-scale-header__actions">
+                    <button type="button" class="la-btn la-btn--ghost la-btn--sm" id="la-copy-scale">Copy</button>
                     <button type="button" class="la-btn la-btn--ghost la-btn--sm" id="la-save-scale">Save Scale</button>
                     <button type="button" class="la-btn la-btn--ghost la-btn--sm" id="la-reset-scale">Reset Scale</button>
                   </div>
                 </div>
                 <div class="la-scale-body" id="la-scale-body">
+                  <!-- Paste Table Data -->
+                  <div class="la-paste-section" id="la-scale-paste-section">
+                    <h3 class="la-paste-section__title">Paste Table Data</h3>
+                    <p class="la-paste-section__hint">Copy a table from Word, Excel, or PDF text, then paste here (Ctrl + V). Rows and columns are detected automatically; the scale mapping is built from your paste and you can edit any cell afterward.</p>
+                    <div class="la-paste-zone" id="la-scale-paste-zone" tabindex="0" role="textbox" aria-label="Paste scale mapping from Word or Excel">Paste here (Ctrl + V)</div>
+                    <p id="la-scale-paste-error" class="la-field-error la-paste-section__error" role="alert" aria-live="polite"></p>
+                  </div>
                   <p class="la-field-hint">Define ranges and labels to map weighted means to qualitative descriptions when Auto Q.D. is selected.</p>
                   <div class="la-scale-table-wrap" id="la-scale-grid">
                     <table class="la-scale-table" role="grid" aria-label="Scale mapping configuration">
