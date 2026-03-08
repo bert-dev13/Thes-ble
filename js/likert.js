@@ -1640,9 +1640,7 @@
     };
 
     var block = document.getElementById('la-interpretation-block');
-    var interpTabs = document.getElementById('la-interp-tabs');
     laInterpTwoGroup = false;
-    if (interpTabs) interpTabs.hidden = true;
     if (block) {
       if (config.type === 'tTest' && config.prewritten) {
         var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
@@ -2302,9 +2300,7 @@
     generateTwoGroupInterpretations(0, '');
     laInterpTwoGroup = true;
     var block = document.getElementById('la-interpretation-block');
-    var interpTabs = document.getElementById('la-interp-tabs');
-    if (block) block.textContent = laInterpretationSh;
-    if (interpTabs) interpTabs.hidden = false;
+    if (block) block.textContent = (laInterpretationSh || '') + (laInterpretationT ? '\n\n' + laInterpretationT : '');
     var copyBtn = document.getElementById('la-copy-interpretation');
     var saveTableBtn = document.getElementById('la-save-table');
     var regenBtn = document.getElementById('la-regenerate-interpretation');
@@ -2764,7 +2760,6 @@
 
     if (activeProjectId === 'rp2' && currentLikertConfig && currentLikertConfig.type !== 'tTest' && (currentLikertConfig.rows || currentTwoGroupData)) {
       var tableId = (currentLikertConfig.id || currentLikertConfig.title || 'likert').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
-      var interpTabs = document.getElementById('la-interp-tabs');
 
       // For RP2 prewritten tables (Tables 10–22), use the dedicated
       // applyRp2PrewrittenVariation helper so Regenerate varies openers
@@ -2777,16 +2772,14 @@
         };
         var resultPre = Gen.generateWithVariation(generatorPre, 'likert_rp2_pre', tableId);
         setFullInterpretation(resultPre.text);
-        if (interpTabs) interpTabs.hidden = true;
         showToast('Interpretation regenerated.');
         return;
       }
 
-      // Fallback for any other RP2 two-group tables: rebuild using the
-      // two-group generator and show both groups together.
+      // Fallback for any other RP2 two-group tables: rebuild and show both groups together.
       var generator = function (vi, lastOpener) {
         generateTwoGroupInterpretations(vi, lastOpener);
-        return laInterpretationSh + '\n\n' + laInterpretationT;
+        return (laInterpretationSh || '') + (laInterpretationT ? '\n\n' + laInterpretationT : '');
       };
       if (Gen) {
         var resultTwo = Gen.generateWithVariation(generator, 'likert_rp2', tableId);
@@ -2795,7 +2788,6 @@
         generateTwoGroupInterpretations(0, '');
         setFullInterpretation((laInterpretationSh || '') + (laInterpretationT ? '\n\n' + laInterpretationT : ''));
       }
-      if (interpTabs && laInterpTwoGroup) interpTabs.hidden = false;
       showToast('Interpretation regenerated.');
       return;
     }
@@ -2848,8 +2840,8 @@
    */
   function copyInterpretation() {
     var block = document.getElementById('la-interpretation-block');
-    var interpText = laInterpTwoGroup && laInterpretationSh && laInterpretationT
-      ? 'School Heads:\n\n' + laInterpretationSh + '\n\nTeachers:\n\n' + laInterpretationT
+    var interpText = laInterpTwoGroup && (laInterpretationSh || laInterpretationT)
+      ? (laInterpretationSh || '') + (laInterpretationT ? '\n\n' + laInterpretationT : '')
       : (block && block.textContent ? block.textContent.trim() : '');
     if (!interpText) {
       showToast('Please compute and generate the interpretation first before copying.', true);
@@ -3023,8 +3015,8 @@
 
   function saveToReport() {
     var interpretation = document.getElementById('la-interpretation-block');
-    var text = laInterpTwoGroup && laInterpretationSh && laInterpretationT
-      ? 'School Heads:\n\n' + laInterpretationSh + '\n\nTeachers:\n\n' + laInterpretationT
+    var text = laInterpTwoGroup && (laInterpretationSh || laInterpretationT)
+      ? (laInterpretationSh || '') + (laInterpretationT ? '\n\n' + laInterpretationT : '')
       : (interpretation && interpretation.textContent ? interpretation.textContent.trim() : '');
     var tables = getLikertTables();
     var toSave = null;
@@ -3295,8 +3287,6 @@
     renderManualLikertTable();
     var block = document.getElementById('la-interpretation-block');
     if (block) block.textContent = '';
-    var interpTabs = document.getElementById('la-interp-tabs');
-    if (interpTabs) interpTabs.hidden = true;
     var copyBtn = document.getElementById('la-copy-interpretation');
     var saveTableBtn = document.getElementById('la-save-table');
     var regenBtn = document.getElementById('la-regenerate-interpretation');
@@ -3520,24 +3510,6 @@
     if (copyBtn) copyBtn.addEventListener('click', copyInterpretation);
     var interpToggleBtn = document.getElementById('la-interpretation-toggle');
     if (interpToggleBtn) interpToggleBtn.addEventListener('click', toggleInterpretationExpand);
-    var interpTabsEl = document.getElementById('la-interp-tabs');
-    if (interpTabsEl) {
-      interpTabsEl.querySelectorAll('[data-interp-tab]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          var tab = btn.getAttribute('data-interp-tab');
-          interpTabsEl.querySelectorAll('.la-qd-toggle__btn').forEach(function (b) {
-            b.classList.remove('is-active');
-            b.setAttribute('aria-selected', 'false');
-          });
-          btn.classList.add('is-active');
-          btn.setAttribute('aria-selected', 'true');
-          var block = document.getElementById('la-interpretation-block');
-          if (block && laInterpTwoGroup) {
-            block.textContent = tab === 'sh' ? laInterpretationSh : laInterpretationT;
-          }
-        });
-      });
-    }
     var saveTableBtn = document.getElementById('la-save-table');
     if (saveTableBtn) saveTableBtn.addEventListener('click', saveToReport);
 
