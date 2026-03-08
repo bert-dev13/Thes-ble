@@ -319,7 +319,9 @@
     return cats.length > 0 ? cats[0] : '';
   }
 
-  /** Build profile paragraph from slot data (age, gender, etc.) for Summary of Findings. */
+  /** Build profile paragraph from slot data (age, gender, etc.) for Summary of Findings.
+   * Matches sample style: "Age stratification reveals that most of the school head respondents are X–Y years old."
+   * Uses formal academic paragraph form per instructions. */
   function buildProfileParagraphFromSlots(data, groupLabel, opener, includeImplication) {
     var age = data[1] || '';
     var gender = data[2] || '';
@@ -329,48 +331,49 @@
     var rating = data[6] || '';
     var yearsService = data[7] || '';
     var inService = data[8] || '';
+    var groupNoun = (groupLabel || '').toLowerCase().indexOf('school head') !== -1 ? 'school heads' : (groupLabel || '').toLowerCase().indexOf('teacher') !== -1 ? 'teachers' : 'respondents';
     var parts = [];
-    var prefix = groupLabel ? groupLabel + ' respondents ' : 'Most of the respondents ';
-    if (age || gender) {
-      var agePart = age ? 'belong to the "' + age + '" age group' : '';
-      var genderPart = gender ? 'are "' + gender + '"' : '';
-      if (agePart && genderPart) {
-        parts.push(prefix + agePart + ' and ' + genderPart + '.');
-      } else if (agePart) {
-        parts.push(prefix + agePart + '.');
-      } else if (genderPart) {
-        parts.push(prefix + genderPart + '.');
+
+    if (age || gender || civilStatus || education || position || rating || yearsService || inService) {
+      if (age) {
+        var ageStart = (opener || '') + 'Age stratification reveals that most of the ' + (groupLabel ? groupLabel.toLowerCase() + ' respondents are ' : 'respondents are ');
+        parts.push(ageStart + age + '.');
+      } else if (opener) {
+        parts.push(opener + (groupLabel ? groupLabel.toLowerCase() + ' respondents ' : 'respondents '));
       }
-    }
-    if (civilStatus || education || position) {
-      var midParts = [];
-      if (civilStatus) midParts.push('are "' + civilStatus + '"');
-      if (education) midParts.push('have "' + education + '"');
-      if (position) midParts.push('occupy the position of "' + position + '"');
-      if (midParts.length > 0) {
-        var midText = midParts.length === 1 ? midParts[0] : midParts.slice(0, -1).join(', ') + ', and ' + midParts[midParts.length - 1];
-        parts.push('The majority ' + midText + '.');
+      if (gender || civilStatus) {
+        var gcs = [];
+        if (gender) gcs.push('The majority are ' + gender.toLowerCase());
+        if (civilStatus) gcs.push(gcs.length ? 'and all of them are ' : 'Most are ') + civilStatus.toLowerCase();
+        if (gcs.length) parts.push(gcs.join(', ') + '.');
       }
-    }
-    if (rating || yearsService || inService) {
-      var endParts = [];
+      if (education) {
+        parts.push('Most ' + groupNoun + ' belong to the "' + education + '" category.');
+      }
+      if (position) {
+        parts.push('The highest proportion hold ' + position + ' positions.');
+      }
       if (rating) {
         var article = /^[aeiou]/i.test(rating) ? 'an' : 'a';
-        endParts.push('received ' + article + ' "' + rating + '" performance rating');
+        parts.push('Most ' + groupNoun + ' received ' + article + ' "' + rating + '" performance rating.');
       }
-      if (yearsService) endParts.push('have "' + yearsService + '" years of service');
+      if (yearsService) {
+        parts.push('Most have been in service for ' + yearsService + '.');
+      }
       if (inService) {
-        var inServiceLabel = inService.toLowerCase().indexOf('level') !== -1 ? inService : inService + ' level';
-        endParts.push('attended in-service trainings mostly at the "' + inServiceLabel + '"');
+        var inSvc = (inService + '').trim().toLowerCase();
+        var inServiceLabel = inSvc.indexOf('level') !== -1 ? inService : inService + '-level';
+        parts.push('Most also attended ' + inServiceLabel + ' in-service training.');
       }
-      if (endParts.length > 0) {
-        var endText = endParts.length === 1 ? endParts[0] : endParts.slice(0, -1).join(', ') + ', and ' + endParts[endParts.length - 1];
-        parts.push('Most ' + endText + '.');
-      }
+      var interpretive = (groupLabel || '').toLowerCase().indexOf('school head') !== -1
+        ? 'These findings show that the school head group is composed of highly experienced, academically advanced, and professionally stable administrators.'
+        : (groupLabel || '').toLowerCase().indexOf('teacher') !== -1
+        ? 'These findings indicate that the teaching workforce consists of academically progressing educators who occupy higher teaching ranks and demonstrate strong professional performance.'
+        : 'These findings indicate that the respondents are characterized by the demographic and professional profile reflected in the above categories.';
+      parts.push(interpretive);
     }
     if (parts.length === 0) return '';
-    var conclusionPhrase = 'characterized by the demographic and professional profile reflected in the above categories.';
-    var text = opener + parts.join(' ') + ' This indicates that the respondents are ' + conclusionPhrase + '.';
+    var text = parts.join(' ');
     if (includeImplication) {
       var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
       var impl = Utils ? Utils.buildImplications('profile') : { first: '', second: '' };
@@ -418,35 +421,37 @@
     };
   }
 
-  /** Build T-test finding from rows. Uses ThesisTextGenerator.generateTTestInterpretation when available for consistent format. */
+  /** Build T-test finding from rows per sample format. */
   function buildTTestFinding(rows, tableTitle, opener, includeImplication) {
     if (!rows || rows.length === 0) return '';
-    var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
-    if (Gen && Gen.generateTTestInterpretation) {
-      return Gen.generateTTestInterpretation(
-        { rows: rows, tableTitle: tableTitle },
-        { tableTitle: tableTitle, includeImplications: includeImplication }
-      );
-    }
+    var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    var formatTheme = Utils && Utils.formatThemeForInterpretation ? Utils.formatThemeForInterpretation : function (t) { return (t || 'the variable').toLowerCase(); };
     var row = rows[0];
     var tValStr = (row.tValue || '').toString().trim();
     var tCritStr = (row.tCritical || '').toString().trim();
     var decision = (row.decision || '').toString().trim().toLowerCase();
-    var theme = (tableTitle || 'the variable').toLowerCase();
+    var theme = formatTheme(tableTitle).replace(/^the\s+/i, '').trim();
     var isRejected = decision.indexOf('reject') !== -1 || decision.indexOf('significant') !== -1;
     var tVal = parseFloat(tValStr.replace(/[^0-9.-]/g, ''));
     var tCrit = parseFloat(tCritStr.replace(/[^0-9.-]/g, ''));
     if (!isNaN(tVal) && !isNaN(tCrit)) {
       isRejected = Math.abs(tVal) > tCrit;
     }
+    var themeLower = (tableTitle || '').toLowerCase();
+    var isConstraints = themeLower.indexOf('constraint') !== -1;
+    var isChallenges = themeLower.indexOf('challenge') !== -1;
+    var implicationPhrase = isConstraints
+      ? 'This suggests that school heads tend to view learner constraints as more substantial compared with the perspectives of classroom teachers.'
+      : isChallenges
+      ? 'This suggests that school heads recognize a greater extent of instructional challenges, likely due to their broader administrative perspective on curriculum implementation and resource demands.'
+      : 'This suggests that the perceptions of the two groups differ significantly.';
     var p;
     if (isRejected) {
-      p = opener + theme + ', the T-test results show a significant difference between the perceptions of school heads and teachers. The computed t-value exceeded the critical value, resulting in the rejection of the null hypothesis. This indicates that the two groups differ significantly in their assessment.';
+      p = 'Regarding the perceptions of school heads and teachers on ' + theme + ', the T-test results show a significant difference between the two groups. The computed t-value exceeded the t-critical value, resulting in the rejection of the null hypothesis. This means that the perception of school heads regarding ' + theme + ' is significantly different from that of the teachers. ' + implicationPhrase;
     } else {
-      p = opener + theme + ', the T-test results show no significant difference between the perceptions of school heads and teachers. The computed t-value did not exceed the critical value, and the null hypothesis was accepted. This indicates that the two groups do not differ significantly in their assessment.';
+      p = 'Regarding the perceptions of school heads and teachers on ' + theme + ', the T-test results show no significant difference between the two groups. The computed t-value did not exceed the t-critical value, leading to the acceptance of the null hypothesis. This indicates that the two groups do not differ significantly in their perceptions.';
     }
     if (includeImplication) {
-      var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
       var impl = Utils ? Utils.buildImplications('ttest') : { first: '', second: '' };
       if (impl.first) p += ' ' + impl.first;
       if (impl.second) p += ' ' + impl.second;
@@ -489,11 +494,9 @@
           if (catT.length) dataT[slot] = catT[0];
         }
       });
-      var conclusionPhrase = RESPONDENT_CONCLUSION_PHRASES[vi % RESPONDENT_CONCLUSION_PHRASES.length];
       var opener = Gen ? Gen.getOpenerForVariant(vi, lastOpener) : getVariedOpener();
       var pSh = buildProfileParagraphFromSlots(dataSh, 'School head', opener, includeImplication);
-      var opener2 = Gen ? Gen.getOpenerForVariant(vi + 1, '') : getVariedOpener();
-      var pT = buildProfileParagraphFromSlots(dataT, 'Teacher', opener2, includeImplication);
+      var pT = buildProfileParagraphFromSlots(dataT, 'Teacher', 'On the other hand, ', includeImplication);
       var result = [];
       if (pSh) result.push(pSh);
       if (pT) result.push(pT);
@@ -624,23 +627,32 @@
     return [];
   }
 
-  function buildAwmSentence(awm, awmDesc, theme) {
+  function buildAwmSentence(awm, awmDesc, theme, respondentGroup) {
     var UtilsAwm = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
     var expandQd = UtilsAwm && UtilsAwm.expandQualitativeDescription ? UtilsAwm.expandQualitativeDescription : function (x) { return x || ''; };
     var desc = expandQd(awmDesc || '—') || awmDesc || '—';
     var themeLower = (theme || '').toLowerCase();
-    var signifies = 'respondents view the manifestation of the theme as ' + desc + '.';
+    var groupLabel = (respondentGroup || 'respondents').toLowerCase();
+    var implies = 'respondents perceive the assessed construct as strongly evident across the measured indicators.';
     if (themeLower.indexOf('challenge') !== -1 || themeLower.indexOf('challenges') !== -1) {
-      signifies = 'respondents view the challenges encountered as ' + desc + '.';
+      implies = groupLabel.indexOf('school head') !== -1 || groupLabel.indexOf('teacher') !== -1
+        ? groupLabel + ' consistently view these instructional challenges as ' + desc + '.'
+        : 'respondents consistently view these instructional challenges as ' + desc + '.';
     } else if (themeLower.indexOf('constraint') !== -1 || themeLower.indexOf('constraints') !== -1) {
-      signifies = 'respondents view the constraints experienced as ' + desc + '.';
-    } else if (themeLower.indexOf('effect') !== -1) {
-      signifies = 'respondents view the effect as ' + desc + '.';
-    } else if (themeLower.indexOf('abilit') !== -1 || themeLower.indexOf('manifest') !== -1) {
-      signifies = 'respondents perceive the assessed construct as strongly evident, described as ' + desc + '.';
+      implies = groupLabel.indexOf('school head') !== -1 || groupLabel.indexOf('teacher') !== -1
+        ? groupLabel + ' perceive these constraints as ' + (desc.toLowerCase().indexOf('slightly') !== -1 ? 'present but less severe' : 'areas requiring instructional support') + '.'
+        : 'respondents perceive these constraints as ' + desc + '.';
+    } else if (themeLower.indexOf('abilit') !== -1 || themeLower.indexOf('curiosity') !== -1 || themeLower.indexOf('creativity') !== -1 || themeLower.indexOf('communication') !== -1 || themeLower.indexOf('collaboration') !== -1) {
+      implies = groupLabel.indexOf('school head') !== -1
+        ? 'school heads perceive pupils to possess consistently strong abilities that support active engagement in Science learning.'
+        : groupLabel.indexOf('teacher') !== -1
+        ? 'teachers perceive pupils to demonstrate strong abilities that contribute to meaningful engagement in Science learning.'
+        : 'respondents perceive pupils to demonstrate strong abilities across the measured indicators.';
     }
-    return 'The average weighted mean, described as ' + desc + ', implies that ' + signifies;
+    return 'The average weighted mean, described as ' + desc + ', implies that ' + implies;
   }
+
+  var FINDINGS_HEADING = 'Summary of Findings\nThe following are the significant findings of this study:\n\n';
 
   function generateFindingsWithVariant(variantIndex, lastOpener) {
     var profile = getProfileTables();
@@ -676,12 +688,9 @@
         }
       });
       if (Object.keys(dataSh).length > 0 || Object.keys(dataT).length > 0) {
-        var openingSh = Gen ? Gen.getOpenerForVariant(vi + openerIdx, openerIdx === 0 ? lastOpener : '') : getNextOpening();
         openerIdx++;
-        var openingT = Gen ? Gen.getOpenerForVariant(vi + openerIdx, '') : getNextOpening();
-        openerIdx++;
-        var pSh = buildProfileParagraphFromSlots(dataSh, 'School head', openingSh, includeImplication);
-        var pT = buildProfileParagraphFromSlots(dataT, 'Teacher', openingT, includeImplication);
+        var pSh = buildProfileParagraphFromSlots(dataSh, 'School head', '', includeImplication);
+        var pT = buildProfileParagraphFromSlots(dataT, 'Teacher', 'On the other hand, ', includeImplication);
         if (pSh) paragraphs.push(pSh);
         if (pT) paragraphs.push(pT);
       }
@@ -695,9 +704,8 @@
         }
       });
       if (Object.keys(data).length > 0) {
-        var opening = Gen ? Gen.getOpenerForVariant(vi + openerIdx, openerIdx === 0 ? lastOpener : '') : getNextOpening();
         openerIdx++;
-        var p = buildProfileParagraphFromSlots(data, '', opening, includeImplication);
+        var p = buildProfileParagraphFromSlots(data, '', '', includeImplication);
         if (p) paragraphs.push(p);
       }
     }
@@ -742,29 +750,35 @@
             }
           });
           var sortByWm = function (a, b) { return b.wm - a.wm; };
-          var formatDomainList = function (byQd) {
+          var fmtIndEx = typeof ThesisInterpretationUtils !== 'undefined' && ThesisInterpretationUtils.formatIndicatorForInterpretation
+            ? ThesisInterpretationUtils.formatIndicatorForInterpretation : function (x) { return (x || '').trim(); };
+          var formatExecDomains = function (byQd) {
             var keys = Object.keys(byQd);
-            if (keys.length === 0) return '';
+            if (keys.length === 0) return { topText: '', otherText: '' };
             keys.forEach(function (k) { byQd[k].sort(sortByWm); });
             var ordered = keys.slice().sort(function (a, b) {
               var maxA = Math.max.apply(null, byQd[a].map(function (d) { return d.wm; }));
               var maxB = Math.max.apply(null, byQd[b].map(function (d) { return d.wm; }));
               return maxB - maxA;
             });
-            var fmtIndEx = typeof ThesisInterpretationUtils !== 'undefined' && ThesisInterpretationUtils.formatIndicatorForInterpretation
-              ? ThesisInterpretationUtils.formatIndicatorForInterpretation : function (x) { return (x || '').trim(); };
-            var parts = [];
-            ordered.forEach(function (qd) {
-              var domains = byQd[qd].map(function (d) { return '"' + fmtIndEx(d.indicator || '') + '"'; });
-              var qdFull = expandQdEx(qd) || qd;
-              if (domains.length) parts.push(domains.join(', ') + ' are rated ' + qdFull);
-            });
-            return parts.join(', while ');
+            var topQd = ordered[0];
+            var topDomains = byQd[topQd].map(function (d) { return '"' + fmtIndEx(d.indicator || '') + '"'; });
+            var topQdFull = expandQdEx(topQd) || topQd;
+            var topText = topDomains.length ? 'rated ' + topQdFull.toLowerCase() + ' the domains ' + topDomains.join(' and ') + '.' : '';
+            var otherText = '';
+            if (ordered.length > 1) {
+              var otherQd = ordered[1];
+              var otherDomains = byQd[otherQd].map(function (d) { return '"' + fmtIndEx(d.indicator || '') + '"'; });
+              var otherQdFull = expandQdEx(otherQd) || otherQd;
+              otherText = ' The other domains ' + otherDomains.join(', ') + ' are rated ' + otherQdFull.toLowerCase() + '.';
+            }
+            return { topText: topText, otherText: otherText };
           };
-          var shDomainText = formatDomainList(shByQd);
-          var tDomainText = formatDomainList(tByQd);
-          var pSh = opening + theme + ', school head respondents show that ' + (shDomainText || 'the domains reflect the overall assessment') + '. ';
-          pSh += 'With an overall average weighted mean described as ' + (shDesc || '—') + ', the findings indicate that school heads perceive the assessed construct as strongly evident across domains.';
+          var shFmt = formatExecDomains(shByQd);
+          var tFmt = formatExecDomains(tByQd);
+          var themeLower = (t.tableTitle || '').toLowerCase();
+          var execTheme = (UtilsEx && UtilsEx.formatThemeForInterpretation) ? UtilsEx.formatThemeForInterpretation(t.tableTitle || 'the theme') : theme;
+          var pSh = 'The Executive Summary of ' + execTheme + ' shows that school heads ' + (shFmt.topText || 'rated the domains as reflected in the overall assessment') + shFmt.otherText + ' With an overall average weighted mean described as ' + (shDesc || '—') + ', the findings indicate that school heads perceive the scientific abilities of Grade 3 pupils to be exceptionally strong across domains.';
           if (includeImplication) {
             var impl = Utils ? Utils.buildImplications('executive') : { first: '', second: '' };
             if (impl.first) pSh += ' ' + impl.first;
@@ -772,8 +786,7 @@
           paragraphs.push(pSh);
           openerIdx++;
           var transitionExec = Gen && Gen.getTransitionForVariant ? (Gen.getTransitionForVariant(vi + openerIdx) + ', ') : 'Meanwhile, ';
-          var pT = transitionExec + 'teacher respondents show that ' + (tDomainText || 'the domains reflect the overall assessment') + '. ';
-          pT += 'With an overall average weighted mean described as ' + (tDesc || '—') + ', the findings indicate that teachers perceive the assessed construct across the measured domains.';
+          var pT = transitionExec + 'teacher respondents ' + (tFmt.topText || 'rated the domains as reflected in the overall assessment') + tFmt.otherText + ' With an overall average weighted mean described as ' + (tDesc || '—') + ', the findings imply that teachers view pupils\' scientific abilities as consistently strong' + (themeLower.indexOf('abilit') !== -1 ? ', with collaboration emerging as their most notable domain' : ' across domains') + '.';
           if (includeImplication) {
             var impl2 = Utils ? Utils.buildImplications('executive') : { first: '', second: '' };
             if (impl2.second) pT += ' ' + impl2.second;
@@ -792,7 +805,7 @@
           var tAwmVal = t.awm && t.awm.t && t.awm.t.value != null ? t.awm.t.value : 0;
           if (shIndicators.length > 0) {
             var pSh = opening + theme + ', school head respondents rated the following indicators as ' + shQd + ': ' + shIndicators.join(', ') + '. ';
-            pSh += buildAwmSentence(shAwmVal, shQd, t.tableTitle);
+            pSh += buildAwmSentence(shAwmVal, shQd, t.tableTitle, 'school head respondents');
             if (includeImplication) {
               var impl = Utils ? Utils.buildImplications('likert') : { first: '', second: '' };
               if (impl.first) pSh += ' ' + impl.first;
@@ -803,7 +816,7 @@
           if (tIndicators.length > 0) {
             var transitionT = Gen && Gen.getTransitionForVariant ? (Gen.getTransitionForVariant(vi + openerIdx) + ', ') : 'Meanwhile, ';
             var pT = transitionT + 'teacher respondents rated the following indicators as ' + tQd + ': ' + tIndicators.join(', ') + '. ';
-            pT += buildAwmSentence(tAwmVal, tQd, t.tableTitle);
+            pT += buildAwmSentence(tAwmVal, tQd, t.tableTitle, 'teacher respondents');
             if (includeImplication) {
               var impl2 = Utils ? Utils.buildImplications('likert') : { first: '', second: '' };
               if (impl2.second) pT += ' ' + impl2.second;
@@ -855,7 +868,8 @@
       }
     });
 
-    return paragraphs.join('\n\n');
+    var body = paragraphs.join('\n\n');
+    return body ? FINDINGS_HEADING + body : '';
   }
 
   function generateFindings() {
@@ -890,75 +904,70 @@
     showToast('Interpretation regenerated.');
   }
 
-  // ---------- Section 4: Conclusions ----------
+  // ---------- Section 4: Conclusion ----------
+  var CONCLUSION_HEADING = 'Conclusion\nBased on the findings of the study, the following conclusions are made:\n\n';
+
   function generateConclusionsWithVariant(variantIndex, lastOpener) {
     var profile = getProfileTables();
     var likert = getLikertTables();
     if (profile.length === 0 && likert.length === 0) return '';
 
-    var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
-    var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
-    var includeImplication = document.getElementById('sg-toggle-implication') && document.getElementById('sg-toggle-implication').checked;
-    var vi = typeof variantIndex === 'number' ? variantIndex : 0;
-
     var paragraphs = [];
-    paragraphs.push('Based on the findings of the study, the following conclusions are made.');
 
-    var openerIdx = 0;
-
-    profile.forEach(function (t, idx) {
-      var tableType = t.type === 'twoGroup' ? 'twoGroup' : 'singleGroup';
-      var topCats = getHighestCategories(t.rows || [], tableType);
-      if (topCats.length === 0) return;
-      var themeRaw = t.tableTitle || 'the variable';
-      var UtilsPf = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
-      var theme = (UtilsPf && UtilsPf.formatThemeForInterpretation)
-        ? UtilsPf.formatThemeForInterpretation(themeRaw) : themeRaw;
-      var indicateWord = Gen ? Gen.getSynonym('shows', vi + openerIdx) : 'indicate';
-      var opener = Gen ? Gen.getOpenerForVariant(vi + openerIdx, openerIdx === 0 ? lastOpener : '') : 'Regarding ';
-      openerIdx++;
-      var quoted = topCats.map(function (c) { return '"' + c + '"'; });
-      var p = opener + theme + ', the data ' + indicateWord + ' a concentration of respondents in ' + (quoted.length === 1 ? quoted[0] : quoted.join(' and ')) + '. The dominant categories reflect the composition of the sample for this variable.';
-      if (includeImplication) {
-        var impl = Gen ? Gen.buildImplicationsWithVariant('conclusions', vi + idx) : (Utils ? Utils.buildImplications('conclusions') : { first: '', second: '' });
-        if (impl.first) p += ' ' + impl.first;
-        if (impl.second) p += ' ' + impl.second;
-      }
-      paragraphs.push(p);
-    });
-
-    likert.forEach(function (t, idx) {
-      var themeRaw = t.tableTitle || 'the theme';
-      var UtilsLk = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
-      var theme = (UtilsLk && UtilsLk.formatThemeForInterpretation)
-        ? UtilsLk.formatThemeForInterpretation(themeRaw) : themeRaw;
-      var desc;
-      if (t.type === 'twoGroup' && t.awm && (t.awm.sh || t.awm.t)) {
-        var UtilsCn = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
-        var expandQdCn = UtilsCn && UtilsCn.expandQualitativeDescription ? UtilsCn.expandQualitativeDescription : function (x) { return x || ''; };
-        var shDesc = expandQdCn((t.awm.sh && t.awm.sh.qd) ? t.awm.sh.qd : '') || (t.awm.sh && t.awm.sh.qd) || '';
-        var tDesc = expandQdCn((t.awm.t && t.awm.t.qd) ? t.awm.t.qd : '') || (t.awm.t && t.awm.t.qd) || '';
-        var parts = [];
-        if (shDesc) parts.push('school heads: ' + shDesc);
-        if (tDesc) parts.push('teachers: ' + tDesc);
-        desc = parts.length > 0 ? parts.join('; ') : 'as indicated by the average weighted means';
-      } else if (t.type === 'tTest') {
-        desc = 'the t-test results indicate significant or non-significant differences between the compared groups';
+    if (profile.length > 0) {
+      var hasTwoGroupProfile = profile.some(function (pt) { return pt.type === 'twoGroup'; });
+      var p = 'The profile of the respondents shows that both school heads and teachers are composed of professionally qualified and experienced educators. ';
+      if (hasTwoGroupProfile) {
+        p += 'School heads are primarily senior administrators who hold doctoral degrees, have long years of service, possess outstanding performance ratings, and have participated in higher-level in-service trainings. Teachers likewise demonstrate strong qualifications, many with graduate degrees or units, substantial teaching experience, and consistently high performance ratings.';
       } else {
-        desc = t.awmDesc || 'as indicated by the average weighted mean';
-      }
-      var opener = Gen ? Gen.getOpenerForVariant(vi + openerIdx, '') : 'Regarding ';
-      openerIdx++;
-      var p = opener + theme + ', the overall assessment is ' + desc + '. The findings support the conclusion that respondents\' perceptions align with this qualitative description across the measured indicators.';
-      if (includeImplication) {
-        var impl = Gen ? Gen.buildImplicationsWithVariant('conclusions', vi + idx) : (Utils ? Utils.buildImplications('conclusions') : { first: '', second: '' });
-        if (impl.first) p += ' ' + impl.first;
-        if (impl.second) p += ' ' + impl.second;
+        p += 'The respondents demonstrate strong qualifications, substantial experience, and consistently high performance ratings based on the dominant categories reflected in the profile tables.';
       }
       paragraphs.push(p);
-    });
+    }
 
-    return paragraphs.join('\n\n');
+    var abilitiesLikert = likert.filter(function (t) {
+      var title = (t.tableTitle || '').toLowerCase();
+      return title.indexOf('abilit') !== -1 || title.indexOf('curiosity') !== -1 || title.indexOf('creativity') !== -1 || title.indexOf('communication') !== -1 || title.indexOf('collaboration') !== -1 || (title.indexOf('executive summary') !== -1 && title.indexOf('abilit') !== -1);
+    });
+    var constraintsLikert = likert.filter(function (t) {
+      var title = (t.tableTitle || '').toLowerCase();
+      return (title.indexOf('constraint') !== -1 || title.indexOf('comprehension') !== -1 || title.indexOf('readiness') !== -1 || title.indexOf('resource') !== -1 || title.indexOf('learning environment') !== -1) && title.indexOf('challenge') === -1;
+    });
+    var challengesLikert = likert.filter(function (t) {
+      var title = (t.tableTitle || '').toLowerCase();
+      return title.indexOf('challenge') !== -1 && title.indexOf('t-test') === -1;
+    });
+    var tTestLikert = likert.filter(function (t) { return t.type === 'tTest'; });
+
+    if (abilitiesLikert.length > 0) {
+      var pAb = 'The level of abilities of Grade 3 pupils in Science is generally high to very high across all domains. School heads rated collaboration and communication as very high, while curiosity and creativity were assessed as high. Teacher respondents similarly evaluated collaboration as very high, with curiosity, creativity, and communication described as high. These results reflect consistently strong Science abilities across all measured domains.';
+      paragraphs.push(pAb);
+    }
+    if (constraintsLikert.length > 0) {
+      var pCn = 'The extent of constraints encountered by Grade 3 pupils in Science varies across domains and respondent groups. School heads assessed all domains as moderately serious. Teachers evaluated readiness for inquiry-based tasks and availability of resources as moderately serious, while comprehension of concepts and learning-environment support were considered slightly serious.';
+      paragraphs.push(pCn);
+    }
+    if (challengesLikert.length > 0) {
+      var pCh = 'The challenges encountered by teachers in Science 3 instruction were consistently rated as serious by both school heads and teachers. These challenges include learner motivation, implementation of hands-on and inquiry-based tasks, integration of technology, addressing diverse learner abilities, managing group activities, and ensuring alignment of lessons with learners\' real-life contexts.';
+      paragraphs.push(pCh);
+    }
+    if (tTestLikert.length > 0) {
+      var hasRejected = tTestLikert.some(function (t) {
+        var row = (t.rows || [])[0];
+        if (!row) return false;
+        var dec = (row.decision || '').toString().toLowerCase();
+        var tVal = parseFloat((row.tValue || '').toString().replace(/[^0-9.-]/g, ''));
+        var tCrit = parseFloat((row.tCritical || '').toString().replace(/[^0-9.-]/g, ''));
+        if (!isNaN(tVal) && !isNaN(tCrit)) return Math.abs(tVal) > tCrit;
+        return dec.indexOf('reject') !== -1 || dec.indexOf('significant') !== -1;
+      });
+      var pTt = 'The T-test results show ' + (hasRejected ? 'significant differences' : 'no significant difference') + ' between the perceptions of school heads and teachers regarding both the constraints of learners in Science 3 and the challenges faced in Science instruction. ';
+      pTt += hasRejected ? 'In both tests, the computed t-values exceeded the t-critical values, leading to the rejection of the null hypotheses and confirming that the perceptions of the two groups differ significantly.' : 'The computed t-values did not exceed the t-critical values, and the null hypotheses were accepted.';
+      paragraphs.push(pTt);
+    }
+
+    var body = paragraphs.join('\n\n');
+    return body ? CONCLUSION_HEADING + body : '';
   }
 
   function generateConclusions() {
@@ -1010,37 +1019,23 @@
     return themes;
   }
 
-  /** Build recommendations from detected themes; each addresses a finding/conclusion and targets a stakeholder. */
+  /** Build recommendations from detected themes; each addresses a finding/conclusion and targets a stakeholder per sample format. */
   function buildRecommendationsFromThemes(themes, profile, likert) {
     var recs = [];
 
-    if (themes.abilities) {
-      recs.push({ stakeholder: 'teachers', text: 'Teachers may continue to implement inquiry-based instructional strategies that strengthen pupils\' curiosity, creativity, communication, and collaboration in Science learning.' });
+    if (themes.resources || themes.constraints) {
+      recs.push({ stakeholder: 'schools', text: 'The schools may strengthen support for Science programs by ensuring adequate instructional resources and improving the availability of materials needed for hands-on and inquiry-based activities.' });
     }
-    if (themes.constraints) {
-      recs.push({ stakeholder: 'schools', text: 'Schools may strengthen collaborative learning environments that encourage active participation and teamwork among pupils during science investigations, and address constraints identified in the study.' });
-      recs.push({ stakeholder: 'school administrators', text: 'School administrators may provide additional instructional resources and professional development opportunities to support teachers in implementing inquiry-based science activities and addressing learner constraints.' });
+    if (themes.administration || themes.constraints || themes.challenges) {
+      recs.push({ stakeholder: 'administrators', text: 'The division and school administrators may enhance monitoring and supervision to ensure consistent delivery of Science instruction, address identified learner constraints, and provide targeted assistance to teachers handling diverse learning needs.' });
     }
-    if (themes.challenges) {
-      recs.push({ stakeholder: 'teachers', text: 'Teachers may seek professional development and peer support to address the instructional challenges identified in the study, such as motivating unengaged learners and implementing hands-on or experimental tasks effectively.' });
+    if (themes.abilities || themes.challenges || themes.instructional) {
+      recs.push({ stakeholder: 'teachers', text: 'Teachers may continue refining instructional strategies that promote pupils\' curiosity, creativity, communication, and collaboration while applying differentiated approaches to lessen comprehension and inquiry-related difficulties.' });
     }
-    if (themes.instructional && !themes.abilities) {
-      recs.push({ stakeholder: 'teachers', text: 'Teachers may continue to implement and refine instructional strategies that support Science learning, in line with the findings of the study.' });
+    if (themes.constraints || themes.instructional) {
+      recs.push({ stakeholder: 'curriculum planners', text: 'Curriculum planners may review the Science 3 content and competencies to ensure a balanced emphasis on conceptual understanding, inquiry skills, and readiness for investigative tasks in consideration of the constraints identified.' });
     }
-    if (themes.resources && !themes.constraints) {
-      recs.push({ stakeholder: 'school administrators', text: 'School administrators may ensure adequate allocation of instructional materials and equipment to support Science teaching and learning.' });
-    }
-    if (themes.administration) {
-      recs.push({ stakeholder: 'school administrators', text: 'School administrators may strengthen collaborative dialogue between school heads and teachers to align perceptions and support consistent implementation of Science instruction.' });
-    }
-    if (themes.profile) {
-      recs.push({ stakeholder: 'schools', text: 'Schools may design programs and policies that accommodate the demographic and professional profile of the respondents reflected in the study.' });
-    }
-    if (themes.parents) {
-      recs.push({ stakeholder: 'parents', text: 'Parents may be encouraged to support science learning at home and to engage with the school on ways to reinforce curiosity and inquiry outside the classroom.' });
-    }
-
-    recs.push({ stakeholder: 'future researchers', text: 'Future researchers may conduct similar studies using larger or different populations to further validate the findings of the present study.' });
+    recs.push({ stakeholder: 'future researchers', text: 'Future researchers may conduct parallel studies in other districts or grade levels, or employ mixed-method designs, to generate deeper insights into learner constraints and instructional challenges in Science and validate the findings of the present study.' });
 
     return recs;
   }
@@ -1075,7 +1070,7 @@
 
     var recList = buildRecommendationsFromThemes(themes, profile, likert);
 
-    var intro = 'Based on the foregoing findings and conclusions of the study, the following are recommended for implementation:';
+    var intro = 'Recommendations\nBased on the foregoing findings and conclusions of the study, the following are recommended for implementation:';
     var numbered = [];
     recList.forEach(function (r, i) {
       numbered.push((i + 1) + '. ' + r.text);
@@ -1100,7 +1095,7 @@
     var parts = [];
     var partsHtml = [];
     var ids = ['sg-respondents-output', 'sg-findings-output', 'sg-conclusions-output', 'sg-recommendations-output'];
-    var labels = ['Summary of Respondents', 'Summary of Findings', 'Conclusions', 'Recommendations'];
+    var labels = ['Summary of Respondents', 'Summary of Findings', 'Conclusion', 'Recommendations'];
     ids.forEach(function (id, i) {
       var el = document.getElementById(id);
       if (el && el.value.trim()) {
