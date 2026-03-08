@@ -2591,13 +2591,38 @@
   }
 
   /**
-   * Build enumeration string for a group of indicators (descending W.M., semicolon-separated, "and" before last).
-   * Format: "Indicator1" with a weighted mean of X.XX; "Indicator2" with a weighted mean of Y.YY; and "Indicator3" with a weighted mean of Z.ZZ
+   * Group indicators by identical weighted mean and format enumeration.
+   * Rule: indicators with the same W.M. are mentioned together using "each with a weighted mean of X.XX".
+   * Format: "A" and "B" each with a weighted mean of 4.20; "C" with a weighted mean of 4.10; and "D" and "E" each with a weighted mean of 4.05
    */
   function formatIndicatorsEnumeration(indicatorRows) {
-    var sorted = indicatorRows.slice().sort(function (a, b) { return b.weightedMean - a.weightedMean; });
-    var parts = sorted.map(function (r) { return '"' + (r.indicator || '').trim() + '" with a weighted mean of ' + (r.weightedMean != null ? r.weightedMean.toFixed(2) : '—'); });
-    if (parts.length <= 1) return parts.join('');
+    var getWm = function (r) { return r.weightedMean != null ? r.weightedMean : (r.wm != null ? r.wm : 0); };
+    var sorted = indicatorRows.slice().sort(function (a, b) { return getWm(b) - getWm(a); });
+    if (!sorted.length) return '';
+
+    var groups = [];
+    var currentWm = getWm(sorted[0]);
+    var currentGroup = [];
+    for (var i = 0; i < sorted.length; i++) {
+      var wm = getWm(sorted[i]);
+      if (wm !== currentWm && currentGroup.length) {
+        groups.push({ wm: currentWm, rows: currentGroup });
+        currentGroup = [];
+        currentWm = wm;
+      }
+      currentGroup.push(sorted[i]);
+    }
+    if (currentGroup.length) groups.push({ wm: currentWm, rows: currentGroup });
+
+    var parts = groups.map(function (g) {
+      var labels = g.rows.map(function (r) { return '"' + (r.indicator || '').trim() + '"'; });
+      var wmStr = g.wm != null ? g.wm.toFixed(2) : '—';
+      if (labels.length === 1) return labels[0] + ' with a weighted mean of ' + wmStr;
+      if (labels.length === 2) return labels[0] + ' and ' + labels[1] + ' each with a weighted mean of ' + wmStr;
+      return labels.slice(0, -1).join(', ') + ', and ' + labels[labels.length - 1] + ' each with a weighted mean of ' + wmStr;
+    });
+
+    if (parts.length <= 1) return parts[0] || '';
     return parts.slice(0, -1).join('; ') + '; and ' + parts[parts.length - 1];
   }
 
