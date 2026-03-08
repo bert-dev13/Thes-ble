@@ -219,26 +219,26 @@
     return '';
   }
 
-  /** RP2 prewritten opener equivalents — same meaning, different phrasing */
+  /** RP2 prewritten opener equivalents — master prompt list (10 options for Likert interpretation). */
   var RP2_SH_OPENER_POOL = [
-    'Regarding the ',
-    'About the ',
-    'In terms of the ',
-    'With regard to the ',
-    'Considering the ',
-    'As to the ',
     'Relative to the ',
+    'In terms of the ',
+    'With reference to the ',
+    'Considering the ',
+    'Regarding the ',
     'Pertaining to the ',
-    'In relation to the ',
     'Concerning the ',
-    'With respect to the '
+    'As to the ',
+    'In relation to the ',
+    'From the data presented on the '
   ];
 
   /** Patterns that start prewritten sh (before "level of abilities" or "extent of constraints") */
   var RP2_OPENER_PATTERNS = [
-    'Regarding the ', 'About the ', 'In terms of the ', 'With regard to the ',
-    'Considering the ', 'As to the ', 'Relative to the ', 'Pertaining to the ',
-    'In relation to the ', 'Concerning the ', 'With respect to the '
+    'Relative to the ', 'In terms of the ', 'With reference to the ', 'Considering the ',
+    'Regarding the ', 'Pertaining to the ', 'Concerning the ', 'As to the ',
+    'In relation to the ', 'From the data presented on the ',
+    'Regarding the ', 'About the ', 'With regard to the ', 'With respect to the '
   ];
 
   var MEANWHILE_SYNONYMS = ['Meanwhile', 'On the other hand', 'Similarly', 'In contrast'];
