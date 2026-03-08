@@ -33,6 +33,15 @@
   ];
   var openingIndex = 0;
 
+  function qdToAcronym(label) {
+    var U = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    return (U && U.toQualitativeDescriptionAcronym) ? U.toQualitativeDescriptionAcronym(label) : (label ? String(label).trim() : '');
+  }
+  function qdToDisplay(label) {
+    var U = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    return (U && U.toQualitativeDescriptionDisplay) ? U.toQualitativeDescriptionDisplay(label) : (label ? String(label).trim() : '');
+  }
+
   function getOpener() {
     var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
     return Utils ? Utils.getVariedOpener() : OPENINGS[openingIndex % OPENINGS.length];
@@ -1413,7 +1422,7 @@
         '</tr>';
     }
     var awmStr = showComputed && config.awm != null ? config.awm.toFixed(2) : '—';
-    var awmDescStr = showComputed && (config.awmDesc != null && config.awmDesc !== '') ? config.awmDesc : '—';
+    var awmDescStr = showComputed && (config.awmDesc != null && config.awmDesc !== '') ? qdToDisplay(config.awmDesc) : '—';
     if (tfoot) {
       tfoot.innerHTML =
         '<tr class="la-thesis-table__footer-row">' +
@@ -1432,7 +1441,7 @@
       tr.setAttribute('data-la-row-index', String(idx));
       var indVal = (row.indicator != null ? String(row.indicator) : '');
       var indSafe = escapeHtml(indVal);
-      var qdVal = showComputed && row.qd ? escapeHtml(row.qd) : '';
+      var qdVal = showComputed && row.qd ? escapeHtml(qdToAcronym(row.qd)) : '';
       var rankVal = showComputed && row.rank != null ? (row.rank % 1 === 0 ? row.rank : row.rank.toFixed(1)) : '—';
       tr.innerHTML =
         '<td class="la-thesis-table__td la-thesis-table__td--no">' + (idx + 1) + '</td>' +
@@ -1584,8 +1593,8 @@
       tr.setAttribute('data-la-row-index', String(idx));
       var indVal = (row.indicator != null ? String(row.indicator) : '');
       var indSafe = escapeHtml(indVal);
-      var shQdVal = showComputed && row.sh.qd ? escapeHtml(row.sh.qd) : '';
-      var tQdVal = showComputed && row.t.qd ? escapeHtml(row.t.qd) : '';
+      var shQdVal = showComputed && row.sh.qd ? escapeHtml(qdToAcronym(row.sh.qd)) : '';
+      var tQdVal = showComputed && row.t.qd ? escapeHtml(qdToAcronym(row.t.qd)) : '';
       var shRankVal = showComputed && row.sh.rank != null ? (row.sh.rank % 1 === 0 ? row.sh.rank : row.sh.rank.toFixed(1)) : '—';
       var tRankVal = showComputed && row.t.rank != null ? (row.t.rank % 1 === 0 ? row.t.rank : row.t.rank.toFixed(1)) : '—';
       tr.innerHTML =
@@ -1604,9 +1613,9 @@
     });
 
     var awmShVal = showComputed && config.awm && config.awm.sh ? config.awm.sh.value.toFixed(2) : '—';
-    var awmShDesc = showComputed && config.awm && config.awm.sh ? escapeHtml(config.awm.sh.qd) : '—';
+    var awmShDesc = showComputed && config.awm && config.awm.sh ? escapeHtml(qdToDisplay(config.awm.sh.qd)) : '—';
     var awmTVal = showComputed && config.awm && config.awm.t ? config.awm.t.value.toFixed(2) : '—';
-    var awmTDesc = showComputed && config.awm && config.awm.t ? escapeHtml(config.awm.t.qd) : '—';
+    var awmTDesc = showComputed && config.awm && config.awm.t ? escapeHtml(qdToDisplay(config.awm.t.qd)) : '—';
     tfoot.innerHTML =
       '<tr class="la-thesis-table__footer-row">' +
         '<td class="la-thesis-table__footer-value"></td>' +
@@ -2214,7 +2223,7 @@
           rankCell.textContent = rv % 1 === 0 ? rv : rv.toFixed(1);
         }
         if (qdInput && row.qualitativeDescription != null) {
-          qdInput.value = row.qualitativeDescription;
+          qdInput.value = qdToAcronym(row.qualitativeDescription);
         }
       });
 
@@ -2228,7 +2237,7 @@
       var awmVal = document.getElementById('la-awm-value');
       var awmDescEl = document.getElementById('la-awm-desc');
       if (awmVal) awmVal.textContent = awm.toFixed(2);
-      if (awmDescEl) awmDescEl.textContent = awmDesc || '—';
+      if (awmDescEl) awmDescEl.textContent = qdToDisplay(awmDesc) || '—';
 
       computedData = {
         indicators: rows,
@@ -2287,7 +2296,7 @@
       rowsT.forEach(function (r) { r.qualitativeDescription = getQualitativeDescription(r.weightedMean, mapping2); });
     }
 
-    // Update DOM
+    // Update DOM: always show Q.D. when we can derive it from scale (so Compute fills cells even with "Use Loaded" when cell was empty)
     tbody.querySelectorAll('tr').forEach(function (tr, idx) {
       var rs = rowsSh[idx];
       var rt = rowsT[idx];
@@ -2303,8 +2312,12 @@
         var rvt = rt.rank;
         tRankCell.textContent = rvt % 1 === 0 ? rvt : rvt.toFixed(1);
       }
-      if (shQdInput && rs.qualitativeDescription != null) shQdInput.value = rs.qualitativeDescription;
-      if (tQdInput && rt.qualitativeDescription != null) tQdInput.value = rt.qualitativeDescription;
+      var shDesc = rs.qualitativeDescription;
+      var tDesc = rt.qualitativeDescription;
+      if (!shDesc || shDesc === 'Q.D.') shDesc = getQualitativeDescription(rs.weightedMean, mapping2) || shDesc;
+      if (!tDesc || tDesc === 'Q.D.') tDesc = getQualitativeDescription(rt.weightedMean, mapping2) || tDesc;
+      if (shQdInput) shQdInput.value = qdToAcronym(shDesc);
+      if (tQdInput) tQdInput.value = qdToAcronym(tDesc);
     });
 
     // Recompute AWM per group
@@ -2318,9 +2331,9 @@
     var awmTValEl = document.getElementById('la-awm-t-value');
     var awmTDescEl = document.getElementById('la-awm-t-desc');
     if (awmShValEl) awmShValEl.textContent = awmSh.toFixed(2);
-    if (awmShDescEl) awmShDescEl.textContent = awmShDesc || '—';
+    if (awmShDescEl) awmShDescEl.textContent = qdToDisplay(awmShDesc) || '—';
     if (awmTValEl) awmTValEl.textContent = awmT.toFixed(2);
-    if (awmTDescEl) awmTDescEl.textContent = awmTDesc || '—';
+    if (awmTDescEl) awmTDescEl.textContent = qdToDisplay(awmTDesc) || '—';
 
     currentTwoGroupData = {
       rowsSh: rowsSh,
@@ -2433,7 +2446,7 @@
       tr.innerHTML =
         '<td>' + escapeHtml(r.indicator) + '</td>' +
         '<td>' + r.weightedMean.toFixed(2) + '</td>' +
-        '<td>' + escapeHtml(r.qualitativeDescription) + '</td>' +
+        '<td>' + escapeHtml(qdToAcronym(r.qualitativeDescription)) + '</td>' +
         '<td>' + (r.rank % 1 === 0 ? r.rank : r.rank.toFixed(1)) + '</td>' +
         '<td>' + r.total + '</td>';
       tbody.appendChild(tr);
@@ -2442,7 +2455,7 @@
     if (footer) {
       footer.hidden = false;
       if (awmVal) awmVal.textContent = awm.toFixed(2);
-      if (awmDescEl) awmDescEl.textContent = awmDesc || '—';
+      if (awmDescEl) awmDescEl.textContent = qdToDisplay(awmDesc) || '—';
     }
   }
 
@@ -3088,7 +3101,7 @@
     var liveAwm = document.getElementById('la-live-awm');
     var liveAwmDesc = document.getElementById('la-live-awm-desc');
     if (liveAwm) liveAwm.textContent = awm != null ? awm.toFixed(2) : '—';
-    if (liveAwmDesc) liveAwmDesc.textContent = awmDesc || '—';
+    if (liveAwmDesc) liveAwmDesc.textContent = qdToDisplay(awmDesc) || '—';
   }
 
   /**
@@ -3204,16 +3217,16 @@
         var shRank = sh.rank != null ? (sh.rank % 1 === 0 ? sh.rank : sh.rank.toFixed(1)) : '';
         var tRank = t.rank != null ? (t.rank % 1 === 0 ? t.rank : t.rank.toFixed(1)) : '';
         tableHtml += '<tr><td style="' + styleCenter + '">' + no + '</td><td style="' + styleLeft + '">' + escapeHtml(row.indicator || '') + '</td>' +
-          '<td style="' + styleRight + '">' + shWm + '</td><td style="' + styleLeft + '">' + escapeHtml(sh.qd || '') + '</td><td style="' + styleCenter + '">' + shRank + '</td>' +
-          '<td style="' + styleRight + '">' + tWm + '</td><td style="' + styleLeft + '">' + escapeHtml(t.qd || '') + '</td><td style="' + styleCenter + '">' + tRank + '</td></tr>';
-        tablePlain += no + '\t' + (row.indicator || '') + '\t' + shWm + '\t' + (sh.qd || '') + '\t' + shRank + '\t' + tWm + '\t' + (t.qd || '') + '\t' + tRank + '\n';
+          '<td style="' + styleRight + '">' + shWm + '</td><td style="' + styleLeft + '">' + escapeHtml(qdToAcronym(sh.qd) || '') + '</td><td style="' + styleCenter + '">' + shRank + '</td>' +
+          '<td style="' + styleRight + '">' + tWm + '</td><td style="' + styleLeft + '">' + escapeHtml(qdToAcronym(t.qd) || '') + '</td><td style="' + styleCenter + '">' + tRank + '</td></tr>';
+        tablePlain += no + '\t' + (row.indicator || '') + '\t' + shWm + '\t' + (qdToAcronym(sh.qd) || '') + '\t' + shRank + '\t' + tWm + '\t' + (qdToAcronym(t.qd) || '') + '\t' + tRank + '\n';
       });
       tableHtml += '</tbody><tfoot><tr><td style="' + styleCenter + '"></td><td style="' + styleLeft + '"><strong>AVERAGE WEIGHTED MEAN</strong></td>' +
         '<td style="' + styleRight + '"><strong>' + (typeof awmSh.value === 'number' ? awmSh.value.toFixed(2) : '—') + '</strong></td>' +
-        '<td style="' + styleLeft + '"><strong>' + escapeHtml(awmSh.qd || '—') + '</strong></td><td style="' + styleCenter + '"></td>' +
+        '<td style="' + styleLeft + '"><strong>' + escapeHtml(qdToDisplay(awmSh.qd) || '—') + '</strong></td><td style="' + styleCenter + '"></td>' +
         '<td style="' + styleRight + '"><strong>' + (typeof awmT.value === 'number' ? awmT.value.toFixed(2) : '—') + '</strong></td>' +
-        '<td style="' + styleLeft + '"><strong>' + escapeHtml(awmT.qd || '—') + '</strong></td><td style="' + styleCenter + '"></td></tr></tfoot></table>';
-      tablePlain += '\tAVERAGE WEIGHTED MEAN\t' + (typeof awmSh.value === 'number' ? awmSh.value.toFixed(2) : '—') + '\t' + (awmSh.qd || '') + '\t\t' + (typeof awmT.value === 'number' ? awmT.value.toFixed(2) : '—') + '\t' + (awmT.qd || '') + '\n';
+        '<td style="' + styleLeft + '"><strong>' + escapeHtml(qdToDisplay(awmT.qd) || '—') + '</strong></td><td style="' + styleCenter + '"></td></tr></tfoot></table>';
+      tablePlain += '\tAVERAGE WEIGHTED MEAN\t' + (typeof awmSh.value === 'number' ? awmSh.value.toFixed(2) : '—') + '\t' + (qdToDisplay(awmSh.qd) || '') + '\t\t' + (typeof awmT.value === 'number' ? awmT.value.toFixed(2) : '—') + '\t' + (qdToDisplay(awmT.qd) || '') + '\n';
     } else {
       var awm = currentLikertConfig.awm;
       var awmDesc = currentLikertConfig.awmDesc != null ? currentLikertConfig.awmDesc : '—';
@@ -3226,13 +3239,13 @@
         var wm = typeof row.wm === 'number' ? row.wm.toFixed(2) : '';
         var rank = row.rank != null ? (row.rank % 1 === 0 ? row.rank : row.rank.toFixed(1)) : '';
         tableHtml += '<tr><td style="' + styleCenter + '">' + no + '</td><td style="' + styleLeft + '">' + escapeHtml(row.indicator || '') + '</td>' +
-          '<td style="' + styleRight + '">' + wm + '</td><td style="' + styleLeft + '">' + escapeHtml(row.qd || '') + '</td><td style="' + styleCenter + '">' + rank + '</td></tr>';
-        tablePlain += no + '\t' + (row.indicator || '') + '\t' + wm + '\t' + (row.qd || '') + '\t' + rank + '\n';
+          '<td style="' + styleRight + '">' + wm + '</td><td style="' + styleLeft + '">' + escapeHtml(qdToAcronym(row.qd) || '') + '</td><td style="' + styleCenter + '">' + rank + '</td></tr>';
+        tablePlain += no + '\t' + (row.indicator || '') + '\t' + wm + '\t' + (qdToAcronym(row.qd) || '') + '\t' + rank + '\n';
       });
       tableHtml += '</tbody><tfoot><tr><td style="' + styleCenter + '"></td><td style="' + styleLeft + '"><strong>AVERAGE WEIGHTED MEAN</strong></td>' +
         '<td style="' + styleRight + '"><strong>' + (typeof awm === 'number' ? awm.toFixed(2) : '—') + '</strong></td>' +
-        '<td style="' + styleLeft + '"><strong>' + escapeHtml(awmDesc) + '</strong></td><td style="' + styleCenter + '"></td></tr></tfoot></table>';
-      tablePlain += '\tAVERAGE WEIGHTED MEAN\t' + (typeof awm === 'number' ? awm.toFixed(2) : '—') + '\t' + awmDesc + '\n';
+        '<td style="' + styleLeft + '"><strong>' + escapeHtml(qdToDisplay(awmDesc) || '—') + '</strong></td><td style="' + styleCenter + '"></td></tr></tfoot></table>';
+      tablePlain += '\tAVERAGE WEIGHTED MEAN\t' + (typeof awm === 'number' ? awm.toFixed(2) : '—') + '\t' + (qdToDisplay(awmDesc) || '—') + '\n';
     }
 
     var titleHtml = tableTitle ? '<p style="margin-bottom: 0.5em; font-weight: bold;">' + escapeHtml(tableTitle) + '</p>' : '';

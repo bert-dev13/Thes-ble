@@ -113,6 +113,7 @@
     SE: 'Slightly Effective',
     NE: 'Not Effective',
     S: 'Serious',
+    SERIOUS: 'Serious',
     MS: 'Moderately Serious',
     SS: 'Slightly Serious',
     O: 'Outstanding',
@@ -132,6 +133,65 @@
     VERYOFTEN: 'Very Often',
     VERYSATISFACTORY: 'Very Satisfactory'
   };
+
+  /** Full text → preferred acronym for table display (prefer short forms e.g. VS over VERYSATISFACTORY). */
+  var FULL_TO_ACRONYM = (function () {
+    var map = {};
+    var keys = Object.keys(QUALITATIVE_DESCRIPTION_MAP);
+    keys.sort(function (a, b) {
+      var shortA = a.length <= 4 ? 0 : 1;
+      var shortB = b.length <= 4 ? 0 : 1;
+      if (shortA !== shortB) return shortA - shortB;
+      return a.length - b.length;
+    });
+    keys.forEach(function (acr) {
+      var full = QUALITATIVE_DESCRIPTION_MAP[acr];
+      if (full && !map[full]) map[full] = acr;
+    });
+    return map;
+  })();
+
+  /**
+   * Normalize Q.D. label to acronym only for table display.
+   * Tables must show only acronyms (VS, O, VH, H, FR, VE, E, S, MS, SS, VO, etc.), never full text or "Q.D.".
+   * @param {string} label - Raw label (e.g. "Very Satisfactory", "Very Satisfactory (VS)", "VS")
+   * @returns {string} Acronym only (e.g. "VS"), or '' if empty/placeholder
+   */
+  function toQualitativeDescriptionAcronym(label) {
+    if (label == null || typeof label !== 'string') return '';
+    var s = String(label).trim();
+    if (!s || s === 'Q.D.' || s === '—') return '';
+    var parenMatch = s.match(/\s*\(([^)]+)\)\s*$/);
+    if (parenMatch) return parenMatch[1].trim().toUpperCase();
+    var key = s.replace(/\s+/g, '').toUpperCase();
+    if (QUALITATIVE_DESCRIPTION_MAP[key]) {
+      var full = QUALITATIVE_DESCRIPTION_MAP[key];
+      var acr = FULL_TO_ACRONYM[full];
+      if (acr) return acr;
+      if (key.length <= 5) return key;
+    }
+    var fullMapped = FULL_TO_ACRONYM[s];
+    if (fullMapped) return fullMapped;
+    if (s.length <= 5 && /^[A-Za-z]+$/.test(s)) return s.toUpperCase();
+    return s;
+  }
+
+  /**
+   * Format Q.D. for table display: "Very Satisfactory (VS)".
+   * @param {string} label - Raw label (e.g. "Very Satisfactory", "VS", "Very Satisfactory (VS)")
+   * @returns {string} "Full Text (ACRONYM)" or full text only, or '' if empty
+   */
+  function toQualitativeDescriptionDisplay(label) {
+    if (label == null || typeof label !== 'string') return '';
+    var s = String(label).trim();
+    if (!s || s === 'Q.D.' || s === '—') return '';
+    var full = expandQualitativeDescription(s);
+    var acr = toQualitativeDescriptionAcronym(s);
+    if (full && acr) return full + ' (' + acr + ')';
+    if (full) return full;
+    if (acr) return acr;
+    return s;
+  }
 
   function expandQualitativeDescription(abbr) {
     if (abbr == null || abbr === '') return abbr === '' ? '' : '—';
@@ -193,6 +253,8 @@
     getVariedOpener: getVariedOpener,
     buildImplications: buildImplications,
     expandQualitativeDescription: expandQualitativeDescription,
+    toQualitativeDescriptionAcronym: toQualitativeDescriptionAcronym,
+    toQualitativeDescriptionDisplay: toQualitativeDescriptionDisplay,
     convertQD: convertQD,
     formatThemeForInterpretation: formatThemeForInterpretation,
     formatIndicatorForInterpretation: formatIndicatorForInterpretation,
