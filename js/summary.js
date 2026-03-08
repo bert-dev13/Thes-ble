@@ -751,9 +751,11 @@
               var maxB = Math.max.apply(null, byQd[b].map(function (d) { return d.wm; }));
               return maxB - maxA;
             });
+            var fmtIndEx = typeof ThesisInterpretationUtils !== 'undefined' && ThesisInterpretationUtils.formatIndicatorForInterpretation
+              ? ThesisInterpretationUtils.formatIndicatorForInterpretation : function (x) { return (x || '').trim(); };
             var parts = [];
             ordered.forEach(function (qd) {
-              var domains = byQd[qd].map(function (d) { return '"' + d.indicator + '"'; });
+              var domains = byQd[qd].map(function (d) { return '"' + fmtIndEx(d.indicator || '') + '"'; });
               var qdFull = expandQdEx(qd) || qd;
               if (domains.length) parts.push(domains.join(', ') + ' are rated ' + qdFull);
             });
@@ -778,8 +780,10 @@
           }
           paragraphs.push(pT);
         } else {
-          var shIndicators = groups.sh.map(function (i) { return '"' + i.indicator + '"'; });
-          var tIndicators = groups.t.map(function (i) { return '"' + i.indicator + '"'; });
+          var fmtIndTw = typeof ThesisInterpretationUtils !== 'undefined' && ThesisInterpretationUtils.formatIndicatorForInterpretation
+            ? ThesisInterpretationUtils.formatIndicatorForInterpretation : function (x) { return (x || '').trim(); };
+          var shIndicators = groups.sh.map(function (i) { return '"' + fmtIndTw(i.indicator || '') + '"'; });
+          var tIndicators = groups.t.map(function (i) { return '"' + fmtIndTw(i.indicator || '') + '"'; });
           var shQdRaw = groups.sh.length ? groups.sh[0].qd : (t.awm && t.awm.sh ? t.awm.sh.qd : '');
           var tQdRaw = groups.t.length ? groups.t[0].qd : (t.awm && t.awm.t ? t.awm.t.qd : '');
           var shQd = UtilsEx ? (expandQdEx(shQdRaw) || shQdRaw) : shQdRaw;
@@ -824,7 +828,9 @@
       var indicators = t.indicators || [];
       var topGroup = getTopQualGroupIndicators(indicators, includeNextGroup);
       if (topGroup.length > 0) {
-        var labels = topGroup.map(function (i) { return '"' + (i.indicator || i) + '"'; });
+        var fmtIndSg = typeof ThesisInterpretationUtils !== 'undefined' && ThesisInterpretationUtils.formatIndicatorForInterpretation
+          ? ThesisInterpretationUtils.formatIndicatorForInterpretation : function (x) { return (x || '').trim(); };
+        var labels = topGroup.map(function (i) { return '"' + fmtIndSg(i.indicator || i) + '"'; });
         var qdRaw = topGroup[0].qualitativeDescription || topGroup[0].qd || t.awmDesc || '';
         var UtilsSg = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
         var expandQdSg = UtilsSg && UtilsSg.expandQualitativeDescription ? UtilsSg.expandQualitativeDescription : function (x) { return x || ''; };
@@ -904,7 +910,10 @@
       var tableType = t.type === 'twoGroup' ? 'twoGroup' : 'singleGroup';
       var topCats = getHighestCategories(t.rows || [], tableType);
       if (topCats.length === 0) return;
-      var theme = t.tableTitle || 'the variable';
+      var themeRaw = t.tableTitle || 'the variable';
+      var UtilsPf = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+      var theme = (UtilsPf && UtilsPf.formatThemeForInterpretation)
+        ? UtilsPf.formatThemeForInterpretation(themeRaw) : themeRaw;
       var indicateWord = Gen ? Gen.getSynonym('shows', vi + openerIdx) : 'indicate';
       var opener = Gen ? Gen.getOpenerForVariant(vi + openerIdx, openerIdx === 0 ? lastOpener : '') : 'Regarding ';
       openerIdx++;
@@ -919,7 +928,10 @@
     });
 
     likert.forEach(function (t, idx) {
-      var theme = t.tableTitle || 'the theme';
+      var themeRaw = t.tableTitle || 'the theme';
+      var UtilsLk = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+      var theme = (UtilsLk && UtilsLk.formatThemeForInterpretation)
+        ? UtilsLk.formatThemeForInterpretation(themeRaw) : themeRaw;
       var desc;
       if (t.type === 'twoGroup' && t.awm && (t.awm.sh || t.awm.t)) {
         var UtilsCn = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;

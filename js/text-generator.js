@@ -356,8 +356,10 @@
     var pValStr = (row.pValue != null ? String(row.pValue) : '').trim();
     var decision = (row.decision != null ? String(row.decision) : '').trim().toLowerCase();
 
-    var theme = (options && options.theme) || (options && options.tableTitle) || tableData.tableTitle || tableData.title || 'the variable';
-    var themeLower = theme.toLowerCase().replace(/^table \d+\.\s*/i, '');
+    var themeRaw = (options && options.theme) || (options && options.tableTitle) || tableData.tableTitle || tableData.title || 'the variable';
+    var UtilsTheme = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    var themeLower = (UtilsTheme && UtilsTheme.formatThemeForInterpretation)
+      ? UtilsTheme.formatThemeForInterpretation(themeRaw) : themeRaw.toLowerCase().replace(/^table \d+\.\s*/i, '');
 
     var vi = (options && typeof options.variantIndex === 'number') ? options.variantIndex : 0;
     var includeImplications = options && options.includeImplications !== false;

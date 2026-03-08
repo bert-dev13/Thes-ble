@@ -115,7 +115,8 @@
     S: 'Serious',
     MS: 'Moderately Serious',
     SS: 'Slightly Serious',
-    O: 'Often',
+    O: 'Outstanding',
+    OFTEN: 'Often',
     VO: 'Very Often',
     VS: 'Very Satisfactory',
     SF: 'Satisfactory',
@@ -150,11 +151,51 @@
     return expandQualitativeDescription(abbreviation);
   }
 
+  /**
+   * Format indicator text for interpretation: capitalize first letter if lowercase,
+   * normalize acronyms (PMDAS, GMDAS, GCF, LCM) to uppercase.
+   * @param {string} indicator - Raw indicator text
+   * @returns {string}
+   */
+  function formatIndicatorForInterpretation(indicator) {
+    if (!indicator || typeof indicator !== 'string') return indicator || '';
+    var s = indicator.trim();
+    if (!s) return s;
+    if (s.charAt(0) === s.charAt(0).toLowerCase() && /[a-z]/.test(s.charAt(0))) {
+      s = s.charAt(0).toUpperCase() + s.slice(1);
+    }
+    s = s.replace(/\bpmdas\b/gi, 'PMDAS');
+    s = s.replace(/\bgmdas\b/gi, 'GMDAS');
+    s = s.replace(/\bgcf\b/gi, 'GCF');
+    s = s.replace(/\blcm\b/gi, 'LCM');
+    return s;
+  }
+
+  /**
+   * Strip "Table 10." etc. from title and format for AWM sentence.
+   * Returns e.g. "the level of abilities of Grade 3 pupils in Science in terms of curiosity".
+   * Does not include "Table X." in output. Preserves proper noun capitalization (Grade N, Science, etc.).
+   */
+  function formatThemeForInterpretation(title) {
+    if (!title || typeof title !== 'string') return 'the theme';
+    var s = title.trim().replace(/^Table\s+\d+\.\s*/i, '').trim();
+    if (!s) return 'the theme';
+    s = s.toLowerCase();
+    s = s.replace(/\bgrade\s+(\d+|k)\b/gi, function (m, n) { return 'Grade ' + (n.toUpperCase() === 'K' ? 'K' : n); });
+    s = s.replace(/\bscience\b/g, 'Science');
+    s = s.replace(/\bmathematics\b/g, 'Mathematics');
+    s = s.replace(/\benglish\b/g, 'English');
+    s = s.replace(/\bfilipino\b/g, 'Filipino');
+    return s.indexOf('the ') === 0 ? s : 'the ' + s;
+  }
+
   global.ThesisInterpretationUtils = {
     getVariedOpener: getVariedOpener,
     buildImplications: buildImplications,
     expandQualitativeDescription: expandQualitativeDescription,
     convertQD: convertQD,
+    formatThemeForInterpretation: formatThemeForInterpretation,
+    formatIndicatorForInterpretation: formatIndicatorForInterpretation,
     QUALITATIVE_DESCRIPTION_MAP: QUALITATIVE_DESCRIPTION_MAP,
     OPENER_POOL: OPENER_POOL,
     TRANSITION_PHRASES: TRANSITION_PHRASES

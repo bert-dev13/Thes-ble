@@ -2482,8 +2482,10 @@
 
     var text;
     if (cfg.isExecutiveSummary) {
+      var fmtIndExec = typeof ThesisInterpretationUtils !== 'undefined' && ThesisInterpretationUtils.formatIndicatorForInterpretation
+        ? ThesisInterpretationUtils.formatIndicatorForInterpretation : function (x) { return (x || '').trim(); };
       var areaParts = rows.map(function (r) {
-        return (r.indicator || '').toLowerCase() + ' having a weighted mean of ' + r.weightedMean.toFixed(2);
+        return fmtIndExec(r.indicator || '') + ' having a weighted mean of ' + r.weightedMean.toFixed(2);
       });
       var areaList = rows.length >= 2
         ? ', with ' + areaParts.slice(0, -1).join(', ') + ', and ' + areaParts[areaParts.length - 1]
@@ -2533,7 +2535,9 @@
     var sorted = rows.slice().sort(function (a, b) { return getWm(b) - getWm(a); });
     if (!sorted.length) return '';
     var first = sorted[0];
-    var firstInd = '"' + (first.indicator || '').trim() + '"';
+    var fmtIndP1 = typeof ThesisInterpretationUtils !== 'undefined' && ThesisInterpretationUtils.formatIndicatorForInterpretation
+      ? ThesisInterpretationUtils.formatIndicatorForInterpretation : function (x) { return (x || '').trim(); };
+    var firstInd = '"' + fmtIndP1(first.indicator || '') + '"';
     var firstWm = getWm(first).toFixed(2);
     var firstQdRaw = getQd(first);
     var firstQd = (firstQdRaw && firstQdRaw !== '—') ? expandQdForRows(firstQdRaw) : qdFull;
@@ -2583,9 +2587,13 @@
     var descSh = expandQdRp2(awmShDesc || '—') || awmShDesc || '—';
     var descT = expandQdRp2(awmTDesc || '—') || awmTDesc || '—';
 
-    var theme = (currentLikertConfig && (currentLikertConfig.theme || currentLikertConfig.title)) ||
+    var themeRaw = (currentLikertConfig && (currentLikertConfig.theme || currentLikertConfig.title)) ||
       (currentTwoGroupData && (currentTwoGroupData.themeSh || currentTwoGroupData.themeT)) ||
-      cfg.headsAwmConstruct || 'the theme';
+      cfg.headsAwmConstruct || '';
+    var UtilsTheme = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    var theme = (UtilsTheme && UtilsTheme.formatThemeForInterpretation)
+      ? UtilsTheme.formatThemeForInterpretation(themeRaw || 'the theme')
+      : (themeRaw || 'the theme');
 
     var baseOpener = (Gen && cfg.headsOpenerAlternatives && cfg.headsOpenerAlternatives.length)
       ? cfg.headsOpenerAlternatives[Math.abs(vi) % cfg.headsOpenerAlternatives.length]
@@ -2649,8 +2657,10 @@
     }
     if (currentGroup.length) groups.push({ wm: currentWm, rows: currentGroup });
 
+    var fmtInd = typeof ThesisInterpretationUtils !== 'undefined' && ThesisInterpretationUtils.formatIndicatorForInterpretation
+      ? ThesisInterpretationUtils.formatIndicatorForInterpretation : function (x) { return (x || '').trim(); };
     var parts = groups.map(function (g) {
-      var labels = g.rows.map(function (r) { return '"' + (r.indicator || '').trim() + '"'; });
+      var labels = g.rows.map(function (r) { return '"' + fmtInd(r.indicator || '') + '"'; });
       var wmStr = g.wm != null ? g.wm.toFixed(2) : '—';
       if (labels.length === 1) return labels[0] + ' with a weighted mean of ' + wmStr;
       if (labels.length === 2) return labels[0] + ' and ' + labels[1] + ' each with a weighted mean of ' + wmStr;
@@ -2724,10 +2734,14 @@
     var descRaw = awmDesc || '—';
     var desc = expandQd(descRaw);
     if (!desc || desc === '—') desc = descRaw || '—';
-    var sent1 = opening + theme + ', ' + indicatorBody + '.';
+    var UtilsTheme2 = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    var themeForAwm = (UtilsTheme2 && UtilsTheme2.formatThemeForInterpretation)
+      ? UtilsTheme2.formatThemeForInterpretation(theme)
+      : (theme.indexOf('the ') === 0 ? theme : 'the ' + theme);
+    var sent1 = opening + themeForAwm + ', ' + indicatorBody + '.';
     var awmStr = awm.toFixed(2);
     var sent3 = groupLabel
-      ? 'The average weighted mean of ' + awmStr + ' signifies that ' + groupLabel + ' view ' + (theme.indexOf('the ') === 0 ? theme : 'the ' + theme) + ' as ' + desc + '.'
+      ? 'The average weighted mean of ' + awmStr + ' signifies that ' + groupLabel + ' view ' + themeForAwm + ' as ' + desc + '.'
       : 'The average weighted mean of ' + awmStr + ' signifies that the indicators are generally assessed as ' + desc + '.';
     var text = sent1 + ' ' + sent3;
     if (includeImplications) {
@@ -2836,7 +2850,11 @@
     var expandQd = Utils && Utils.expandQualitativeDescription ? Utils.expandQualitativeDescription : function (x) { return x || ''; };
     var descSh = expandQd(awmShDesc || '—') || awmShDesc || '—';
     var descT = expandQd(awmTDesc || '—') || awmTDesc || '—';
-    var theme = themeSh || themeT || (currentLikertConfig && (currentLikertConfig.theme || currentLikertConfig.title)) || 'the theme';
+    var themeRaw = themeSh || themeT || (currentLikertConfig && (currentLikertConfig.theme || currentLikertConfig.title)) || '';
+    var UtilsFmt = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    var theme = (UtilsFmt && UtilsFmt.formatThemeForInterpretation)
+      ? UtilsFmt.formatThemeForInterpretation(themeRaw || 'the theme')
+      : (themeRaw || 'the theme');
     var includeImpl = document.getElementById('la-include-implications') && document.getElementById('la-include-implications').checked;
 
     var opener = Gen ? Gen.getOpenerForVariant(vi, lastOpener) : (Utils ? Utils.getVariedOpener() : 'In terms of ');
@@ -2995,8 +3013,14 @@
 
   function buildAwmSentence(awm, awmDesc, theme) {
     var awmStr = awm.toFixed(2);
-    var desc = awmDesc || '—';
-    return 'The average weighted mean of ' + awmStr + ' signifies that teachers view the ' + theme + ' as ' + desc.toLowerCase() + '.';
+    var UtilsAwm = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    var expandQd = UtilsAwm && UtilsAwm.expandQualitativeDescription ? UtilsAwm.expandQualitativeDescription : function (x) { return x || ''; };
+    var descRaw = awmDesc || '—';
+    var desc = expandQd(descRaw) || descRaw || '—';
+    var themeFormatted = (UtilsAwm && UtilsAwm.formatThemeForInterpretation)
+      ? UtilsAwm.formatThemeForInterpretation(theme || 'the theme')
+      : (theme || 'the theme');
+    return 'The average weighted mean of ' + awmStr + ' signifies that teachers view ' + themeFormatted + ' as ' + desc + '.';
   }
 
   function updateLiveStats(awm, awmDesc) {
