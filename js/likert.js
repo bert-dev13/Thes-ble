@@ -2715,6 +2715,7 @@
 
   /**
    * Copy All: table title + full table (W.M., Q.D., Rank, AWM) + interpretation as rich HTML for Word.
+   * Syncs from DOM before copy to ensure all visible rows and columns are included.
    */
   function copyInterpretation() {
     var block = document.getElementById('la-interpretation-block');
@@ -2729,6 +2730,56 @@
       showToast('Please compute and generate the interpretation first before copying.', true);
       return;
     }
+    var tbody = document.getElementById('la-output-tbody');
+    if (tbody && (currentLikertConfig.type === 'twoGroup' || (currentLikertConfig.rows[0] && (currentLikertConfig.rows[0].sh || currentLikertConfig.rows[0].t)))) {
+      var rowsFromDom = [];
+      tbody.querySelectorAll('tr').forEach(function (tr, idx) {
+        var base = currentLikertConfig.rows[idx];
+        var indInput = tr.querySelector('[data-la-indicator]');
+        var ind = (indInput && indInput.value != null) ? indInput.value.trim() : (base && base.indicator) || '';
+        var shWmInput = tr.querySelector('[data-la-sh-wm]');
+        var shQdInput = tr.querySelector('[data-la-sh-qd]');
+        var tWmInput = tr.querySelector('[data-la-t-wm]');
+        var tQdInput = tr.querySelector('[data-la-t-qd]');
+        var shWm = shWmInput && shWmInput.value !== '' ? parseFloat(shWmInput.value) : (base && base.sh) ? base.sh.wm : 0;
+        var tWm = tWmInput && tWmInput.value !== '' ? parseFloat(tWmInput.value) : (base && base.t) ? base.t.wm : 0;
+        if (isNaN(shWm)) shWm = 0;
+        if (isNaN(tWm)) tWm = 0;
+        var shQd = (shQdInput && shQdInput.value) ? shQdInput.value.trim() : (base && base.sh) ? base.sh.qd : '';
+        var tQd = (tQdInput && tQdInput.value) ? tQdInput.value.trim() : (base && base.t) ? base.t.qd : '';
+        var shRankCell = tr.querySelector('[data-la-sh-rank]');
+        var tRankCell = tr.querySelector('[data-la-t-rank]');
+        var shRank = shRankCell && shRankCell.textContent ? parseFloat(shRankCell.textContent) : (base && base.sh) ? base.sh.rank : null;
+        var tRank = tRankCell && tRankCell.textContent ? parseFloat(tRankCell.textContent) : (base && base.t) ? base.t.rank : null;
+        rowsFromDom.push({
+          indicator: ind,
+          sh: { wm: shWm, qd: shQd, rank: shRank },
+          t: { wm: tWm, qd: tQd, rank: tRank }
+        });
+      });
+      if (rowsFromDom.length > 0) {
+        var awmShEl = document.getElementById('la-awm-sh-value');
+        var awmTEl = document.getElementById('la-awm-t-value');
+        var awmShDescEl = document.getElementById('la-awm-sh-desc');
+        var awmTDescEl = document.getElementById('la-awm-t-desc');
+        currentLikertConfig = {
+          rows: rowsFromDom,
+          awm: {
+            sh: {
+              value: awmShEl && awmShEl.textContent ? parseFloat(awmShEl.textContent) : (currentLikertConfig.awm && currentLikertConfig.awm.sh ? currentLikertConfig.awm.sh.value : 0),
+              qd: awmShDescEl ? awmShDescEl.textContent : (currentLikertConfig.awm && currentLikertConfig.awm.sh ? currentLikertConfig.awm.sh.qd : '')
+            },
+            t: {
+              value: awmTEl && awmTEl.textContent ? parseFloat(awmTEl.textContent) : (currentLikertConfig.awm && currentLikertConfig.awm.t ? currentLikertConfig.awm.t.value : 0),
+              qd: awmTDescEl ? awmTDescEl.textContent : (currentLikertConfig.awm && currentLikertConfig.awm.t ? currentLikertConfig.awm.t.qd : '')
+            }
+          },
+          type: currentLikertConfig.type,
+          title: currentLikertConfig.title,
+          theme: currentLikertConfig.theme
+        };
+      }
+    }
     var titleEl = document.getElementById('la-table-title');
     var tableTitle = (titleEl && titleEl.value) ? titleEl.value.trim() : '';
     var tableHtml = '';
@@ -2741,19 +2792,20 @@
     if (currentLikertConfig.type === 'tTest') {
       tableHtml =
         '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">' +
-        '<thead><tr><th style="' + styleLeft + '">Particulars</th><th style="' + styleRight + '">t-value</th><th style="' + styleRight + '">t-critical</th>' +
+        '<thead><tr><th style="' + styleCenter + '; width: 2em;">No.</th><th style="' + styleLeft + '">Particulars</th><th style="' + styleRight + '">t-value</th><th style="' + styleRight + '">t-critical</th>' +
         '<th style="' + styleRight + '">p-value</th><th style="' + styleLeft + '">Decision</th><th style="' + styleLeft + '">Description</th></tr></thead><tbody>';
-      tablePlain = 'Particulars\tt-value\tt-critical\tp-value\tDecision\tDescription\n';
+      tablePlain = 'No.\tParticulars\tt-value\tt-critical\tp-value\tDecision\tDescription\n';
       (currentLikertConfig.rows || []).forEach(function (row, idx) {
-        var label = (idx + 1) + '. ' + (row.label || '');
+        var no = idx + 1;
+        var label = row.label || '';
         var tVal = row.tValue != null ? String(row.tValue) : '';
         var tCrit = row.tCritical != null ? String(row.tCritical) : '';
         var pVal = row.pValue != null ? String(row.pValue) : '';
         var dec = row.decision || '';
         var desc = row.description || '';
-        tableHtml += '<tr><td style="' + styleLeft + '">' + escapeHtml(label) + '</td><td style="' + styleRight + '">' + escapeHtml(tVal) + '</td><td style="' + styleRight + '">' + escapeHtml(tCrit) + '</td>' +
+        tableHtml += '<tr><td style="' + styleCenter + '">' + no + '</td><td style="' + styleLeft + '">' + escapeHtml(label) + '</td><td style="' + styleRight + '">' + escapeHtml(tVal) + '</td><td style="' + styleRight + '">' + escapeHtml(tCrit) + '</td>' +
           '<td style="' + styleRight + '">' + escapeHtml(pVal) + '</td><td style="' + styleLeft + '">' + escapeHtml(dec) + '</td><td style="' + styleLeft + '">' + escapeHtml(desc) + '</td></tr>';
-        tablePlain += label + '\t' + tVal + '\t' + tCrit + '\t' + pVal + '\t' + dec + '\t' + desc + '\n';
+        tablePlain += no + '\t' + label + '\t' + tVal + '\t' + tCrit + '\t' + pVal + '\t' + dec + '\t' + desc + '\n';
       });
       tableHtml += '</tbody></table>';
     } else if (currentLikertConfig.type === 'twoGroup' || (currentLikertConfig.rows[0] && (currentLikertConfig.rows[0].sh || currentLikertConfig.rows[0].t))) {
@@ -2761,46 +2813,48 @@
       var awmT = currentLikertConfig.awm && currentLikertConfig.awm.t ? currentLikertConfig.awm.t : { value: 0, qd: '—' };
       tableHtml =
         '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">' +
-        '<thead><tr><th style="' + styleLeft + '">Particulars</th><th colspan="3" style="' + styleCenter + '">School Heads</th><th colspan="3" style="' + styleCenter + '">Teachers</th></tr>' +
-        '<tr><th style="' + styleLeft + '"></th><th style="' + styleRight + '">W.M.</th><th style="' + styleLeft + '">Q.D.</th><th style="' + styleCenter + '">Rank</th>' +
+        '<thead><tr><th style="' + styleCenter + '; width: 2em;">No.</th><th style="' + styleLeft + '">Particulars</th><th colspan="3" style="' + styleCenter + '">School Heads</th><th colspan="3" style="' + styleCenter + '">Teachers</th></tr>' +
+        '<tr><th style="' + styleCenter + '"></th><th style="' + styleLeft + '"></th><th style="' + styleRight + '">W.M.</th><th style="' + styleLeft + '">Q.D.</th><th style="' + styleCenter + '">Rank</th>' +
         '<th style="' + styleRight + '">W.M.</th><th style="' + styleLeft + '">Q.D.</th><th style="' + styleCenter + '">Rank</th></tr></thead><tbody>';
-      tablePlain = 'Particulars\tSchool Heads W.M.\tQ.D.\tRank\tTeachers W.M.\tQ.D.\tRank\n';
-      currentLikertConfig.rows.forEach(function (row) {
+      tablePlain = 'No.\tParticulars\tSchool Heads W.M.\tQ.D.\tRank\tTeachers W.M.\tQ.D.\tRank\n';
+      currentLikertConfig.rows.forEach(function (row, idx) {
+        var no = idx + 1;
         var sh = row.sh || {};
         var t = row.t || {};
         var shWm = typeof sh.wm === 'number' ? sh.wm.toFixed(2) : '';
         var tWm = typeof t.wm === 'number' ? t.wm.toFixed(2) : '';
         var shRank = sh.rank != null ? (sh.rank % 1 === 0 ? sh.rank : sh.rank.toFixed(1)) : '';
         var tRank = t.rank != null ? (t.rank % 1 === 0 ? t.rank : t.rank.toFixed(1)) : '';
-        tableHtml += '<tr><td style="' + styleLeft + '">' + escapeHtml(row.indicator || '') + '</td>' +
+        tableHtml += '<tr><td style="' + styleCenter + '">' + no + '</td><td style="' + styleLeft + '">' + escapeHtml(row.indicator || '') + '</td>' +
           '<td style="' + styleRight + '">' + shWm + '</td><td style="' + styleLeft + '">' + escapeHtml(sh.qd || '') + '</td><td style="' + styleCenter + '">' + shRank + '</td>' +
           '<td style="' + styleRight + '">' + tWm + '</td><td style="' + styleLeft + '">' + escapeHtml(t.qd || '') + '</td><td style="' + styleCenter + '">' + tRank + '</td></tr>';
-        tablePlain += (row.indicator || '') + '\t' + shWm + '\t' + (sh.qd || '') + '\t' + shRank + '\t' + tWm + '\t' + (t.qd || '') + '\t' + tRank + '\n';
+        tablePlain += no + '\t' + (row.indicator || '') + '\t' + shWm + '\t' + (sh.qd || '') + '\t' + shRank + '\t' + tWm + '\t' + (t.qd || '') + '\t' + tRank + '\n';
       });
-      tableHtml += '</tbody><tfoot><tr><td style="' + styleLeft + '"><strong>AVERAGE WEIGHTED MEAN</strong></td>' +
+      tableHtml += '</tbody><tfoot><tr><td style="' + styleCenter + '"></td><td style="' + styleLeft + '"><strong>AVERAGE WEIGHTED MEAN</strong></td>' +
         '<td style="' + styleRight + '"><strong>' + (typeof awmSh.value === 'number' ? awmSh.value.toFixed(2) : '—') + '</strong></td>' +
         '<td style="' + styleLeft + '"><strong>' + escapeHtml(awmSh.qd || '—') + '</strong></td><td style="' + styleCenter + '"></td>' +
         '<td style="' + styleRight + '"><strong>' + (typeof awmT.value === 'number' ? awmT.value.toFixed(2) : '—') + '</strong></td>' +
         '<td style="' + styleLeft + '"><strong>' + escapeHtml(awmT.qd || '—') + '</strong></td><td style="' + styleCenter + '"></td></tr></tfoot></table>';
-      tablePlain += 'AVERAGE WEIGHTED MEAN\t' + (typeof awmSh.value === 'number' ? awmSh.value.toFixed(2) : '—') + '\t' + (awmSh.qd || '') + '\t\t' + (typeof awmT.value === 'number' ? awmT.value.toFixed(2) : '—') + '\t' + (awmT.qd || '') + '\n';
+      tablePlain += '\tAVERAGE WEIGHTED MEAN\t' + (typeof awmSh.value === 'number' ? awmSh.value.toFixed(2) : '—') + '\t' + (awmSh.qd || '') + '\t\t' + (typeof awmT.value === 'number' ? awmT.value.toFixed(2) : '—') + '\t' + (awmT.qd || '') + '\n';
     } else {
       var awm = currentLikertConfig.awm;
       var awmDesc = currentLikertConfig.awmDesc != null ? currentLikertConfig.awmDesc : '—';
       tableHtml =
         '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">' +
-        '<thead><tr><th style="' + styleLeft + '">Particulars</th><th style="' + styleRight + '">W.M.</th><th style="' + styleLeft + '">Q.D.</th><th style="' + styleCenter + '">Rank</th></tr></thead><tbody>';
-      tablePlain = 'Particulars\tW.M.\tQ.D.\tRank\n';
-      currentLikertConfig.rows.forEach(function (row) {
+        '<thead><tr><th style="' + styleCenter + '; width: 2em;">No.</th><th style="' + styleLeft + '">Particulars</th><th style="' + styleRight + '">W.M.</th><th style="' + styleLeft + '">Q.D.</th><th style="' + styleCenter + '">Rank</th></tr></thead><tbody>';
+      tablePlain = 'No.\tParticulars\tW.M.\tQ.D.\tRank\n';
+      currentLikertConfig.rows.forEach(function (row, idx) {
+        var no = idx + 1;
         var wm = typeof row.wm === 'number' ? row.wm.toFixed(2) : '';
         var rank = row.rank != null ? (row.rank % 1 === 0 ? row.rank : row.rank.toFixed(1)) : '';
-        tableHtml += '<tr><td style="' + styleLeft + '">' + escapeHtml(row.indicator || '') + '</td>' +
+        tableHtml += '<tr><td style="' + styleCenter + '">' + no + '</td><td style="' + styleLeft + '">' + escapeHtml(row.indicator || '') + '</td>' +
           '<td style="' + styleRight + '">' + wm + '</td><td style="' + styleLeft + '">' + escapeHtml(row.qd || '') + '</td><td style="' + styleCenter + '">' + rank + '</td></tr>';
-        tablePlain += (row.indicator || '') + '\t' + wm + '\t' + (row.qd || '') + '\t' + rank + '\n';
+        tablePlain += no + '\t' + (row.indicator || '') + '\t' + wm + '\t' + (row.qd || '') + '\t' + rank + '\n';
       });
-      tableHtml += '</tbody><tfoot><tr><td style="' + styleLeft + '"><strong>AVERAGE WEIGHTED MEAN</strong></td>' +
+      tableHtml += '</tbody><tfoot><tr><td style="' + styleCenter + '"></td><td style="' + styleLeft + '"><strong>AVERAGE WEIGHTED MEAN</strong></td>' +
         '<td style="' + styleRight + '"><strong>' + (typeof awm === 'number' ? awm.toFixed(2) : '—') + '</strong></td>' +
         '<td style="' + styleLeft + '"><strong>' + escapeHtml(awmDesc) + '</strong></td><td style="' + styleCenter + '"></td></tr></tfoot></table>';
-      tablePlain += 'AVERAGE WEIGHTED MEAN\t' + (typeof awm === 'number' ? awm.toFixed(2) : '—') + '\t' + awmDesc + '\n';
+      tablePlain += '\tAVERAGE WEIGHTED MEAN\t' + (typeof awm === 'number' ? awm.toFixed(2) : '—') + '\t' + awmDesc + '\n';
     }
 
     var titleHtml = tableTitle ? '<p style="margin-bottom: 0.5em; font-weight: bold;">' + escapeHtml(tableTitle) + '</p>' : '';

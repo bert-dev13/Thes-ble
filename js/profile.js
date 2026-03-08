@@ -1610,6 +1610,7 @@
   /**
    * Copy All: table title + full table (no inputs/buttons) + interpretation as rich HTML for Word.
    * Disabled when nothing is computed; shows message if user clicks before computing.
+   * Reads table from the displayed DOM to ensure all visible rows and columns are copied.
    */
   function copyInterpretation() {
     var block = document.getElementById('pa-interpretation-block');
@@ -1623,7 +1624,8 @@
     var tableHtml = '';
     var tablePlain = '';
 
-    if (currentProject2Table && currentProject2Table.rows && currentProject2Table.rows.length) {
+    if (activeProjectId === 'rp2' && currentProject2Table && currentProject2Table.rows && currentProject2Table.rows.length) {
+      syncTwoGroupFromDom();
       var sumH = 0, sumT = 0;
       currentProject2Table.rows.forEach(function (r) {
         sumH += (r.heads && typeof r.heads.f === 'number') ? r.heads.f : 0;
@@ -1635,13 +1637,13 @@
       var tPctText = (currentProject2Table.type === 'twoGroupPercent' && sumT > 0) || (computeTable9Percent && sumT > 0) ? '100.00' : '—';
       tableHtml =
         '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">' +
-        '<thead><tr><th style="border: 1px solid #000; text-align: left;">Particulars</th>' +
+        '<thead><tr><th style="border: 1px solid #000; text-align: center; width: 2em;">No.</th><th style="border: 1px solid #000; text-align: left;">Particulars</th>' +
         '<th colspan="3" style="border: 1px solid #000; text-align: center;">School Heads</th>' +
         '<th colspan="3" style="border: 1px solid #000; text-align: center;">Teachers</th></tr>' +
-        '<tr><th style="border: 1px solid #000;"></th>' +
+        '<tr><th style="border: 1px solid #000;"></th><th style="border: 1px solid #000;"></th>' +
         '<th style="border: 1px solid #000;">f</th><th style="border: 1px solid #000;">Percentage</th><th style="border: 1px solid #000;">Rank</th>' +
         '<th style="border: 1px solid #000;">f</th><th style="border: 1px solid #000;">Percentage</th><th style="border: 1px solid #000;">Rank</th></tr></thead><tbody>';
-      tablePlain = 'Particulars\tSchool Heads (f)\t%\tRank\tTeachers (f)\t%\tRank\n';
+      tablePlain = 'No.\tParticulars\tSchool Heads (f)\t%\tRank\tTeachers (f)\t%\tRank\n';
       currentProject2Table.rows.forEach(function (row, idx) {
         var hF = row.heads && typeof row.heads.f === 'number' ? row.heads.f : 0;
         var tF = row.teachers && typeof row.teachers.f === 'number' ? row.teachers.f : 0;
@@ -1649,36 +1651,58 @@
         var tPct = row.teachers && typeof row.teachers.pct === 'number' ? row.teachers.pct.toFixed(2) : '';
         var hRank = rankMapH[idx] || '';
         var tRank = rankMapT[idx] || '';
-        tableHtml += '<tr><td style="border: 1px solid #000;">' + escapeHtml(row.category) + '</td>' +
+        var no = idx + 1;
+        tableHtml += '<tr><td style="border: 1px solid #000; text-align: center;">' + no + '</td><td style="border: 1px solid #000;">' + escapeHtml(row.category) + '</td>' +
           '<td style="border: 1px solid #000; text-align: right;">' + hF + '</td><td style="border: 1px solid #000; text-align: right;">' + hPct + '</td><td style="border: 1px solid #000; text-align: center;">' + hRank + '</td>' +
           '<td style="border: 1px solid #000; text-align: right;">' + tF + '</td><td style="border: 1px solid #000; text-align: right;">' + tPct + '</td><td style="border: 1px solid #000; text-align: center;">' + tRank + '</td></tr>';
-        tablePlain += (row.category || '') + '\t' + hF + '\t' + hPct + '\t' + hRank + '\t' + tF + '\t' + tPct + '\t' + tRank + '\n';
+        tablePlain += no + '\t' + (row.category || '') + '\t' + hF + '\t' + hPct + '\t' + hRank + '\t' + tF + '\t' + tPct + '\t' + tRank + '\n';
       });
-      tableHtml += '</tbody><tfoot><tr><td style="border: 1px solid #000;"><strong>TOTAL</strong></td>' +
+      tableHtml += '</tbody><tfoot><tr><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"><strong>TOTAL</strong></td>' +
         '<td style="border: 1px solid #000; text-align: right;"><strong>' + sumH + '</strong></td><td style="border: 1px solid #000;"><strong>' + shPctText + '</strong></td><td style="border: 1px solid #000;"></td>' +
         '<td style="border: 1px solid #000; text-align: right;"><strong>' + sumT + '</strong></td><td style="border: 1px solid #000;"><strong>' + tPctText + '</strong></td><td style="border: 1px solid #000;"></td></tr></tfoot></table>';
-      tablePlain += 'TOTAL\t' + sumH + '\t' + shPctText + '\t\t' + sumT + '\t' + tPctText + '\n';
-    } else if (computedRows.length) {
-      var total = computedRows.reduce(function (s, r) { return s + (r.frequency || 0); }, 0);
+      tablePlain += '\tTOTAL\t' + sumH + '\t' + shPctText + '\t\t' + sumT + '\t' + tPctText + '\n';
+    } else if (activeProjectId === 'rp1') {
+      var tbody = document.getElementById('pa-table-tbody');
+      var totalFreqEl = document.getElementById('pa-total-freq');
+      var totalPctEl = document.getElementById('pa-total-pct');
+      if (!tbody || !tbody.querySelectorAll('tr').length) {
+        showToast('Please compute and generate the interpretation first before copying.', true);
+        return;
+      }
+      var rows = [];
+      tbody.querySelectorAll('tr').forEach(function (tr) {
+        var catEl = tr.querySelector('[data-pa-category]');
+        var freqEl = tr.querySelector('[data-pa-freq]');
+        var pctEl = tr.querySelector('[data-pa-pct]');
+        var rankEl = tr.querySelector('[data-pa-rank]');
+        var category = (catEl && catEl.value != null) ? String(catEl.value).trim() : '';
+        var freq = (freqEl && freqEl.value != null) ? (parseInt(String(freqEl.value), 10) || 0) : 0;
+        var pct = (pctEl && pctEl.textContent != null) ? String(pctEl.textContent).trim() : '—';
+        var rank = (rankEl && rankEl.textContent != null) ? String(rankEl.textContent).trim() : '';
+        rows.push({ category: category, frequency: freq, percentage: pct, rank: rank });
+      });
+      var total = totalFreqEl ? (parseInt(totalFreqEl.textContent, 10) || 0) : rows.reduce(function (s, r) { return s + (r.frequency || 0); }, 0);
+      var totalPct = (totalPctEl && totalPctEl.textContent) ? totalPctEl.textContent.trim() : '100.00';
       tableHtml =
         '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">' +
-        '<thead><tr><th style="border: 1px solid #000; text-align: left;">Particulars</th>' +
+        '<thead><tr><th style="border: 1px solid #000; text-align: center; width: 2em;">No.</th><th style="border: 1px solid #000; text-align: left;">Particulars</th>' +
         '<th style="border: 1px solid #000; text-align: right;">Frequency (f)</th>' +
         '<th style="border: 1px solid #000; text-align: right;">Percentage</th>' +
         '<th style="border: 1px solid #000; text-align: center;">Rank</th></tr></thead><tbody>';
-      tablePlain = 'Particulars\tFrequency (f)\tPercentage\tRank\n';
-      computedRows.forEach(function (r) {
-        tableHtml += '<tr><td style="border: 1px solid #000;">' + escapeHtml(r.category) + '</td>' +
+      tablePlain = 'No.\tParticulars\tFrequency (f)\tPercentage\tRank\n';
+      rows.forEach(function (r, idx) {
+        var no = idx + 1;
+        tableHtml += '<tr><td style="border: 1px solid #000; text-align: center;">' + no + '</td><td style="border: 1px solid #000;">' + escapeHtml(r.category) + '</td>' +
           '<td style="border: 1px solid #000; text-align: right;">' + r.frequency + '</td>' +
-          '<td style="border: 1px solid #000; text-align: right;">' + (r.percentage != null ? r.percentage.toFixed(2) : '—') + '</td>' +
-          '<td style="border: 1px solid #000; text-align: center;">' + (r.rank != null ? r.rank : '') + '</td></tr>';
-        tablePlain += (r.category || '') + '\t' + (r.frequency || '') + '\t' + (r.percentage != null ? r.percentage.toFixed(2) : '') + '\t' + (r.rank != null ? r.rank : '') + '\n';
+          '<td style="border: 1px solid #000; text-align: right;">' + (r.percentage || '—') + '</td>' +
+          '<td style="border: 1px solid #000; text-align: center;">' + (r.rank || '') + '</td></tr>';
+        tablePlain += no + '\t' + (r.category || '') + '\t' + (r.frequency || '') + '\t' + (r.percentage || '') + '\t' + (r.rank || '') + '\n';
       });
-      tableHtml += '</tbody><tfoot><tr><td style="border: 1px solid #000;"><strong>TOTAL</strong></td>' +
+      tableHtml += '</tbody><tfoot><tr><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"><strong>TOTAL</strong></td>' +
         '<td style="border: 1px solid #000; text-align: right;"><strong>' + total + '</strong></td>' +
-        '<td style="border: 1px solid #000; text-align: right;"><strong>100.00</strong></td>' +
+        '<td style="border: 1px solid #000; text-align: right;"><strong>' + totalPct + '</strong></td>' +
         '<td style="border: 1px solid #000;"></td></tr></tfoot></table>';
-      tablePlain += 'TOTAL\t' + total + '\t100.00\n';
+      tablePlain += '\tTOTAL\t' + total + '\t' + totalPct + '\n';
     } else {
       showToast('Please compute and generate the interpretation first before copying.', true);
       return;

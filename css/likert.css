@@ -989,11 +989,6 @@ body {
   padding: var(--space-xs);
 }
 
-/* Visual separator between School Heads and Teachers columns */
-.la-thesis-table--two-group .la-thesis-table__td:nth-child(4),
-.la-thesis-table--two-group .la-thesis-table__th:nth-child(4) {
-  border-left: var(--thesis-border-strong);
-}
 
 /* Thesis-style inputs: contained, focus ring */
 .la-thesis-input {
