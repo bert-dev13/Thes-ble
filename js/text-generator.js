@@ -296,7 +296,51 @@
     return (shText + ' ' + tText).trim();
   }
 
+  /**
+   * Detect table type from table structure (columns/rows).
+   * Use this to automatically choose the correct interpretation format.
+   * @param {Object} tableData - Table config or data with rows
+   * @param {'profile'|'likert'} analyzerContext - Which analyzer the data comes from
+   * @returns {'single-profile'|'two-group-profile'|'single-likert'|'two-group-likert'|'ttest'}
+   */
+  function detectTableType(tableData, analyzerContext) {
+    if (!tableData) return analyzerContext === 'profile' ? 'single-profile' : 'single-likert';
+    var rows = tableData.rows || tableData.indicators || [];
+    if (!rows.length) return analyzerContext === 'profile' ? 'single-profile' : 'single-likert';
+
+    var first = rows[0];
+    if (!first || typeof first !== 'object') return analyzerContext === 'profile' ? 'single-profile' : 'single-likert';
+
+    if (analyzerContext === 'profile') {
+      if (first.heads && first.teachers) return 'two-group-profile';
+      if (first.frequency != null || first.f != null) return 'single-profile';
+      return 'single-profile';
+    }
+
+    if (analyzerContext === 'likert') {
+      if (tableData.type === 'tTest') return 'ttest';
+      if (first.tValue != null || first.tCritical != null || first.pValue != null ||
+          (typeof first.tValue === 'string' && first.tValue.trim() !== '') ||
+          (typeof first.tCritical === 'string' && first.tCritical.trim() !== '')) return 'ttest';
+      if (first.sh && first.t) return 'two-group-likert';
+      if (first.weightedMean != null || first.wm != null || (first.indicator && (first.qualitativeDescription != null || first.qd != null))) return 'single-likert';
+      return 'single-likert';
+    }
+
+    return 'single-likert';
+  }
+
+  /** Transition phrases for second paragraph of two-group tables */
+  var TRANSITION_PHRASES = ['Meanwhile', 'On the other hand', 'Similarly', 'In contrast'];
+
+  function getTransitionForVariant(variantIndex) {
+    return TRANSITION_PHRASES[Math.abs(variantIndex || 0) % TRANSITION_PHRASES.length];
+  }
+
   global.ThesisTextGenerator = {
+    detectTableType: detectTableType,
+    getTransitionForVariant: getTransitionForVariant,
+    TRANSITION_PHRASES: TRANSITION_PHRASES,
     getVariantIndex: getVariantIndex,
     incrementVariantIndex: incrementVariantIndex,
     getOpenerForVariant: getOpenerForVariant,

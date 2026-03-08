@@ -507,6 +507,25 @@
   var laInterpTwoGroup = false;
   var currentTwoGroupData = null;
 
+  /**
+   * Detect Likert table type from current data structure.
+   * Uses ThesisTextGenerator.detectTableType when available.
+   * Returns: 'ttest' | 'two-group-likert' | 'single-likert'
+   */
+  function getDetectedLikertTableType() {
+    var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
+    var src = currentLikertConfig || (computedData && computedData.indicators && computedData.indicators.length
+      ? { rows: computedData.indicators, indicators: computedData.indicators } : null);
+    if (Gen && Gen.detectTableType && src) {
+      return Gen.detectTableType(src, 'likert');
+    }
+    if (currentLikertConfig && currentLikertConfig.type === 'tTest') return 'ttest';
+    if (currentTwoGroupData || (currentLikertConfig && currentLikertConfig.rows && currentLikertConfig.rows[0] && currentLikertConfig.rows[0].sh && currentLikertConfig.rows[0].t)) {
+      return 'two-group-likert';
+    }
+    return 'single-likert';
+  }
+
   // RP2 Likert interpretation config (Tables 10–20; T-test t21–t22 keep prewritten)
   var RP2_LIKERT_INTERPRETATION_CONFIG = {
     t10: {
@@ -2758,8 +2777,13 @@
       block.textContent = (text || '').trim();
     }
 
-    if (activeProjectId === 'rp2' && currentLikertConfig && currentLikertConfig.type !== 'tTest' && (currentLikertConfig.rows || currentTwoGroupData)) {
-      var tableId = (currentLikertConfig.id || currentLikertConfig.title || 'likert').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
+    var detectedType = getDetectedLikertTableType();
+    var isLikertTwoGroup = detectedType === 'two-group-likert';
+    var isLikertTTest = detectedType === 'ttest';
+
+    if (isLikertTwoGroup && (currentLikertConfig || currentTwoGroupData)) {
+      var tableId = (currentLikertConfig && (currentLikertConfig.id || currentLikertConfig.title)) || 'likert';
+      tableId = String(tableId).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
 
       // For RP2 prewritten tables (Tables 10–22), use the dedicated
       // applyRp2PrewrittenVariation helper so Regenerate varies openers
@@ -2791,7 +2815,7 @@
       showToast('Interpretation regenerated.');
       return;
     }
-    if (activeProjectId === 'rp2' && currentLikertConfig && currentLikertConfig.prewritten && currentLikertConfig.type === 'tTest') {
+    if (isLikertTTest && currentLikertConfig && currentLikertConfig.prewritten) {
       var prewrittenText = (currentLikertConfig.prewritten.sh || '') + (currentLikertConfig.prewritten.t ? ' ' + currentLikertConfig.prewritten.t : '');
       var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
       var implEl = document.getElementById('la-include-implications');

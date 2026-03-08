@@ -145,15 +145,24 @@
 
   function getTableTypeLabel(t) {
     if (!t) return 'Profile';
-    if (t.type === 'twoGroup') return 'Profile (Two Groups)';
-    if (t.type === 'singleGroup') return 'Profile (Single Group)';
+    var type = t.type;
+    if (!type && t.rows && t.rows.length && typeof ThesisTextGenerator !== 'undefined' && ThesisTextGenerator.detectTableType) {
+      type = ThesisTextGenerator.detectTableType(t, 'profile') === 'two-group-profile' ? 'twoGroup' : 'singleGroup';
+    }
+    if (type === 'twoGroup') return 'Profile (Two Groups)';
+    if (type === 'singleGroup') return 'Profile (Single Group)';
     return 'Profile';
   }
 
   function getLikertTypeLabel(t) {
     if (!t) return 'Likert';
-    if (t.type === 'tTest') return 'Likert (T-test)';
-    if (t.type === 'twoGroup') return 'Likert (Two Groups)';
+    var type = t.type;
+    if (!type && t.rows && t.rows.length && typeof ThesisTextGenerator !== 'undefined' && ThesisTextGenerator.detectTableType) {
+      var detected = ThesisTextGenerator.detectTableType(t, 'likert');
+      type = detected === 'ttest' ? 'tTest' : (detected === 'two-group-likert' ? 'twoGroup' : 'single');
+    }
+    if (type === 'tTest') return 'Likert (T-test)';
+    if (type === 'twoGroup') return 'Likert (Two Groups)';
     return 'Likert';
   }
 

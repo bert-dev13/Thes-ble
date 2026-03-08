@@ -1573,16 +1573,38 @@
     return text;
   }
 
+  /**
+   * Detect profile table type from current data.
+   * Uses structure: two-group has rows with heads/teachers; single has frequency.
+   */
+  function getDetectedProfileTableType() {
+    var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
+    if (Gen && Gen.detectTableType) {
+      if (currentProject2Table && currentProject2Table.rows && currentProject2Table.rows.length) {
+        return Gen.detectTableType(currentProject2Table, 'profile');
+      }
+      if (computedRows && computedRows.length) {
+        return Gen.detectTableType({ rows: computedRows }, 'profile');
+      }
+    }
+    if (currentProject2Table && currentProject2Table.rows && currentProject2Table.rows[0] && currentProject2Table.rows[0].heads && currentProject2Table.rows[0].teachers) {
+      return 'two-group-profile';
+    }
+    return 'single-profile';
+  }
+
   function regenerateInterpretation() {
     var block = document.getElementById('pa-interpretation-block');
     if (!block) return;
 
+    var tableType = getDetectedProfileTableType();
+    var isTwoGroup = tableType === 'two-group-profile';
+
     try {
       var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
       if (!Gen) {
-        if (activeProjectId === 'rp2' && currentProject2Table) {
-          var t = buildTwoGroupProfileInterpretation(currentProject2Table);
-          block.textContent = t || '';
+        if (isTwoGroup && currentProject2Table) {
+          block.textContent = buildTwoGroupProfileInterpretation(currentProject2Table) || '';
         } else if (computedRows.length) {
           generateInterpretation(computedRows, currentTableTitle);
         }
@@ -1592,7 +1614,7 @@
 
       var tableId = (currentTableTitle || (currentProject2Table && currentProject2Table.title) || 'profile').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
       var generator = function (vi, lastOpener) {
-        if (activeProjectId === 'rp2' && currentProject2Table) {
+        if (isTwoGroup && currentProject2Table) {
           return buildTwoGroupProfileInterpretation(currentProject2Table, vi, lastOpener);
         }
         return buildInterpretationText(computedRows, currentTableTitle, vi, lastOpener);
@@ -2603,7 +2625,8 @@
     var implToggle = document.getElementById('pa-include-implications');
     if (implToggle) {
       implToggle.addEventListener('change', function () {
-        if (activeProjectId === 'rp2' && currentProject2Table) {
+        var detected = getDetectedProfileTableType();
+        if (detected === 'two-group-profile' && currentProject2Table) {
           var text = buildTwoGroupProfileInterpretation(currentProject2Table);
           var block = document.getElementById('pa-interpretation-block');
           if (block) block.textContent = text;
