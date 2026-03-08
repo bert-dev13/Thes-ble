@@ -208,7 +208,7 @@
       majorityPrefix: 'are ',
       majoritySuffix: '.',
       indicates: 'This indicates that most teachers maintain established family responsibilities alongside their professional roles.',
-      implies: 'This further implies that the respondents possess a level of personal stability that may contribute to their commitment to their profession.'
+      implies: 'This further implies that the respondents possess a level of personal stability that contributes to their commitment to their profession.'
     },
     education: {
       id: 'education',
@@ -1204,7 +1204,10 @@
    * RP2 Table-specific config (Tables 2–9): section title, intro, "which means", "This implies".
    */
   var RP2_TEACHERS_TRANSITION_ALTERNATIVES = [
-    'For the teachers, ', 'Meanwhile, for the teachers, ', 'As for the teachers, '
+    'Meanwhile, for the teachers, ',
+    'On the other hand, for the teachers, ',
+    'Similarly, for the teachers, ',
+    'In contrast, for the teachers, '
   ];
 
   var RP2_PROFILE_CONFIG = {
@@ -1309,8 +1312,9 @@
   function buildProfileImplications(dominantLabels) {
     if (!dominantLabels || dominantLabels.length === 0) return { first: '', second: '' };
     var catPhrase = dominantLabels.length === 1 ? dominantLabels[0] : joinWithAnd(dominantLabels);
-    var first = 'This indicates that the respondent group is largely composed of ' + catPhrase.toLowerCase() + ' participants.';
-    var second = 'This further implies that the perspectives reflected in the study are shaped primarily by ' + catPhrase.toLowerCase() + ' respondents.';
+    var catLower = catPhrase.toLowerCase();
+    var first = 'This indicates that the respondent group is largely composed of ' + catLower + ' participants.';
+    var second = 'This further implies that the findings mainly reflect the perspectives of ' + catLower + ' respondents.';
     return { first: first, second: second };
   }
 

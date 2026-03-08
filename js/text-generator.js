@@ -241,7 +241,7 @@
     'In relation to the ', 'Concerning the ', 'With respect to the '
   ];
 
-  var MEANWHILE_SYNONYMS = ['Meanwhile', 'Similarly', 'Likewise', 'In parallel', 'Correspondingly', 'For their part', 'In turn'];
+  var MEANWHILE_SYNONYMS = ['Meanwhile', 'On the other hand', 'Similarly', 'In contrast'];
 
   var DENOTES_VERBS = ['indicates', 'suggests', 'implies', 'denotes', 'reflects', 'shows'];
 

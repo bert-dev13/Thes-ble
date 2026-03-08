@@ -8,20 +8,22 @@
 (function (global) {
   'use strict';
 
+  /** Opening phrases for interpretations (formal thesis style). */
   var OPENER_POOL = [
     'In terms of ',
-    'About the ',
     'Regarding ',
-    'With regard to ',
     'Considering ',
-    'As to ',
-    'Pertaining to ',
+    'Across ',
+    'Concerning ',
     'Relative to ',
+    'Pertaining to ',
+    'With reference to ',
     'In relation to ',
-    'Based on the data presented, ',
-    'From the table, ',
-    'As reflected in the data, '
+    'As to '
   ];
+
+  /** Transition phrases for second paragraph of two-group tables. */
+  var TRANSITION_PHRASES = ['Meanwhile, ', 'On the other hand, ', 'Similarly, ', 'In contrast, '];
 
   var OPENER_STORAGE_KEY = 'thesisInterpretation_lastOpener';
   var OPENER_INDEX_KEY = 'thesisInterpretation_openerIndex';
@@ -154,6 +156,7 @@
     expandQualitativeDescription: expandQualitativeDescription,
     convertQD: convertQD,
     QUALITATIVE_DESCRIPTION_MAP: QUALITATIVE_DESCRIPTION_MAP,
-    OPENER_POOL: OPENER_POOL
+    OPENER_POOL: OPENER_POOL,
+    TRANSITION_PHRASES: TRANSITION_PHRASES
   };
 })(typeof window !== 'undefined' ? window : this);

@@ -2517,7 +2517,10 @@
   }
 
   var RP2_LIKERT_TEACHERS_TRANSITION = [
-    'Meanwhile, teacher respondents ', 'Similarly, teacher respondents ', 'For their part, teacher respondents '
+    'Meanwhile, teacher respondents ',
+    'On the other hand, teacher respondents ',
+    'Similarly, teacher respondents ',
+    'In contrast, teacher respondents '
   ];
 
   /**
@@ -2559,7 +2562,7 @@
     }
     var signifiesSh = Gen ? (Gen.getSynonym('signifies', vi) || 'signifies') : 'signifies';
     var shPara = shIntro + clausesSh + ' ' +
-      'The average weighted mean of ' + awmShStr + ' ' + signifiesSh + ' that school heads view ' + construct + ' as ' + descSh + '.';
+      'The average weighted mean of ' + awmShStr + ' ' + signifiesSh + ' that school heads generally view ' + construct + ' as ' + descSh + '.';
     if (includeImplications && cfg.headsIndicates) {
       var leadSh1 = Gen ? (Gen.getSynonym('indicatesLead', vi) || 'This indicates that') : 'This indicates that';
       shPara += ' ' + leadSh1 + ' ' + cfg.headsIndicates;
@@ -2569,7 +2572,7 @@
       shPara += ' ' + leadSh2 + ' ' + cfg.headsImplies;
     }
 
-    var teachersOpener = cfg.teachersOpener || 'Meanwhile, teacher respondents ';
+    var teachersOpener = cfg.teachersOpener || RP2_LIKERT_TEACHERS_TRANSITION[0];
     if (Gen && cfg.teachersOpenerAlternatives && cfg.teachersOpenerAlternatives.length) {
       teachersOpener = cfg.teachersOpenerAlternatives[Math.abs(vi) % cfg.teachersOpenerAlternatives.length];
     } else if (Gen && RP2_LIKERT_TEACHERS_TRANSITION) {

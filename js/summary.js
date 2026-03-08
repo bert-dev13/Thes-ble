@@ -769,8 +769,8 @@
           }
           paragraphs.push(pSh);
           openerIdx++;
-          var openingT2 = Gen ? Gen.getOpenerForVariant(vi + openerIdx, '') : getNextOpening();
-          var pT = openingT2 + theme + ', teacher respondents show that ' + (tDomainText || 'the domains reflect the overall assessment') + '. ';
+          var transitionExec = Gen && Gen.getTransitionForVariant ? (Gen.getTransitionForVariant(vi + openerIdx) + ', ') : 'Meanwhile, ';
+          var pT = transitionExec + 'teacher respondents show that ' + (tDomainText || 'the domains reflect the overall assessment') + '. ';
           pT += 'With an overall average weighted mean described as ' + (tDesc || '—') + ', the findings indicate that teachers perceive the assessed construct across the measured domains.';
           if (includeImplication) {
             var impl2 = Utils ? Utils.buildImplications('executive') : { first: '', second: '' };
@@ -797,8 +797,8 @@
             openerIdx++;
           }
           if (tIndicators.length > 0) {
-            var openingT2 = Gen ? Gen.getOpenerForVariant(vi + openerIdx, '') : getNextOpening();
-            var pT = openingT2 + theme + ', teacher respondents rated the following indicators as ' + tQd + ': ' + tIndicators.join(', ') + '. ';
+            var transitionT = Gen && Gen.getTransitionForVariant ? (Gen.getTransitionForVariant(vi + openerIdx) + ', ') : 'Meanwhile, ';
+            var pT = transitionT + 'teacher respondents rated the following indicators as ' + tQd + ': ' + tIndicators.join(', ') + '. ';
             pT += buildAwmSentence(tAwmVal, tQd, t.tableTitle);
             if (includeImplication) {
               var impl2 = Utils ? Utils.buildImplications('likert') : { first: '', second: '' };
