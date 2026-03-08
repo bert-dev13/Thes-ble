@@ -2524,9 +2524,47 @@
   ];
 
   /**
+   * Build paragraph 1 body for two-group Likert: first indicator "rated X with a weighted mean of Y as [QD]";
+   * then "Other indicators rated as [QD] include [enumeration]". Avoids "rated the indicators rated as" duplication.
+   */
+  function buildTwoGroupPara1Body(rows, qdFull) {
+    var getWm = function (r) { return r.weightedMean != null ? r.weightedMean : (r.wm != null ? r.wm : 0); };
+    var getQd = function (r) { return (r.qualitativeDescription || r.qd || '').trim() || '—'; };
+    var sorted = rows.slice().sort(function (a, b) { return getWm(b) - getWm(a); });
+    if (!sorted.length) return '';
+    var first = sorted[0];
+    var firstInd = '"' + (first.indicator || '').trim() + '"';
+    var firstWm = getWm(first).toFixed(2);
+    var firstQdRaw = getQd(first);
+    var firstQd = (firstQdRaw && firstQdRaw !== '—') ? expandQdForRows(firstQdRaw) : qdFull;
+    var rest = sorted.slice(1);
+    if (rest.length === 0) {
+      return 'school head respondents rated ' + firstInd + ' with a weighted mean of ' + firstWm + ' as ' + firstQd + '.';
+    }
+    var restEnum = formatIndicatorsEnumeration(rest);
+    return 'school head respondents rated ' + firstInd + ' with a weighted mean of ' + firstWm + ' as ' + firstQd + '. Other indicators rated as ' + qdFull + ' include ' + restEnum + '.';
+  }
+
+  /**
+   * Build paragraph 2 body for two-group Likert (appended after transition + "teacher respondents "):
+   * "rated the indicators as [QD]. Indicators rated as [QD] include [enumeration]".
+   * Avoids "rated the indicators rated as" duplication.
+   */
+  function buildTwoGroupPara2Body(rows, qdFull) {
+    if (!rows || !rows.length) return '';
+    var enumText = formatIndicatorsEnumeration(rows);
+    return 'rated the indicators as ' + qdFull + '. Indicators rated as ' + qdFull + ' include ' + enumText + '.';
+  }
+
+  function expandQdForRows(abbr) {
+    var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    return (Utils && Utils.expandQualitativeDescription) ? Utils.expandQualitativeDescription(abbr) : (abbr || '—');
+  }
+
+  /**
    * Build RP2 two-group Likert interpretation (Tables 10–20).
-   * Format: section title + school heads paragraph + teachers paragraph.
-   * Returns { sectionTitle, shPara, tPara }.
+   * Structure: Para 1 – opener + theme + rated first indicator + Other indicators include; Para 2 – transition + rated indicators as [QD] + Indicators include.
+   * Uses actual table theme from loaded config.
    */
   function buildRp2TwoGroupLikertInterpretation(rowsSh, rowsT, awmSh, awmT, awmShDesc, awmTDesc, tableId, variantIndex) {
     var cfg = RP2_LIKERT_INTERPRETATION_CONFIG[tableId];
@@ -2538,31 +2576,24 @@
     var implEl = document.getElementById('la-include-implications');
     if (implEl) includeImplications = implEl.checked;
 
-    function buildClausesByQd(rows) {
-      return buildIndicatorsByQdGroups(rows);
-    }
-
-    var clausesSh = buildClausesByQd(rowsSh);
-    var clausesT = buildClausesByQd(rowsT);
-
     var awmShStr = awmSh.toFixed(2);
     var awmTStr = awmT.toFixed(2);
     var UtilsRp2 = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
     var expandQdRp2 = UtilsRp2 && UtilsRp2.expandQualitativeDescription ? UtilsRp2.expandQualitativeDescription : function (x) { return x || ''; };
     var descSh = expandQdRp2(awmShDesc || '—') || awmShDesc || '—';
     var descT = expandQdRp2(awmTDesc || '—') || awmTDesc || '—';
-    var construct = cfg.headsAwmConstruct || 'the construct';
 
-    var shIntro = (cfg.headsRated === false)
-      ? cfg.headsOpener
-      : (cfg.headsOpener + 'school head respondents rated ');
-    if (Gen && cfg.headsOpenerAlternatives && cfg.headsOpenerAlternatives.length) {
-      var baseOpener = cfg.headsOpenerAlternatives[Math.abs(vi) % cfg.headsOpenerAlternatives.length];
-      shIntro = (cfg.headsRated === false) ? baseOpener : (baseOpener + 'school head respondents rated ');
-    }
+    var theme = (currentLikertConfig && (currentLikertConfig.theme || currentLikertConfig.title)) ||
+      (currentTwoGroupData && (currentTwoGroupData.themeSh || currentTwoGroupData.themeT)) ||
+      cfg.headsAwmConstruct || 'the theme';
+
+    var baseOpener = (Gen && cfg.headsOpenerAlternatives && cfg.headsOpenerAlternatives.length)
+      ? cfg.headsOpenerAlternatives[Math.abs(vi) % cfg.headsOpenerAlternatives.length]
+      : (cfg.headsOpener || 'In terms of ');
+    var bodySh = buildTwoGroupPara1Body(rowsSh, descSh);
     var signifiesSh = Gen ? (Gen.getSynonym('signifies', vi) || 'signifies') : 'signifies';
-    var shPara = shIntro + clausesSh + ' ' +
-      'The average weighted mean of ' + awmShStr + ' ' + signifiesSh + ' that school heads generally view ' + construct + ' as ' + descSh + '.';
+    var shPara = baseOpener + bodySh + ' ' +
+      'The average weighted mean of ' + awmShStr + ' ' + signifiesSh + ' that school heads generally view ' + theme + ' as ' + descSh + '.';
     if (includeImplications && cfg.headsIndicates) {
       var leadSh1 = Gen ? (Gen.getSynonym('indicatesLead', vi) || 'This indicates that') : 'This indicates that';
       shPara += ' ' + leadSh1 + ' ' + cfg.headsIndicates;
@@ -2578,9 +2609,10 @@
     } else if (Gen && RP2_LIKERT_TEACHERS_TRANSITION) {
       teachersOpener = RP2_LIKERT_TEACHERS_TRANSITION[Math.abs(vi) % RP2_LIKERT_TEACHERS_TRANSITION.length];
     }
+    var bodyT = buildTwoGroupPara2Body(rowsT, descT);
     var signifiesT = Gen ? (Gen.getSynonym('signifies', vi + 1) || 'signifies') : 'signifies';
-    var tPara = teachersOpener + 'rated ' + clausesT + ' ' +
-      'The average weighted mean of ' + awmTStr + ' ' + signifiesT + ' that teachers view ' + construct + ' as ' + descT + '.';
+    var tPara = teachersOpener + bodyT + ' ' +
+      'The average weighted mean of ' + awmTStr + ' ' + signifiesT + ' that teachers view ' + theme + ' as ' + descT + '.';
     if (includeImplications && cfg.teachersIndicates) {
       var leadT1 = Gen ? (Gen.getSynonym('indicatesLead', vi + 1) || 'This indicates that') : 'This indicates that';
       tPara += ' ' + leadT1 + ' ' + cfg.teachersIndicates;
@@ -2750,10 +2782,10 @@
         var rows = currentLikertConfig.rows || [];
         if (!rows.length) return;
         rowsSh = rows.map(function (r) {
-          return { indicator: r.indicator, weightedMean: r.sh && typeof r.sh.wm === 'number' ? r.sh.wm : 0 };
+          return { indicator: r.indicator, weightedMean: r.sh && typeof r.sh.wm === 'number' ? r.sh.wm : 0, qd: r.sh && r.sh.qd };
         });
         rowsT = rows.map(function (r) {
-          return { indicator: r.indicator, weightedMean: r.t && typeof r.t.wm === 'number' ? r.t.wm : 0 };
+          return { indicator: r.indicator, weightedMean: r.t && typeof r.t.wm === 'number' ? r.t.wm : 0, qd: r.t && r.t.qd };
         });
         awmSh = currentLikertConfig.awm && currentLikertConfig.awm.sh ? currentLikertConfig.awm.sh.value : 0;
         awmT = currentLikertConfig.awm && currentLikertConfig.awm.t ? currentLikertConfig.awm.t.value : 0;
@@ -2786,10 +2818,10 @@
       var rows = currentLikertConfig.rows || [];
       if (!rows.length) return;
       rowsSh = rows.map(function (r) {
-        return { indicator: r.indicator, weightedMean: r.sh && typeof r.sh.wm === 'number' ? r.sh.wm : 0 };
+        return { indicator: r.indicator, weightedMean: r.sh && typeof r.sh.wm === 'number' ? r.sh.wm : 0, qd: r.sh && r.sh.qd };
       });
       rowsT = rows.map(function (r) {
-        return { indicator: r.indicator, weightedMean: r.t && typeof r.t.wm === 'number' ? r.t.wm : 0 };
+        return { indicator: r.indicator, weightedMean: r.t && typeof r.t.wm === 'number' ? r.t.wm : 0, qd: r.t && r.t.qd };
       });
       awmSh = currentLikertConfig.awm && currentLikertConfig.awm.sh ? currentLikertConfig.awm.sh.value : 0;
       awmT = currentLikertConfig.awm && currentLikertConfig.awm.t ? currentLikertConfig.awm.t.value : 0;
@@ -2799,25 +2831,30 @@
       themeT = currentLikertConfig.themeTeachers || currentLikertConfig.theme || currentLikertConfig.title || 'the theme';
     }
     var vi = typeof variantIndex === 'number' ? variantIndex : 0;
-    laInterpretationSh = buildOneGroupInterpretation(rowsSh, awmSh, awmShDesc, themeSh, 'school heads', vi, lastOpener);
-    var firstOpener = '';
-    if (typeof ThesisInterpretationUtils !== 'undefined' && ThesisInterpretationUtils.OPENER_POOL) {
-      for (var k = 0; k < ThesisInterpretationUtils.OPENER_POOL.length; k++) {
-        if (laInterpretationSh.indexOf(ThesisInterpretationUtils.OPENER_POOL[k]) === 0) {
-          firstOpener = ThesisInterpretationUtils.OPENER_POOL[k];
-          break;
-        }
-      }
+    var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
+    var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    var expandQd = Utils && Utils.expandQualitativeDescription ? Utils.expandQualitativeDescription : function (x) { return x || ''; };
+    var descSh = expandQd(awmShDesc || '—') || awmShDesc || '—';
+    var descT = expandQd(awmTDesc || '—') || awmTDesc || '—';
+    var theme = themeSh || themeT || (currentLikertConfig && (currentLikertConfig.theme || currentLikertConfig.title)) || 'the theme';
+    var includeImpl = document.getElementById('la-include-implications') && document.getElementById('la-include-implications').checked;
+
+    var opener = Gen ? Gen.getOpenerForVariant(vi, lastOpener) : (Utils ? Utils.getVariedOpener() : 'In terms of ');
+    var bodySh = buildTwoGroupPara1Body(rowsSh, descSh);
+    laInterpretationSh = opener + bodySh + ' The average weighted mean of ' + awmSh.toFixed(2) + ' signifies that school heads generally view ' + theme + ' as ' + descSh + '.';
+    if (includeImpl && Utils) {
+      var impl = Utils.buildImplications('likert');
+      laInterpretationSh += ' ' + impl.first;
     }
-    if (!firstOpener && typeof ThesisTextGenerator !== 'undefined' && ThesisTextGenerator.OPENER_POOL) {
-      for (var k = 0; k < ThesisTextGenerator.OPENER_POOL.length; k++) {
-        if (laInterpretationSh.indexOf(ThesisTextGenerator.OPENER_POOL[k]) === 0) {
-          firstOpener = ThesisTextGenerator.OPENER_POOL[k];
-          break;
-        }
-      }
+
+    var transition = Gen && Gen.getTransitionForVariant ? Gen.getTransitionForVariant(vi + 1) + ', ' : 'Meanwhile, ';
+    var teachersPrefix = transition + 'teacher respondents ';
+    var bodyT = buildTwoGroupPara2Body(rowsT, descT);
+    laInterpretationT = teachersPrefix + bodyT + ' The average weighted mean of ' + awmT.toFixed(2) + ' signifies that teachers view ' + theme + ' as ' + descT + '.';
+    if (includeImpl && Utils) {
+      var impl2 = Utils.buildImplications('likert');
+      laInterpretationT += ' ' + impl2.second;
     }
-    laInterpretationT = buildOneGroupInterpretation(rowsT, awmT, awmTDesc, themeT, 'teachers', vi + 1, firstOpener);
   }
 
   /**
