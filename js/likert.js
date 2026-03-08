@@ -1661,16 +1661,32 @@
     var block = document.getElementById('la-interpretation-block');
     laInterpTwoGroup = false;
     if (block) {
-      if (config.type === 'tTest' && config.prewritten) {
-        var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
-        var includeImplications = true;
-        var implEl = document.getElementById('la-include-implications');
-        if (implEl) includeImplications = implEl.checked;
-        var impl = Utils && includeImplications ? Utils.buildImplications('ttest') : null;
-        var implSuffix = impl ? ' ' + impl.first + ' ' + impl.second : '';
-        var prewrittenText = (config.prewritten.sh || '') + (config.prewritten.t ? ' ' + config.prewritten.t : '');
-        if (includeImplications && Utils && prewrittenText) prewrittenText += implSuffix;
-        block.textContent = prewrittenText;
+      if (config.type === 'tTest') {
+        var hasTTestData = config.rows && config.rows.some(function (r) {
+          var t = r.tValue != null ? String(r.tValue).trim() : '';
+          return t !== '';
+        });
+        var GenLoad = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
+        if (GenLoad && GenLoad.generateTTestInterpretation && hasTTestData) {
+          var implElLoad = document.getElementById('la-include-implications');
+          var includeImplicationsLoad = implElLoad && implElLoad.checked;
+          block.textContent = GenLoad.generateTTestInterpretation(config, {
+            tableTitle: config.title,
+            includeImplications: includeImplicationsLoad
+          });
+        } else if (config.prewritten && !hasTTestData) {
+          var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+          var includeImplications = true;
+          var implEl = document.getElementById('la-include-implications');
+          if (implEl) includeImplications = implEl.checked;
+          var impl = Utils && includeImplications ? Utils.buildImplications('ttest') : null;
+          var implSuffix = impl ? ' ' + impl.first + ' ' + impl.second : '';
+          var prewrittenText = (config.prewritten.sh || '') + (config.prewritten.t ? ' ' + config.prewritten.t : '');
+          if (includeImplications && Utils && prewrittenText) prewrittenText += implSuffix;
+          block.textContent = prewrittenText;
+        } else {
+          block.textContent = '';
+        }
       } else if (config.type !== 'tTest') {
         block.textContent = '';
       }
@@ -1869,7 +1885,15 @@
     usingPredefinedTable = true;
     renderTTestTable(currentLikertConfig);
     var block = document.getElementById('la-interpretation-block');
-    if (block) block.textContent = '';
+    if (block) {
+      var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
+      var implEl = document.getElementById('la-include-implications');
+      var includeImplications = implEl && implEl.checked;
+      var text = Gen && Gen.generateTTestInterpretation
+        ? Gen.generateTTestInterpretation(currentLikertConfig, { tableTitle: currentLikertConfig.title, includeImplications: includeImplications })
+        : '';
+      block.textContent = text;
+    }
     onInputChange();
   }
 
@@ -2768,12 +2792,39 @@
     laInterpretationT = buildOneGroupInterpretation(rowsT, awmT, awmTDesc, themeT, 'teachers', vi + 1, firstOpener);
   }
 
+  /**
+   * Generate interpretation using automatic table type detection.
+   * Routes to single-likert, two-group-likert, or ttest generator based on loaded columns.
+   */
   function generateInterpretation() {
-    var data = computedData;
-    if (!data.indicators.length) return '';
-
     var block = document.getElementById('la-interpretation-block');
     if (!block) return '';
+
+    var detectedType = getDetectedLikertTableType();
+
+    if (detectedType === 'ttest' && currentLikertConfig && currentLikertConfig.rows && currentLikertConfig.rows.length) {
+      var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
+      var implEl = document.getElementById('la-include-implications');
+      var includeImplications = implEl && implEl.checked;
+      var text = Gen && Gen.generateTTestInterpretation
+        ? Gen.generateTTestInterpretation(currentLikertConfig, {
+            tableTitle: currentLikertConfig.title || currentLikertConfig.tableTitle,
+            includeImplications: includeImplications
+          })
+        : '';
+      block.textContent = text;
+      return text;
+    }
+
+    if (detectedType === 'two-group-likert' && (currentLikertConfig || currentTwoGroupData)) {
+      generateTwoGroupInterpretations(0, '');
+      var text = (laInterpretationSh || '') + (laInterpretationT ? '\n\n' + laInterpretationT : '');
+      block.textContent = text;
+      return text;
+    }
+
+    var data = computedData;
+    if (!data.indicators.length) return '';
 
     var text = generateInterpretationWithVariant(0, '');
     block.textContent = text;
@@ -2828,15 +2879,34 @@
       showToast('Interpretation regenerated.');
       return;
     }
-    if (isLikertTTest && currentLikertConfig && currentLikertConfig.prewritten) {
-      var prewrittenText = (currentLikertConfig.prewritten.sh || '') + (currentLikertConfig.prewritten.t ? ' ' + currentLikertConfig.prewritten.t : '');
-      var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
-      var implEl = document.getElementById('la-include-implications');
-      if (implEl && implEl.checked && Utils && prewrittenText) {
-        var impl = Utils.buildImplications('ttest');
-        prewrittenText += ' ' + impl.first + ' ' + impl.second;
+    if (isLikertTTest && currentLikertConfig) {
+      var hasTTestRowData = currentLikertConfig.rows && currentLikertConfig.rows.length && currentLikertConfig.rows.some(function (r) {
+        var t = r.tValue != null ? String(r.tValue).trim() : '';
+        return t !== '';
+      });
+      if (Gen && Gen.generateTTestInterpretation && hasTTestRowData) {
+        var implEl = document.getElementById('la-include-implications');
+        var includeImplications = implEl && implEl.checked;
+        var generatorT = function (vi) {
+          return Gen.generateTTestInterpretation(currentLikertConfig, {
+            tableTitle: currentLikertConfig.title || currentLikertConfig.tableTitle,
+            includeImplications: includeImplications,
+            variantIndex: vi
+          });
+        };
+        var tableIdT = (currentLikertConfig.id || currentLikertConfig.title || 'ttest').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
+        var resultT = Gen.generateWithVariation(generatorT, 'likert_ttest', tableIdT);
+        setFullInterpretation(resultT.text);
+      } else if (currentLikertConfig.prewritten) {
+        var prewrittenText = (currentLikertConfig.prewritten.sh || '') + (currentLikertConfig.prewritten.t ? ' ' + currentLikertConfig.prewritten.t : '');
+        var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+        var implEl2 = document.getElementById('la-include-implications');
+        if (implEl2 && implEl2.checked && Utils && prewrittenText) {
+          var impl = Utils.buildImplications('ttest');
+          prewrittenText += ' ' + impl.first + ' ' + impl.second;
+        }
+        setFullInterpretation(prewrittenText);
       }
-      setFullInterpretation(prewrittenText);
       showToast('Interpretation regenerated.');
       return;
     }

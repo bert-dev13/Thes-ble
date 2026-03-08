@@ -10,19 +10,18 @@
 (function (global) {
   'use strict';
 
+  /** Opening phrases for first paragraphs (rotate to avoid consecutive repeats). */
   var OPENER_POOL = [
     'In terms of ',
-    'About the ',
     'Regarding ',
-    'With regard to ',
     'Considering ',
-    'As to ',
-    'Pertaining to ',
+    'Across ',
+    'Concerning ',
     'Relative to ',
+    'Pertaining to ',
+    'With reference to ',
     'In relation to ',
-    'Based on the data presented, ',
-    'From the table, ',
-    'As reflected in the data, '
+    'As to '
   ];
 
   var SHOWS_SYNONYMS = ['shows', 'reveals', 'indicates', 'reflects', 'demonstrates'];
@@ -300,7 +299,7 @@
    * Detect table type from table structure (columns/rows).
    * Use this to automatically choose the correct interpretation format.
    * @param {Object} tableData - Table config or data with rows
-   * @param {'profile'|'likert'} analyzerContext - Which analyzer the data comes from
+   * @param {'profile'|'likert'} [analyzerContext] - Which analyzer the data comes from (optional; infers from structure if omitted)
    * @returns {'single-profile'|'two-group-profile'|'single-likert'|'two-group-likert'|'ttest'}
    */
   function detectTableType(tableData, analyzerContext) {
@@ -311,23 +310,83 @@
     var first = rows[0];
     if (!first || typeof first !== 'object') return analyzerContext === 'profile' ? 'single-profile' : 'single-likert';
 
-    if (analyzerContext === 'profile') {
-      if (first.heads && first.teachers) return 'two-group-profile';
-      if (first.frequency != null || first.f != null) return 'single-profile';
-      return 'single-profile';
-    }
+    // T-test: check for statistical comparison fields (highest priority)
+    var hasTTestFields = function (r) {
+      var tVal = r.tValue != null ? String(r.tValue).trim() : '';
+      var tCrit = r.tCritical != null ? String(r.tCritical).trim() : '';
+      var pVal = r.pValue != null ? String(r.pValue).trim() : '';
+      var dec = r.decision != null ? String(r.decision).trim() : '';
+      var desc = r.description != null ? String(r.description).trim() : '';
+      return tVal !== '' || tCrit !== '' || pVal !== '' || dec !== '' || desc !== '';
+    };
+    if (tableData.type === 'tTest' || hasTTestFields(first)) return 'ttest';
 
-    if (analyzerContext === 'likert') {
-      if (tableData.type === 'tTest') return 'ttest';
-      if (first.tValue != null || first.tCritical != null || first.pValue != null ||
-          (typeof first.tValue === 'string' && first.tValue.trim() !== '') ||
-          (typeof first.tCritical === 'string' && first.tCritical.trim() !== '')) return 'ttest';
-      if (first.sh && first.t) return 'two-group-likert';
-      if (first.weightedMean != null || first.wm != null || (first.indicator && (first.qualitativeDescription != null || first.qd != null))) return 'single-likert';
-      return 'single-likert';
-    }
+    // Profile: rows with heads/teachers (two groups) or frequency/f
+    if (first.heads && first.teachers) return 'two-group-profile';
+    if (first.frequency != null || first.f != null) return 'single-profile';
 
+    // Likert: rows with sh/t (two groups) or wm/weightedMean
+    if (first.sh && first.t) return 'two-group-likert';
+    if (first.weightedMean != null || first.wm != null ||
+        (first.indicator && (first.qualitativeDescription != null || first.qd != null))) return 'single-likert';
+
+    if (analyzerContext === 'profile') return 'single-profile';
+    if (analyzerContext === 'likert') return 'single-likert';
     return 'single-likert';
+  }
+
+  /**
+   * Generate T-test interpretation from table data.
+   * Format: varied opening phrase + significant/no significant + t-value, t-critical, p-value, decision + implications.
+   * @param {Object} tableData - Table with rows containing tValue, tCritical, pValue, decision, description
+   * @param {Object} [options] - { tableTitle, theme, includeImplications, variantIndex }
+   * @returns {string}
+   */
+  function generateTTestInterpretation(tableData, options) {
+    if (!tableData) return '';
+    var rows = tableData.rows || [];
+    var row = rows[0] || rows.find(function (r) {
+      var t = r.tValue != null ? String(r.tValue).trim() : '';
+      return t !== '';
+    });
+    if (!row) return '';
+
+    var tValStr = (row.tValue != null ? String(row.tValue) : '').trim();
+    var tCritStr = (row.tCritical != null ? String(row.tCritical) : '').trim();
+    var pValStr = (row.pValue != null ? String(row.pValue) : '').trim();
+    var decision = (row.decision != null ? String(row.decision) : '').trim().toLowerCase();
+
+    var theme = (options && options.theme) || (options && options.tableTitle) || tableData.tableTitle || tableData.title || 'the variable';
+    var themeLower = theme.toLowerCase().replace(/^table \d+\.\s*/i, '');
+
+    var vi = (options && typeof options.variantIndex === 'number') ? options.variantIndex : 0;
+    var includeImplications = options && options.includeImplications !== false;
+
+    var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    var impl = Utils && includeImplications ? Utils.buildImplications('ttest') : { first: '', second: '' };
+
+    var tVal = parseFloat(String(tValStr).replace(/[^0-9.-]/g, ''));
+    var tCrit = parseFloat(String(tCritStr).replace(/[^0-9.-]/g, ''));
+    var isRejected = decision.indexOf('reject') !== -1 || decision.indexOf('significant') !== -1;
+    if (!isNaN(tVal) && !isNaN(tCrit)) isRejected = Math.abs(tVal) > tCrit;
+
+    var text;
+    if (isRejected) {
+      text = 'The T-test results reveal a significant difference between the perceptions of school heads and teachers regarding ' + themeLower + '.';
+      text += ' The computed t-value of ' + (tValStr || '—') + (tCritStr ? ' exceeded the t-critical value of ' + tCritStr : '');
+      if (pValStr) text += ', the p-value was ' + pValStr;
+      text += ', and the null hypothesis was rejected.';
+    } else {
+      text = 'The T-test results reveal no significant difference between the perceptions of school heads and teachers regarding ' + themeLower + '.';
+      text += ' The computed t-value of ' + (tValStr || '—') + (tCritStr ? ' did not exceed the t-critical value of ' + tCritStr : '');
+      if (pValStr) text += ', the p-value was ' + pValStr;
+      text += ', and the null hypothesis was accepted.';
+    }
+
+    if (includeImplications && impl.first) text += ' ' + impl.first;
+    if (includeImplications && impl.second) text += ' ' + impl.second;
+
+    return text.trim();
   }
 
   /** Transition phrases for second paragraph of two-group tables */
@@ -339,6 +398,7 @@
 
   global.ThesisTextGenerator = {
     detectTableType: detectTableType,
+    generateTTestInterpretation: generateTTestInterpretation,
     getTransitionForVariant: getTransitionForVariant,
     TRANSITION_PHRASES: TRANSITION_PHRASES,
     getVariantIndex: getVariantIndex,

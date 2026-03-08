@@ -1566,8 +1566,18 @@
     return text.trim();
   }
 
+  /**
+   * Generate interpretation using automatic table type detection.
+   * Routes to single-profile or two-group-profile builder based on loaded columns.
+   */
   function generateInterpretation(rows, tableTitle) {
-    var text = buildInterpretationText(rows, tableTitle);
+    var tableData = currentProject2Table && currentProject2Table.rows && currentProject2Table.rows.length
+      ? { rows: currentProject2Table.rows }
+      : { rows: rows || [] };
+    var detectedType = getDetectedProfileTableType();
+    var text = detectedType === 'two-group-profile' && currentProject2Table
+      ? buildTwoGroupProfileInterpretation(currentProject2Table)
+      : buildInterpretationText(rows || [], tableTitle);
     var block = document.getElementById('pa-interpretation-block');
     if (block) block.textContent = text;
     return text;

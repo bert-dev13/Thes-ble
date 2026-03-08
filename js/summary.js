@@ -418,9 +418,16 @@
     };
   }
 
-  /** Build T-test finding from rows. Compares t-value vs t-critical, determines reject/accept. */
+  /** Build T-test finding from rows. Uses ThesisTextGenerator.generateTTestInterpretation when available for consistent format. */
   function buildTTestFinding(rows, tableTitle, opener, includeImplication) {
     if (!rows || rows.length === 0) return '';
+    var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
+    if (Gen && Gen.generateTTestInterpretation) {
+      return Gen.generateTTestInterpretation(
+        { rows: rows, tableTitle: tableTitle },
+        { tableTitle: tableTitle, includeImplications: includeImplication }
+      );
+    }
     var row = rows[0];
     var tValStr = (row.tValue || '').toString().trim();
     var tCritStr = (row.tCritical || '').toString().trim();
