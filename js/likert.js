@@ -2450,7 +2450,11 @@
 
     var indicatorPart = buildIndicatorsByQdGroups(rows);
     var awmStr = awm.toFixed(2);
-    var desc = (awmDesc || '—').toLowerCase();
+    var UtilsRp1 = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    var expandQdRp1 = UtilsRp1 && UtilsRp1.expandQualitativeDescription ? UtilsRp1.expandQualitativeDescription : function (x) { return x || ''; };
+    var descRaw = awmDesc || '—';
+    var desc = expandQdRp1(descRaw);
+    if (!desc || desc === '—') desc = descRaw;
 
     var text;
     if (cfg.isExecutiveSummary) {
@@ -2516,8 +2520,10 @@
 
     var awmShStr = awmSh.toFixed(2);
     var awmTStr = awmT.toFixed(2);
-    var descSh = (awmShDesc || '—').toLowerCase();
-    var descT = (awmTDesc || '—').toLowerCase();
+    var UtilsRp2 = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    var expandQdRp2 = UtilsRp2 && UtilsRp2.expandQualitativeDescription ? UtilsRp2.expandQualitativeDescription : function (x) { return x || ''; };
+    var descSh = expandQdRp2(awmShDesc || '—') || awmShDesc || '—';
+    var descT = expandQdRp2(awmTDesc || '—') || awmTDesc || '—';
     var construct = cfg.headsAwmConstruct || 'the construct';
 
     var shIntro = (cfg.headsRated === false)
@@ -2590,15 +2596,18 @@
     });
     if (qdMap['—'] && qdMap['—'].length) qdKeys.push('—');
 
+    var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    var expandQd = Utils && Utils.expandQualitativeDescription ? Utils.expandQualitativeDescription : function (x) { return x || ''; };
     var segments = [];
     qdKeys.forEach(function (qd, idx) {
       var groupRows = qdMap[qd];
       if (!groupRows || !groupRows.length) return;
       var enumText = formatIndicatorsEnumeration(groupRows);
+      var qdFull = expandQd(qd);
       if (idx === 0) {
-        segments.push('the indicators rated as ' + qd + ' include the following: ' + enumText);
+        segments.push('the indicators rated as ' + qdFull + ' include the following: ' + enumText);
       } else {
-        segments.push('While other indicators were rated as ' + qd + '. These include: ' + enumText);
+        segments.push('While other indicators were rated as ' + qdFull + '. These include: ' + enumText);
       }
     });
 
@@ -2626,9 +2635,13 @@
 
     var indicatorBody = buildIndicatorsByQdGroups(rows);
 
+    var Utils2 = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    var expandQd = Utils2 && Utils2.expandQualitativeDescription ? Utils2.expandQualitativeDescription : function (x) { return x || ''; };
+    var descRaw = awmDesc || '—';
+    var desc = expandQd(descRaw);
+    if (!desc || desc === '—') desc = descRaw || '—';
     var sent1 = opening + theme + ', ' + indicatorBody + '.';
     var awmStr = awm.toFixed(2);
-    var desc = (awmDesc || '—').toLowerCase();
     var sent3 = groupLabel
       ? 'The average weighted mean of ' + awmStr + ' signifies that ' + groupLabel + ' view ' + (theme.indexOf('the ') === 0 ? theme : 'the ' + theme) + ' as ' + desc + '.'
       : 'The average weighted mean of ' + awmStr + ' signifies that the indicators are generally assessed as ' + desc + '.';

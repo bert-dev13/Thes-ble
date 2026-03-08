@@ -618,7 +618,9 @@
   }
 
   function buildAwmSentence(awm, awmDesc, theme) {
-    var desc = awmDesc || '—';
+    var UtilsAwm = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    var expandQd = UtilsAwm && UtilsAwm.expandQualitativeDescription ? UtilsAwm.expandQualitativeDescription : function (x) { return x || ''; };
+    var desc = expandQd(awmDesc || '—') || awmDesc || '—';
     var themeLower = (theme || '').toLowerCase();
     var signifies = 'respondents view the manifestation of the theme as ' + desc + '.';
     if (themeLower.indexOf('challenge') !== -1 || themeLower.indexOf('challenges') !== -1) {
@@ -708,14 +710,16 @@
       }
 
       if (isTwoGroup && t.rows) {
+        var UtilsEx = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+        var expandQdEx = UtilsEx && UtilsEx.expandQualitativeDescription ? UtilsEx.expandQualitativeDescription : function (x) { return x || ''; };
         var execSummary = isExecutiveSummary(t.tableTitle);
         var groups = getIndicatorsByTopQdForTwoGroup(t.rows, includeNextGroup);
 
         if (execSummary) {
           var shAwm = t.awm && t.awm.sh ? t.awm.sh : {};
           var tAwm = t.awm && t.awm.t ? t.awm.t : {};
-          var shDesc = (shAwm.qd || '').trim();
-          var tDesc = (tAwm.qd || '').trim();
+          var shDesc = expandQdEx((shAwm.qd || '').trim()) || (shAwm.qd || '').trim();
+          var tDesc = expandQdEx((tAwm.qd || '').trim()) || (tAwm.qd || '').trim();
           var shByQd = {};
           var tByQd = {};
           (t.rows || []).forEach(function (r) {
@@ -743,7 +747,8 @@
             var parts = [];
             ordered.forEach(function (qd) {
               var domains = byQd[qd].map(function (d) { return '"' + d.indicator + '"'; });
-              if (domains.length) parts.push(domains.join(', ') + ' are rated ' + qd);
+              var qdFull = expandQdEx(qd) || qd;
+              if (domains.length) parts.push(domains.join(', ') + ' are rated ' + qdFull);
             });
             return parts.join(', while ');
           };
@@ -768,8 +773,10 @@
         } else {
           var shIndicators = groups.sh.map(function (i) { return '"' + i.indicator + '"'; });
           var tIndicators = groups.t.map(function (i) { return '"' + i.indicator + '"'; });
-          var shQd = groups.sh.length ? groups.sh[0].qd : (t.awm && t.awm.sh ? t.awm.sh.qd : '');
-          var tQd = groups.t.length ? groups.t[0].qd : (t.awm && t.awm.t ? t.awm.t.qd : '');
+          var shQdRaw = groups.sh.length ? groups.sh[0].qd : (t.awm && t.awm.sh ? t.awm.sh.qd : '');
+          var tQdRaw = groups.t.length ? groups.t[0].qd : (t.awm && t.awm.t ? t.awm.t.qd : '');
+          var shQd = UtilsEx ? (expandQdEx(shQdRaw) || shQdRaw) : shQdRaw;
+          var tQd = UtilsEx ? (expandQdEx(tQdRaw) || tQdRaw) : tQdRaw;
           var shAwmVal = t.awm && t.awm.sh && t.awm.sh.value != null ? t.awm.sh.value : 0;
           var tAwmVal = t.awm && t.awm.t && t.awm.t.value != null ? t.awm.t.value : 0;
           if (shIndicators.length > 0) {
@@ -794,8 +801,8 @@
           }
           if (shIndicators.length === 0 && tIndicators.length === 0 && (t.awm && (t.awm.sh || t.awm.t))) {
             var awmParts = [];
-            if (t.awm.sh) awmParts.push('school heads: ' + (t.awm.sh.qd || '—'));
-            if (t.awm.t) awmParts.push('teachers: ' + (t.awm.t.qd || '—'));
+            if (t.awm.sh) awmParts.push('school heads: ' + (expandQdEx(t.awm.sh.qd || '—') || t.awm.sh.qd || '—'));
+            if (t.awm.t) awmParts.push('teachers: ' + (expandQdEx(t.awm.t.qd || '—') || t.awm.t.qd || '—'));
             var p = opening + theme + ', the overall assessment shows ' + awmParts.join('; ') + '.';
             if (includeImplication) {
               var impl = Utils ? Utils.buildImplications('likert') : { first: '', second: '' };
@@ -811,7 +818,10 @@
       var topGroup = getTopQualGroupIndicators(indicators, includeNextGroup);
       if (topGroup.length > 0) {
         var labels = topGroup.map(function (i) { return '"' + (i.indicator || i) + '"'; });
-        var qd = topGroup[0].qualitativeDescription || topGroup[0].qd || t.awmDesc || '';
+        var qdRaw = topGroup[0].qualitativeDescription || topGroup[0].qd || t.awmDesc || '';
+        var UtilsSg = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+        var expandQdSg = UtilsSg && UtilsSg.expandQualitativeDescription ? UtilsSg.expandQualitativeDescription : function (x) { return x || ''; };
+        var qd = expandQdSg(qdRaw) || qdRaw;
         var p = opening + theme + ', respondents rated the following indicators as ' + qd + ': ' + labels.join(', ') + '. ';
         p += buildAwmSentence(t.awm, t.awmDesc, t.tableTitle);
         if (includeImplication) {
@@ -905,8 +915,10 @@
       var theme = t.tableTitle || 'the theme';
       var desc;
       if (t.type === 'twoGroup' && t.awm && (t.awm.sh || t.awm.t)) {
-        var shDesc = (t.awm.sh && t.awm.sh.qd) ? t.awm.sh.qd : '';
-        var tDesc = (t.awm.t && t.awm.t.qd) ? t.awm.t.qd : '';
+        var UtilsCn = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+        var expandQdCn = UtilsCn && UtilsCn.expandQualitativeDescription ? UtilsCn.expandQualitativeDescription : function (x) { return x || ''; };
+        var shDesc = expandQdCn((t.awm.sh && t.awm.sh.qd) ? t.awm.sh.qd : '') || (t.awm.sh && t.awm.sh.qd) || '';
+        var tDesc = expandQdCn((t.awm.t && t.awm.t.qd) ? t.awm.t.qd : '') || (t.awm.t && t.awm.t.qd) || '';
         var parts = [];
         if (shDesc) parts.push('school heads: ' + shDesc);
         if (tDesc) parts.push('teachers: ' + tDesc);

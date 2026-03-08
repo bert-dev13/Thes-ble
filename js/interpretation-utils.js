@@ -90,9 +90,70 @@
     return { first: t.first, second: t.second };
   }
 
+  /**
+   * Scale dictionary: Q.D. acronym → full text for interpretation only.
+   * Tables keep acronyms (Q.D. column: VH, H, MS, etc.); interpretation paragraphs use full words.
+   * Rule: Tables → acronyms. Interpretation → full words.
+   * @param {string} abbr - Abbreviation (e.g. VH, H, MS, FR)
+   * @returns {string} Full text (e.g. Very High, High, Moderately Serious, Fully Realized)
+   */
+  var QUALITATIVE_DESCRIPTION_MAP = {
+    VH: 'Very High',
+    H: 'High',
+    FR: 'Fully Realized',
+    MR: 'Moderately Realized',
+    R: 'Realized',
+    SR: 'Slightly Realized',
+    NR: 'Not Realized',
+    VE: 'Very Effective',
+    E: 'Effective',
+    ME: 'Moderately Effective',
+    SE: 'Slightly Effective',
+    NE: 'Not Effective',
+    S: 'Serious',
+    MS: 'Moderately Serious',
+    SS: 'Slightly Serious',
+    O: 'Often',
+    VO: 'Very Often',
+    VS: 'Very Satisfactory',
+    SF: 'Satisfactory',
+    MRS: 'Moderately Satisfactory',
+    SSS: 'Slightly Satisfactory',
+    OUTSTANDING: 'Outstanding',
+    VERYHIGH: 'Very High',
+    VERYEFFECTIVE: 'Very Effective',
+    FULLYREALIZED: 'Fully Realized',
+    MODERATELYREALIZED: 'Moderately Realized',
+    MODERATELYSERIOUS: 'Moderately Serious',
+    SLIGHTLYSERIOUS: 'Slightly Serious',
+    VERYOFTEN: 'Very Often',
+    VERYSATISFACTORY: 'Very Satisfactory'
+  };
+
+  function expandQualitativeDescription(abbr) {
+    if (abbr == null || abbr === '') return abbr === '' ? '' : '—';
+    var s = String(abbr).trim();
+    if (!s || s === '—') return s || '—';
+    var raw = s.replace(/\s*\([^)]*\)\s*$/, '').trim();
+    var key = raw.replace(/\s+/g, '').toUpperCase();
+    if (!key) return s;
+    var mapped = QUALITATIVE_DESCRIPTION_MAP[key];
+    if (mapped) return mapped;
+    if (raw.length > 5) return raw;
+    return s;
+  }
+
+  /** Alias for expandQualitativeDescription: convertQD(abbreviation) → full text for interpretation. */
+  function convertQD(abbreviation) {
+    return expandQualitativeDescription(abbreviation);
+  }
+
   global.ThesisInterpretationUtils = {
     getVariedOpener: getVariedOpener,
     buildImplications: buildImplications,
+    expandQualitativeDescription: expandQualitativeDescription,
+    convertQD: convertQD,
+    QUALITATIVE_DESCRIPTION_MAP: QUALITATIVE_DESCRIPTION_MAP,
     OPENER_POOL: OPENER_POOL
   };
 })(typeof window !== 'undefined' ? window : this);
