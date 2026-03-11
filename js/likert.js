@@ -54,6 +54,14 @@
     { min: 1.81, max: 2.60, label: '' },
     { min: 1.00, max: 1.80, label: '' }
   ];
+  // Fallback when scale mapping UI is empty (e.g. standard Likert 5-point)
+  var DEFAULT_QD_SCALE = [
+    { min: 4.50, max: 5.00, label: 'Very High' },
+    { min: 3.50, max: 4.49, label: 'High' },
+    { min: 2.50, max: 3.49, label: 'Moderate' },
+    { min: 1.50, max: 2.49, label: 'Low' },
+    { min: 1.00, max: 1.49, label: 'Very Low' }
+  ];
 
   // Active project: rp1 (cooperative learning), rp2 (Science 3 SH vs Teachers)
   var activeProjectId = 'rp1';
@@ -1117,12 +1125,18 @@
   }
 
   function getQualitativeDescription(wm, mapping) {
-    if (!mapping || !mapping.length) return '';
-    for (var i = 0; i < mapping.length; i++) {
-      var m = mapping[i];
+    if (wm == null || isNaN(wm)) return '';
+    var list = mapping && mapping.length ? mapping : DEFAULT_QD_SCALE;
+    for (var i = 0; i < list.length; i++) {
+      var m = list[i];
       if (m.min != null && m.max != null && wm >= m.min && wm <= m.max && m.label) {
-        return m.label;
+        return String(m.label).trim();
       }
+    }
+    // No match in mapping (or mapping has no labels): use default scale
+    for (var j = 0; j < DEFAULT_QD_SCALE.length; j++) {
+      var d = DEFAULT_QD_SCALE[j];
+      if (wm >= d.min && wm <= d.max) return d.label;
     }
     return '';
   }
@@ -2183,7 +2197,8 @@
         var qdInput = tr.querySelector('[data-la-qd]');
         var wmVal = wmInput && wmInput.value !== '' ? parseFloat(wmInput.value) : NaN;
         if (isNaN(wmVal)) wmVal = 0;
-        var qdVal = qdInput && qdInput.value ? qdInput.value.trim() : '';
+        // Use input Q.D. if present, else loaded config so "Use Loaded" shows predefined Q.D.
+        var qdVal = (qdInput && qdInput.value && qdInput.value.trim()) ? qdInput.value.trim() : (currentLikertConfig.rows[idx] && currentLikertConfig.rows[idx].qd) || '';
         rows.push({
           indicator: ind || '',
           weightedMean: wmVal,
@@ -2192,38 +2207,40 @@
         });
       });
 
-      // Sort by WM desc and apply average-of-positions ranking
+      // Sort by WM desc and apply average-of-positions ranking (mutates rank on each row)
       var sorted = rows.slice().sort(function (a, b) {
         return b.weightedMean - a.weightedMean;
       });
       computeRanks(sorted);
-      var rankMap = {};
-      sorted.forEach(function (r) {
-        rankMap[r.indicator] = r.rank;
-      });
+      // Rows and sorted share same objects; rank is already set on each row. Do not overwrite by indicator.
+
+      var mapping = getScaleMapping();
+      // Q.D.: Auto mode overwrites all; Use Loaded keeps value but fill empty from scale so Compute always shows Q.D.
       rows.forEach(function (r) {
-        r.rank = rankMap[r.indicator];
+        var fromScale = getQualitativeDescription(r.weightedMean, mapping);
+        if (!useLoadedQd) {
+          r.qualitativeDescription = fromScale;
+        } else if ((!r.qualitativeDescription || r.qualitativeDescription === '') && fromScale) {
+          r.qualitativeDescription = fromScale;
+        }
       });
 
-      // Auto Q.D. mode
-      if (!useLoadedQd) {
-        var mapping = getScaleMapping();
-        rows.forEach(function (r) {
-          r.qualitativeDescription = getQualitativeDescription(r.weightedMean, mapping);
-        });
-      }
-
-      // Update DOM ranks/Q.D.
+      // Update DOM: Rank and Q.D. (defensive for null/undefined rank)
       tbody.querySelectorAll('tr').forEach(function (tr, idx) {
         var row = rows[idx];
+        if (!row) return;
         var rankCell = tr.querySelector('[data-la-rank]');
         var qdInput = tr.querySelector('[data-la-qd]');
         if (rankCell) {
           var rv = row.rank;
-          rankCell.textContent = rv % 1 === 0 ? rv : rv.toFixed(1);
+          if (rv != null && rv !== '') {
+            rankCell.textContent = (typeof rv === 'number' && rv % 1 !== 0) ? rv.toFixed(1) : String(rv);
+          } else {
+            rankCell.textContent = '—';
+          }
         }
-        if (qdInput && row.qualitativeDescription != null) {
-          qdInput.value = qdToAcronym(row.qualitativeDescription);
+        if (qdInput) {
+          qdInput.value = (row.qualitativeDescription != null && row.qualitativeDescription !== '') ? qdToAcronym(row.qualitativeDescription) : '';
         }
       });
 
@@ -2232,12 +2249,27 @@
         ? Math.round(rows.reduce(function (s, r) { return s + r.weightedMean; }, 0) / rows.length * 100) / 100
         : 0;
       var awmMapping = getScaleMapping();
-      var awmDesc = useLoadedQd ? (currentLikertConfig.awmDesc || '') : getQualitativeDescription(awm, awmMapping);
+      var awmDesc = useLoadedQd && (currentLikertConfig.awmDesc != null && currentLikertConfig.awmDesc !== '')
+        ? currentLikertConfig.awmDesc
+        : getQualitativeDescription(awm, awmMapping);
+      if (!awmDesc) awmDesc = getQualitativeDescription(awm, awmMapping);
 
       var awmVal = document.getElementById('la-awm-value');
       var awmDescEl = document.getElementById('la-awm-desc');
-      if (awmVal) awmVal.textContent = awm.toFixed(2);
+      if (awmVal) awmVal.textContent = awm != null && !isNaN(awm) ? awm.toFixed(2) : '—';
       if (awmDescEl) awmDescEl.textContent = qdToDisplay(awmDesc) || '—';
+
+      // Update currentLikertConfig so Copy All uses computed values
+      currentLikertConfig.rows = rows.map(function (r) {
+        return {
+          indicator: r.indicator,
+          wm: r.weightedMean,
+          qd: r.qualitativeDescription || '',
+          rank: r.rank
+        };
+      });
+      currentLikertConfig.awm = awm;
+      currentLikertConfig.awmDesc = awmDesc;
 
       computedData = {
         indicators: rows,
@@ -2435,7 +2467,6 @@
 
   function renderOutput(results, awm, awmDesc) {
     var tbody = document.getElementById('la-output-tbody');
-    var footer = document.getElementById('la-output-footer');
     var awmVal = document.getElementById('la-awm-value');
     var awmDescEl = document.getElementById('la-awm-desc');
     if (!tbody) return;
@@ -2452,11 +2483,8 @@
       tbody.appendChild(tr);
     });
 
-    if (footer) {
-      footer.hidden = false;
-      if (awmVal) awmVal.textContent = awm.toFixed(2);
-      if (awmDescEl) awmDescEl.textContent = qdToDisplay(awmDesc) || '—';
-    }
+    if (awmVal) awmVal.textContent = (awm != null && !isNaN(awm)) ? awm.toFixed(2) : '—';
+    if (awmDescEl) awmDescEl.textContent = qdToDisplay(awmDesc) || '—';
   }
 
   function joinWithAnd(labels) {
@@ -2465,6 +2493,24 @@
     if (labels.length === 2) return labels[0] + ' and ' + labels[1];
     return labels.slice(0, -1).join(', ') + ', and ' + labels[labels.length - 1];
   }
+
+  /** 20 opener lead-ins for RP1 (same structure, varied wording). */
+  var RP1_OPENER_LEADS = [
+    'Pertaining to ', 'Regarding ', 'As to ', 'In relation to ', 'Concerning ',
+    'Relative to ', 'With reference to ', 'Across ', 'Considering ', 'Focusing on ',
+    'In terms of ', 'With respect to ', 'With regard to ', 'In connection with ',
+    'In the context of ', 'With attention to ', 'In view of ', 'In light of ',
+    'As regards ', 'Touching on '
+  ];
+  /** 20 verbs for executive-summary openers (e.g. "shows that", "indicates that"). */
+  var RP1_EXEC_VERBS = [
+    'shows that ', 'indicates that ', 'reveals that ', 'demonstrates that ', 'reflects that ',
+    'suggests that ', 'implies that ', 'denotes that ', 'conveys that ', 'evidences that ',
+    'attests to the fact that ', 'illustrates that ', 'underscores that ', 'highlights that ',
+    'corroborates that ', 'substantiates that ', 'validates that ', 'reinforces that ',
+    'confirms that ', 'establishes that '
+  ];
+  var NUM_VARIATIONS = typeof ThesisTextGenerator !== 'undefined' && ThesisTextGenerator.NUM_VARIATIONS ? ThesisTextGenerator.NUM_VARIATIONS : 20;
 
   /**
    * Build RP1 Likert interpretation in thesis-ready format (Tables 10–22).
@@ -2476,13 +2522,29 @@
 
     var Gen = typeof ThesisTextGenerator !== 'undefined' ? ThesisTextGenerator : null;
     var vi = typeof variantIndex === 'number' ? variantIndex : 0;
+    var slot = Math.abs(vi) % NUM_VARIATIONS;
     var includeImplications = true;
     var implEl = document.getElementById('la-include-implications');
     if (implEl) includeImplications = implEl.checked;
 
     var opener = cfg.opener;
-    if (Gen && cfg.openerAlternatives && cfg.openerAlternatives.length) {
-      opener = cfg.openerAlternatives[Math.abs(vi) % cfg.openerAlternatives.length];
+    if (cfg.openerAlternatives && cfg.openerAlternatives.length >= NUM_VARIATIONS) {
+      opener = cfg.openerAlternatives[slot];
+    } else if (cfg.openerAlternatives && cfg.openerAlternatives.length > 0) {
+      var first = cfg.openerAlternatives[0];
+      if (cfg.isExecutiveSummary) {
+        var stem = first.replace(/\s+(shows|indicates|reveals|demonstrates|reflects|suggests|implies)\s+that\s*$/i, '').trim();
+        opener = stem + ' ' + RP1_EXEC_VERBS[slot % RP1_EXEC_VERBS.length];
+      } else {
+        var stem = first;
+        for (var j = 0; j < RP1_OPENER_LEADS.length; j++) {
+          if (first.indexOf(RP1_OPENER_LEADS[j]) === 0) {
+            stem = first.slice(RP1_OPENER_LEADS[j].length).replace(/\s*,\s*$/, '');
+            break;
+          }
+        }
+        opener = RP1_OPENER_LEADS[slot % RP1_OPENER_LEADS.length] + stem + ', ';
+      }
     }
 
     var indicatorPart = buildIndicatorsByQdGroups(rows);
@@ -2531,25 +2593,25 @@
     return text.trim();
   }
 
-  /** Master prompt: rotate randomly among these for the ENTIRE opening phrase of paragraph 1. */
+  /** 20 opener prefixes for RP2 paragraph 1. */
   var LIKERT_PARA1_OPENER_PREFIXES = [
-    'Relative to the ',
-    'In terms of the ',
-    'With reference to the ',
-    'Considering the ',
-    'Regarding the ',
-    'Pertaining to the ',
-    'Concerning the ',
-    'As to the ',
-    'In relation to the ',
-    'From the data presented on the '
+    'Relative to the ', 'In terms of the ', 'With reference to the ', 'Considering the ',
+    'Regarding the ', 'Pertaining to the ', 'Concerning the ', 'As to the ',
+    'In relation to the ', 'From the data presented on the ', 'With respect to the ',
+    'With regard to the ', 'In connection with the ', 'In the context of the ',
+    'Focusing on the ', 'With attention to the ', 'In view of the ', 'In light of the ',
+    'As regards the ', 'Touching on the '
   ];
 
-  /** Paragraph 2 must always begin with one of these transition words (master prompt). */
+  /** 20 transition phrases for paragraph 2 (RP2 two-group). */
   var RP2_LIKERT_TEACHERS_TRANSITION = [
-    'Meanwhile, teacher respondents ',
-    'On the other hand, teacher respondents ',
-    'Similarly, teacher respondents '
+    'Meanwhile, teacher respondents ', 'On the other hand, teacher respondents ', 'Similarly, teacher respondents ',
+    'In contrast, teacher respondents ', 'By comparison, teacher respondents ', 'Correspondingly, teacher respondents ',
+    'Likewise, teacher respondents ', 'Conversely, teacher respondents ', 'Alternatively, teacher respondents ',
+    'Additionally, teacher respondents ', 'Furthermore, teacher respondents ', 'Moreover, teacher respondents ',
+    'In parallel, teacher respondents ', 'In tandem, teacher respondents ', 'By the same token, teacher respondents ',
+    'In like manner, teacher respondents ', 'Equally, teacher respondents ', 'Concurrently, teacher respondents ',
+    'In turn, teacher respondents ', 'In addition, teacher respondents '
   ];
 
   /**
@@ -3122,6 +3184,42 @@
       return;
     }
     var tbody = document.getElementById('la-output-tbody');
+    // Sync RP1 single-group from DOM (rows + AWM) so Copy All uses on-screen values
+    if (tbody && activeProjectId === 'rp1' && currentLikertConfig && !currentLikertConfig.type && (!currentLikertConfig.rows[0] || !currentLikertConfig.rows[0].sh)) {
+      var rowsFromDomRp1 = [];
+      tbody.querySelectorAll('tr').forEach(function (tr, idx) {
+        var placeholder = tr.querySelector('.la-output-empty');
+        if (placeholder) return;
+        var indInput = tr.querySelector('[data-la-indicator]');
+        var wmInput = tr.querySelector('[data-la-wm]');
+        var qdInput = tr.querySelector('[data-la-qd]');
+        var rankCell = tr.querySelector('[data-la-rank]');
+        var ind = (indInput && indInput.value != null) ? indInput.value.trim() : (currentLikertConfig.rows[idx] && currentLikertConfig.rows[idx].indicator) || '';
+        var wm = wmInput && wmInput.value !== '' ? parseFloat(wmInput.value) : (currentLikertConfig.rows[idx] && typeof currentLikertConfig.rows[idx].wm === 'number') ? currentLikertConfig.rows[idx].wm : 0;
+        if (isNaN(wm)) wm = 0;
+        var qd = (qdInput && qdInput.value) ? qdInput.value.trim() : (currentLikertConfig.rows[idx] && currentLikertConfig.rows[idx].qd) || '';
+        var rank = rankCell && rankCell.textContent && rankCell.textContent !== '—' ? parseFloat(rankCell.textContent) : (currentLikertConfig.rows[idx] && currentLikertConfig.rows[idx].rank != null) ? currentLikertConfig.rows[idx].rank : null;
+        rowsFromDomRp1.push({ indicator: ind, wm: wm, qd: qd, rank: rank });
+      });
+      if (rowsFromDomRp1.length > 0) {
+        var awmValEl = document.getElementById('la-awm-value');
+        var awmDescElSync = document.getElementById('la-awm-desc');
+        var awmNum = awmValEl && awmValEl.textContent && awmValEl.textContent !== '—' ? parseFloat(awmValEl.textContent) : null;
+        var awmDescSync = awmDescElSync && awmDescElSync.textContent ? awmDescElSync.textContent.trim() : '';
+        if (awmNum != null && !isNaN(awmNum)) {
+          currentLikertConfig = {
+            rows: rowsFromDomRp1,
+            awm: awmNum,
+            awmDesc: awmDescSync || currentLikertConfig.awmDesc || '—',
+            title: currentLikertConfig.title,
+            theme: currentLikertConfig.theme,
+            id: currentLikertConfig.id
+          };
+        } else {
+          currentLikertConfig.rows = rowsFromDomRp1;
+        }
+      }
+    }
     if (tbody && (currentLikertConfig.type === 'twoGroup' || (currentLikertConfig.rows[0] && (currentLikertConfig.rows[0].sh || currentLikertConfig.rows[0].t)))) {
       var rowsFromDom = [];
       tbody.querySelectorAll('tr').forEach(function (tr, idx) {

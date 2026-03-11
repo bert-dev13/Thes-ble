@@ -8,22 +8,22 @@
 (function (global) {
   'use strict';
 
-  /** Opening phrases for interpretations (formal thesis style). */
+  /** Opening phrases for interpretations (20 variants, formal thesis style). */
   var OPENER_POOL = [
-    'In terms of ',
-    'Regarding ',
-    'Considering ',
-    'Across ',
-    'Concerning ',
-    'Relative to ',
-    'Pertaining to ',
-    'With reference to ',
-    'In relation to ',
-    'As to '
+    'In terms of ', 'Regarding ', 'Considering ', 'Across ', 'Concerning ',
+    'Relative to ', 'Pertaining to ', 'With reference to ', 'In relation to ', 'As to ',
+    'With respect to ', 'With regard to ', 'In connection with ', 'In the context of ',
+    'Focusing on ', 'With attention to ', 'In view of ', 'In light of ',
+    'As regards ', 'Touching on '
   ];
 
-  /** Transition phrases for second paragraph of two-group tables. */
-  var TRANSITION_PHRASES = ['Meanwhile, ', 'On the other hand, ', 'Similarly, ', 'In contrast, '];
+  /** Transition phrases for second paragraph of two-group tables (20 variants). */
+  var TRANSITION_PHRASES = [
+    'Meanwhile, ', 'On the other hand, ', 'Similarly, ', 'In contrast, ', 'By comparison, ',
+    'Correspondingly, ', 'Likewise, ', 'Conversely, ', 'Alternatively, ', 'Additionally, ',
+    'Furthermore, ', 'Moreover, ', 'In parallel, ', 'In tandem, ', 'By the same token, ',
+    'In like manner, ', 'Equally, ', 'Concurrently, ', 'In turn, ', 'In addition, '
+  ];
 
   var OPENER_STORAGE_KEY = 'thesisInterpretation_lastOpener';
   var OPENER_INDEX_KEY = 'thesisInterpretation_openerIndex';

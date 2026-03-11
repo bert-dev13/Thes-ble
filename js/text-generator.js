@@ -2,44 +2,41 @@
  * Thesis Interpretation Assistant — Text Variation Engine
  * Deterministic variation for Regenerate Interpretation.
  * - variantIndex per context (localStorage)
- * - Opener rotation (never consecutive repeat)
+ * - 20 variations per context before repeat
  * - Synonym sets and sentence patterns
- * - Duplicate prevention (last 3 outputs)
+ * - Duplicate prevention (last 20 outputs)
  */
 
 (function (global) {
   'use strict';
 
-  /** Opening phrases for first paragraphs (rotate to avoid consecutive repeats). */
+  var NUM_VARIATIONS = 20;
+
+  /** Opening phrases for first paragraphs (20 variants). */
   var OPENER_POOL = [
-    'In terms of ',
-    'Regarding ',
-    'Considering ',
-    'Across ',
-    'Concerning ',
-    'Relative to ',
-    'Pertaining to ',
-    'With reference to ',
-    'In relation to ',
-    'As to '
+    'In terms of ', 'Regarding ', 'Considering ', 'Across ', 'Concerning ',
+    'Relative to ', 'Pertaining to ', 'With reference to ', 'In relation to ', 'As to ',
+    'With respect to ', 'With regard to ', 'In connection with ', 'In the context of ',
+    'Focusing on ', 'With attention to ', 'In view of ', 'In light of ',
+    'As regards ', 'Touching on '
   ];
 
-  var SHOWS_SYNONYMS = ['shows', 'reveals', 'indicates', 'reflects', 'demonstrates'];
-  var MAJORITY_SYNONYMS = ['majority', 'largest proportion', 'greater share', 'dominant category', 'prevailing category'];
-  var INDICATES_LEADS = ['This indicates that', 'This suggests that', 'This implies that'];
-  var FURTHER_LEADS = ['This further implies that', 'This further suggests that', 'This further indicates that'];
-  var TIE_PHRASES = ['both categories', 'the categories share the same frequency', 'the categories are tied'];
-  var HAD_VERBS = ['had', 'recorded', 'showed', 'accounted for'];
-  var CONTRIBUTED_PHRASES = ['was contributed by', 'was accounted for by', 'came from'];
-  var ASSESSED_AS = ['assessed as', 'described as', 'rated as'];
-  var INCLUDE_VERBS = ['include', 'comprise', 'consist of'];
-  var SIGNIFIES_VERBS = ['signifies', 'indicates', 'reflects', 'reveals'];
+  var SHOWS_SYNONYMS = ['shows', 'reveals', 'indicates', 'reflects', 'demonstrates', 'displays', 'illustrates', 'evidences', 'points to', 'suggests', 'manifests', 'expresses', 'conveys', 'exhibits', 'unveils', 'highlights', 'underscores', 'attests to', 'corroborates', 'substantiates'];
+  var MAJORITY_SYNONYMS = ['majority', 'largest proportion', 'greater share', 'dominant category', 'prevailing category', 'leading segment', 'primary group', 'main body', 'bulk of respondents', 'preponderance', 'predominant share', 'foremost category', 'chief proportion', 'principal segment', 'core group', 'central category', 'key demographic', 'main contingent', 'primary contingent', 'dominant share'];
+  var INDICATES_LEADS = ['This indicates that', 'This suggests that', 'This implies that', 'This demonstrates that', 'This reveals that', 'This reflects that', 'This points to the fact that', 'This conveys that', 'This attests to the fact that', 'This underscores that', 'This illustrates that', 'This evidences that', 'This manifests that', 'This shows that', 'This highlights that', 'This corroborates that', 'This substantiates that', 'This supports that', 'This confirms that', 'This establishes that'];
+  var FURTHER_LEADS = ['This further implies that', 'This further suggests that', 'This further indicates that', 'This further demonstrates that', 'This further reveals that', 'This further reflects that', 'This additionally suggests that', 'This moreover implies that', 'This likewise indicates that', 'This correspondingly suggests that', 'This in turn implies that', 'This consequently indicates that', 'This thus suggests that', 'This accordingly implies that', 'This therefore indicates that', 'This hence suggests that', 'This thereby implies that', 'This subsequently indicates that', 'This then suggests that', 'This further conveys that'];
+  var TIE_PHRASES = ['both categories', 'the categories share the same frequency', 'the categories are tied', 'the two categories are equal', 'an equal distribution between categories', 'a tie between the categories', 'the categories rank equally', 'the categories show identical frequencies', 'the categories are equivalent', 'the categories share identical rankings', 'the categories are evenly matched', 'the categories have equal standing', 'the categories are on par', 'the categories exhibit parity', 'the categories demonstrate equivalence', 'the categories have matching frequencies', 'the categories are deadlocked', 'the categories reflect equal representation', 'the categories are comparable', 'the categories hold equal positions'];
+  var HAD_VERBS = ['had', 'recorded', 'showed', 'accounted for', 'displayed', 'registered', 'exhibited', 'attained', 'reported', 'presented', 'manifested', 'demonstrated', 'reflected', 'represented', 'indicated', 'revealed', 'achieved', 'attained', 'posted', 'documented'];
+  var CONTRIBUTED_PHRASES = ['was contributed by', 'was accounted for by', 'came from', 'stemmed from', 'originated from', 'was attributable to', 'resulted from', 'was derived from', 'arose from', 'flowed from', 'emanated from', 'proceeded from', 'was driven by', 'was influenced by', 'was linked to', 'was associated with', 'was tied to', 'was credited to', 'was traced to', 'was sourced from'];
+  var ASSESSED_AS = ['assessed as', 'described as', 'rated as', 'evaluated as', 'characterized as', 'perceived as', 'viewed as', 'interpreted as', 'designated as', 'classified as', 'regarded as', 'judged as', 'considered as', 'deemed as', 'labeled as', 'termed as', 'identified as', 'recognized as', 'acknowledged as', 'categorized as'];
+  var INCLUDE_VERBS = ['include', 'comprise', 'consist of', 'encompass', 'incorporate', 'contain', 'embrace', 'enfold', 'take in', 'cover', 'span', 'embody', 'involve', 'entail', 'feature', 'comprehend', 'constitute', 'make up', 'aggregate', 'aggregate'];
+  var SIGNIFIES_VERBS = ['signifies', 'indicates', 'reflects', 'reveals', 'demonstrates', 'denotes', 'conveys', 'suggests', 'implies', 'points to', 'evidences', 'attests to', 'manifests', 'illustrates', 'underscores', 'highlights', 'corroborates', 'substantiates', 'reinforces', 'validates'];
 
   var STORAGE_PREFIX = 'thesisVariant_';
   var LAST_OPENER_PREFIX = 'thesisLastOpener_';
   var RECENT_OUTPUTS_PREFIX = 'thesisRecent_';
-  var MAX_RECENT = 3;
-  var MAX_RETRIES = 5;
+  var MAX_RECENT = NUM_VARIATIONS;
+  var MAX_RETRIES = NUM_VARIATIONS * 2;
 
   function getStorageKey(context, tableId) {
     var id = (tableId || '').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -68,11 +65,12 @@
   }
 
   function getOpenerForVariant(variantIndex, lastOpener) {
-    var idx = Math.abs(variantIndex) % OPENER_POOL.length;
+    var slot = Math.abs(variantIndex) % NUM_VARIATIONS;
+    var idx = slot % OPENER_POOL.length;
     var chosen = OPENER_POOL[idx];
     if (lastOpener && OPENER_POOL.indexOf(lastOpener) >= 0 && OPENER_POOL.length > 1) {
       var others = OPENER_POOL.filter(function (p) { return p !== lastOpener; });
-      chosen = others[Math.abs(variantIndex) % others.length];
+      chosen = others[slot % others.length];
     }
     return chosen;
   }
@@ -95,7 +93,8 @@
 
   function pickFrom(arr, variantIndex) {
     if (!arr || !arr.length) return '';
-    return arr[Math.abs(variantIndex) % arr.length];
+    var slot = Math.abs(variantIndex) % NUM_VARIATIONS;
+    return arr[slot % arr.length];
   }
 
   function getSynonym(key, variantIndex) {
@@ -219,31 +218,32 @@
     return '';
   }
 
-  /** RP2 prewritten opener equivalents — master prompt list (10 options for Likert interpretation). */
+  /** RP2 prewritten opener equivalents — 20 options for Likert interpretation. */
   var RP2_SH_OPENER_POOL = [
-    'Relative to the ',
-    'In terms of the ',
-    'With reference to the ',
-    'Considering the ',
-    'Regarding the ',
-    'Pertaining to the ',
-    'Concerning the ',
-    'As to the ',
-    'In relation to the ',
-    'From the data presented on the '
+    'Relative to the ', 'In terms of the ', 'With reference to the ', 'Considering the ',
+    'Regarding the ', 'Pertaining to the ', 'Concerning the ', 'As to the ',
+    'In relation to the ', 'From the data presented on the ', 'With respect to the ',
+    'With regard to the ', 'In connection with the ', 'In the context of the ',
+    'Focusing on the ', 'With attention to the ', 'In view of the ', 'In light of the ',
+    'As regards the ', 'Touching on the '
   ];
 
   /** Patterns that start prewritten sh (before "level of abilities" or "extent of constraints") */
-  var RP2_OPENER_PATTERNS = [
-    'Relative to the ', 'In terms of the ', 'With reference to the ', 'Considering the ',
-    'Regarding the ', 'Pertaining to the ', 'Concerning the ', 'As to the ',
-    'In relation to the ', 'From the data presented on the ',
-    'Regarding the ', 'About the ', 'With regard to the ', 'With respect to the '
+  var RP2_OPENER_PATTERNS = RP2_SH_OPENER_POOL.slice();
+
+  var MEANWHILE_SYNONYMS = [
+    'Meanwhile', 'On the other hand', 'Similarly', 'In contrast', 'By comparison',
+    'Correspondingly', 'Likewise', 'Conversely', 'Alternatively', 'Additionally',
+    'Furthermore', 'Moreover', 'In parallel', 'In tandem', 'By the same token',
+    'In like manner', 'Equally', 'Concurrently', 'In turn', 'In addition'
   ];
 
-  var MEANWHILE_SYNONYMS = ['Meanwhile', 'On the other hand', 'Similarly', 'In contrast'];
-
-  var DENOTES_VERBS = ['indicates', 'suggests', 'implies', 'denotes', 'reflects', 'shows'];
+  var DENOTES_VERBS = [
+    'indicates', 'suggests', 'implies', 'denotes', 'reflects', 'shows', 'reveals',
+    'demonstrates', 'conveys', 'evidences', 'attests to', 'manifests', 'illustrates',
+    'underscores', 'highlights', 'corroborates', 'substantiates', 'validates',
+    'reinforces', 'confirms'
+  ];
 
   /**
    * Apply full-text variation to RP2 prewritten (sh + t).
@@ -267,7 +267,8 @@
       }
     }
     if (matchedOpener) {
-      var newOpener = RP2_SH_OPENER_POOL[vi % RP2_SH_OPENER_POOL.length];
+      var openIdx = (vi % NUM_VARIATIONS) % RP2_SH_OPENER_POOL.length;
+      var newOpener = RP2_SH_OPENER_POOL[openIdx];
       shText = newOpener + shRest;
     }
 
@@ -282,13 +283,13 @@
 
     /* 3. Vary "indicates" / "denotes" / "described as" in both sections */
     var verbs = DENOTES_VERBS;
-    var verbIndex = vi % verbs.length;
+    var verbIndex = (vi % NUM_VARIATIONS) % verbs.length;
     shText = shText.replace(/\bindicates that\b/gi, verbs[verbIndex] + ' that');
     tText = tText.replace(/\bindicates that\b/gi, verbs[verbIndex] + ' that');
     shText = shText.replace(/\bdenotes that\b/gi, verbs[(verbIndex + 1) % verbs.length] + ' that');
     tText = tText.replace(/\bdenotes that\b/gi, verbs[(verbIndex + 1) % verbs.length] + ' that');
-    var descVariants = ['described as', 'interpreted as', 'rated as'];
-    var descChoice = descVariants[vi % descVariants.length];
+    var descVariants = ['described as', 'interpreted as', 'rated as', 'assessed as', 'evaluated as', 'characterized as', 'perceived as', 'viewed as', 'designated as', 'regarded as', 'judged as', 'considered as', 'deemed as', 'labeled as', 'termed as', 'identified as', 'recognized as', 'acknowledged as', 'categorized as', 'classified as'];
+    var descChoice = descVariants[(vi % NUM_VARIATIONS) % descVariants.length];
     shText = shText.replace(/\b(described as|interpreted as|rated as)\b/gi, descChoice);
     tText = tText.replace(/\b(described as|interpreted as|rated as)\b/gi, descChoice);
 
@@ -391,11 +392,12 @@
     return text.trim();
   }
 
-  /** Transition phrases for second paragraph of two-group tables */
-  var TRANSITION_PHRASES = ['Meanwhile', 'On the other hand', 'Similarly', 'In contrast'];
+  /** Transition phrases for second paragraph of two-group tables (20 variants). */
+  var TRANSITION_PHRASES = MEANWHILE_SYNONYMS;
 
   function getTransitionForVariant(variantIndex) {
-    return TRANSITION_PHRASES[Math.abs(variantIndex || 0) % TRANSITION_PHRASES.length];
+    var slot = Math.abs(variantIndex || 0) % NUM_VARIATIONS;
+    return TRANSITION_PHRASES[slot % TRANSITION_PHRASES.length];
   }
 
   global.ThesisTextGenerator = {
@@ -416,6 +418,7 @@
     isDuplicate: isDuplicate,
     getRecentOutputs: getRecentOutputs,
     OPENER_POOL: OPENER_POOL,
+    NUM_VARIATIONS: NUM_VARIATIONS,
     MAX_RECENT: MAX_RECENT,
     MAX_RETRIES: MAX_RETRIES
   };

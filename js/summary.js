@@ -19,16 +19,11 @@
   var MAX_ACTIVITY = 8;
 
   var OPENINGS_LEGACY = [
-    'In terms of ',
-    'Regarding ',
-    'Considering ',
-    'Across ',
-    'Concerning ',
-    'Relative to ',
-    'Pertaining to ',
-    'With reference to ',
-    'In relation to ',
-    'As to '
+    'In terms of ', 'Regarding ', 'Considering ', 'Across ', 'Concerning ',
+    'Relative to ', 'Pertaining to ', 'With reference to ', 'In relation to ', 'As to ',
+    'With respect to ', 'With regard to ', 'In connection with ', 'In the context of ',
+    'Focusing on ', 'With attention to ', 'In view of ', 'In light of ',
+    'As regards ', 'Touching on '
   ];
   var openingIndex = 0;
 

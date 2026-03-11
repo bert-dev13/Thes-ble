@@ -1472,9 +1472,24 @@
     var rp1Cfg = tableKey && RP1_INTERPRETATION_CONFIG[tableKey] ? RP1_INTERPRETATION_CONFIG[tableKey] : null;
 
     if (rp1Cfg) {
+      var NUM_V = typeof ThesisTextGenerator !== 'undefined' && ThesisTextGenerator.NUM_VARIATIONS ? ThesisTextGenerator.NUM_VARIATIONS : 20;
+      var slot = Math.abs(vi) % NUM_V;
       var opener = rp1Cfg.opener;
-      if (Gen && rp1Cfg.openerAlternatives && rp1Cfg.openerAlternatives.length) {
-        opener = rp1Cfg.openerAlternatives[Math.abs(vi) % rp1Cfg.openerAlternatives.length];
+      if (rp1Cfg.openerAlternatives) {
+        if (rp1Cfg.openerAlternatives.length >= NUM_V) {
+          opener = rp1Cfg.openerAlternatives[slot];
+        } else if (rp1Cfg.openerAlternatives.length > 0) {
+          var PA_LEADS = ['In terms of ', 'Regarding ', 'As to ', 'In relation to ', 'Concerning ', 'Relative to ', 'With reference to ', 'Pertaining to ', 'About the ', 'Considering ', 'Focusing on ', 'With respect to ', 'With regard to ', 'In connection with ', 'In the context of ', 'With attention to ', 'In view of ', 'In light of ', 'As regards ', 'Touching on '];
+          var first = rp1Cfg.openerAlternatives[0];
+          var stem = first;
+          for (var k = 0; k < PA_LEADS.length; k++) {
+            if (first.indexOf(PA_LEADS[k]) === 0) {
+              stem = first.slice(PA_LEADS[k].length).replace(/\s*,\s*$/, '').trim();
+              break;
+            }
+          }
+          opener = PA_LEADS[slot % PA_LEADS.length] + stem + ', ';
+        }
       }
       var distParts;
       if (rp1Cfg.useAttendedFormat) {
