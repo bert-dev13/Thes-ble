@@ -234,19 +234,55 @@
    */
   function mapToProfileTwoGroupRows(rows) {
     if (!rows || !rows.length) return null;
-    var colCount = rows[0] ? rows[0].length : 0;
-    var particulars = [], headsF = [], headsPct = [], teachersF = [], teachersPct = [];
+    var particulars = [];
+    var headsF = [];
+    var headsPct = [];
+    var teachersF = [];
+    var teachersPct = [];
+
     for (var i = 0; i < rows.length; i++) {
-      var c = rows[i];
+      var c = rows[i] || [];
+      var cols = c.length;
+
+      // Column 0: Particulars (always string, may be empty)
       particulars.push((c[0] != null ? String(c[0]).trim() : '') || '');
+
+      // Column 1: School Heads frequency
       var hF = c[1] != null && String(c[1]).trim() !== '' ? String(c[1]).trim() : '';
-      var tF = (colCount >= 5 && c[4] != null && String(c[4]).trim() !== '') ? String(c[4]).trim() : (c[2] != null && String(c[2]).trim() !== '' ? String(c[2]).trim() : '');
+      var hPct = '';
+      var tF = '';
+      var tPct = '';
+
+      if (cols >= 5) {
+        // 5+ columns: 0=Particulars, 1=Heads f, 2=Heads %, 3=Teachers f, 4=Teachers %
+        hPct = c[2] != null ? String(c[2]).trim() : '';
+        tF = c[3] != null && String(c[3]).trim() !== '' ? String(c[3]).trim() : '';
+        tPct = c[4] != null ? String(c[4]).trim() : '';
+      } else if (cols === 4) {
+        // 4 columns: 0=Particulars, 1=Heads f, 2=Heads %, 3=Teachers f (Teachers % intentionally blank)
+        hPct = c[2] != null ? String(c[2]).trim() : '';
+        tF = c[3] != null && String(c[3]).trim() !== '' ? String(c[3]).trim() : '';
+      } else if (cols === 3) {
+        // 3 columns: 0=Particulars, 1=Heads f, 2=Teachers f (no percentages provided)
+        tF = c[2] != null && String(c[2]).trim() !== '' ? String(c[2]).trim() : '';
+      } else if (cols <= 2) {
+        // 1–2 columns: only Particulars and optional Heads f; Teachers group remains blank
+        // hPct, tF, and tPct stay as empty strings
+      }
+
       headsF.push(hF);
-      headsPct.push(colCount >= 6 && c[2] != null ? String(c[2]).trim() : '');
+      headsPct.push(hPct);
       teachersF.push(tF);
-      teachersPct.push(colCount >= 7 && c[5] != null ? String(c[5]).trim() : '');
+      teachersPct.push(tPct);
     }
-    return { particulars: particulars, headsF: headsF, headsPct: headsPct, teachersF: teachersF, teachersPct: teachersPct };
+
+    return {
+      particulars: particulars,
+      headsF: headsF,
+      headsPct: headsPct,
+      teachersF: teachersF,
+      teachersPct: teachersPct
+    };
   }
 
   /**

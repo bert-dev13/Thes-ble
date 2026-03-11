@@ -38,6 +38,9 @@
   var MAX_RECENT = NUM_VARIATIONS;
   var MAX_RETRIES = NUM_VARIATIONS * 2;
 
+  // In‑memory fallback when localStorage is unavailable (e.g., strict privacy mode or blocked storage).
+  var MEMORY_VARIANT_INDEX = {};
+
   function getStorageKey(context, tableId) {
     var id = (tableId || '').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
     return STORAGE_PREFIX + context + (id ? '_' + id : '');
@@ -49,7 +52,8 @@
       var raw = localStorage.getItem(key);
       return raw !== null ? parseInt(raw, 10) || 0 : 0;
     } catch (e) {
-      return 0;
+      var memKey = getStorageKey(context || '', tableId || '');
+      return MEMORY_VARIANT_INDEX[memKey] || 0;
     }
   }
 
@@ -60,7 +64,13 @@
       localStorage.setItem(key, String(next));
       return next;
     } catch (e) {
-      return 0;
+      // Fall back to deterministic in‑memory counter so Regenerate still varies wording
+      // even when persistent storage is disabled.
+      var memKey = getStorageKey(context || '', tableId || '');
+      var current = MEMORY_VARIANT_INDEX[memKey] || 0;
+      var next = current + 1;
+      MEMORY_VARIANT_INDEX[memKey] = next;
+      return next;
     }
   }
 

@@ -524,6 +524,18 @@
   var laInterpTwoGroup = false;
   var currentTwoGroupData = null;
 
+  // Per-table in-memory variant counters for RP2 so Regenerate always
+  // advances the opener/transition/phrasing even if localStorage is blocked.
+  var rp2VariantCounters = {};
+
+  function nextRp2VariantIndex(tableId, context) {
+    var key = String(context || 'rp2') + '_' + String(tableId || 'likert');
+    var current = rp2VariantCounters[key] || 0;
+    var next = current + 1;
+    rp2VariantCounters[key] = next;
+    return next;
+  }
+
   /**
    * Detect Likert table type from current data structure.
    * Uses ThesisTextGenerator.detectTableType when available.
@@ -3055,21 +3067,43 @@
     var isLikertTwoGroup = detectedType === 'two-group-likert';
     var isLikertTTest = detectedType === 'ttest';
 
+    // Strong guarantee for RP2 dual-group Likert tables (School Heads vs Teachers):
+    // always rebuild BOTH paragraphs (school heads then teachers) on Regenerate,
+    // using the same two-group engine as Compute. We use an in-memory per-table
+    // variant counter so each click produces a fresh wording even if
+    // localStorage-based variation is unavailable. For RP2 we bypass the generic
+    // validator so the full range of RP2 transitions (e.g., "In contrast", "In turn")
+    // are allowed and not collapsed back to a single variant.
+    if (activeProjectId === 'rp2' && isLikertTwoGroup && (currentLikertConfig || currentTwoGroupData)) {
+      var tableIdRp2 = (currentLikertConfig && (currentLikertConfig.id || currentLikertConfig.title)) || 'likert';
+      tableIdRp2 = String(tableIdRp2).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
+
+      var viRp2 = nextRp2VariantIndex(tableIdRp2, 'two_group');
+      generateTwoGroupInterpretations(viRp2, '');
+      laInterpTwoGroup = true;
+      var shText = (laInterpretationSh || '').trim();
+      var tText = (laInterpretationT || '').trim();
+      var fullText = shText + (tText ? '\n\n' + tText : '');
+      setFullInterpretation(fullText);
+
+      showToast('Interpretation regenerated.');
+      return;
+    }
+
     if (isLikertTwoGroup && (currentLikertConfig || currentTwoGroupData)) {
       var tableId = (currentLikertConfig && (currentLikertConfig.id || currentLikertConfig.title)) || 'likert';
       tableId = String(tableId).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
 
       // For RP2 prewritten tables (Tables 10–22), use the dedicated
       // applyRp2PrewrittenVariation helper so Regenerate varies openers
-      // and verbs but keeps the same paragraph structure.
+      // and verbs but keeps the same paragraph structure. We drive the
+      // variation using a simple in-memory counter per table.
       if (Gen && currentLikertConfig.prewritten && typeof Gen.applyRp2PrewrittenVariation === 'function') {
         var baseSh = currentLikertConfig.prewritten.sh || '';
         var baseT = currentLikertConfig.prewritten.t || '';
-        var generatorPre = function (vi) {
-          return Gen.applyRp2PrewrittenVariation(baseSh, baseT, vi);
-        };
-        var resultPre = Gen.generateWithVariation(generatorPre, 'likert_rp2_pre', tableId);
-        setFullInterpretation(resultPre.text);
+        var viPre = nextRp2VariantIndex(tableId, 'prewritten');
+        var textPre = Gen.applyRp2PrewrittenVariation(baseSh, baseT, viPre);
+        setFullInterpretation(textPre);
         showToast('Interpretation regenerated.');
         return;
       }
