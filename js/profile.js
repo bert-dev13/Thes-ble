@@ -1825,6 +1825,25 @@
     });
   }
 
+  /** Normalize table title for duplicate comparison (trim, lowercase). */
+  function normalizeTableKey(str) {
+    return (str && String(str).trim()) ? String(str).trim().toLowerCase() : '';
+  }
+
+  /** Return true if a profile table with same projectId, tableTitle, and type already exists. */
+  function isDuplicateProfileTable(tables, toSave) {
+    if (!toSave || !Array.isArray(tables)) return false;
+    var projectId = (toSave.projectId || 'rp1').toString().toLowerCase();
+    var tableTitle = normalizeTableKey(toSave.tableTitle);
+    var type = (toSave.type || 'singleGroup').toString();
+    return tables.some(function (t) {
+      var sameProject = (t.projectId || 'rp1').toString().toLowerCase() === projectId;
+      var sameTitle = normalizeTableKey(t.tableTitle) === tableTitle;
+      var sameType = (t.type || 'singleGroup').toString() === type;
+      return sameProject && sameTitle && sameType;
+    });
+  }
+
   function saveToReport() {
     var interpretation = document.getElementById('pa-interpretation-block');
     var text = interpretation && interpretation.textContent ? interpretation.textContent.trim() : '';
@@ -1870,6 +1889,12 @@
       };
     }
     if (!toSave) return;
+
+    if (isDuplicateProfileTable(tables, toSave)) {
+      showToast('This table has already been saved. If you want to update the table, please edit the existing record instead.', true);
+      return;
+    }
+
     tables.push(toSave);
     try {
       localStorage.setItem(KEYS.profileTables, JSON.stringify(tables));
