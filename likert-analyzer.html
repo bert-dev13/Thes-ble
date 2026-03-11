@@ -101,6 +101,7 @@
                   <span class="la-top-controls__summary-label">Selected table:</span>
                   <span class="la-top-controls__summary-pill" id="la-selected-table-pill">None selected</span>
                 </div>
+                <p class="la-field-hint la-instruction-persistent" id="la-instruction-text-top">You may select a predefined table or manually enter your own data.</p>
               </div>
 
               <!-- B) Table title (auto-filled but editable) -->
@@ -248,7 +249,7 @@
           <div class="la-card" id="la-output-card">
             <h2 class="la-card__title">Indicators and Weighted Means</h2>
             <div class="la-card__body">
-              <p class="la-field-hint la-manual-mode-note">You may select a predefined table or manually enter your own indicators.</p>
+              <p class="la-field-hint la-manual-mode-note" id="la-instruction-text">You may select a predefined table or manually enter your own data.</p>
               <!-- Paste Table Data -->
               <div class="la-paste-section" id="la-paste-section">
                 <h3 class="la-paste-section__title">Paste Table Data</h3>
@@ -421,6 +422,8 @@
   <script src="js/interpretation-utils.js"></script>
   <script src="js/text-generator.js"></script>
   <script src="js/paste-table-utils.js"></script>
+  <script src="js/TableEngine.js"></script>
+  <script src="js/ClipboardEngine.js"></script>
   <script src="js/likert.js"></script>
 </body>
 </html>

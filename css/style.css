@@ -389,6 +389,7 @@ body {
 .section-title,
 .kpi__title,
 .quick-actions__title,
+.recent-activity__title,
 .workflow__title {
   margin: 0 0 var(--space-lg);
   font-size: 0.75rem;
@@ -399,6 +400,7 @@ body {
 }
 .kpi__title { display: block; }
 .quick-actions__title { display: block; }
+.recent-activity__title { display: block; }
 .workflow__title { display: block; }
 
 /* ========== Session Statistics (KPI) ========== */
@@ -467,6 +469,43 @@ body {
     gap: var(--space-md);
   }
 }
+/* ========== Recent Activity ========== */
+.recent-activity {
+  padding: var(--space-2xl) 0;
+}
+.recent-activity__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 560px;
+}
+.recent-activity__empty {
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+  padding: var(--space-md) 0;
+}
+.recent-activity__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-md) 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9375rem;
+}
+.recent-activity__item:last-child {
+  border-bottom: none;
+}
+.recent-activity__item-text {
+  flex: 1;
+  color: var(--text);
+}
+.recent-activity__item-time {
+  flex-shrink: 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
 @media (max-width: 420px) {
   .kpi__grid {
     grid-template-columns: 1fr;

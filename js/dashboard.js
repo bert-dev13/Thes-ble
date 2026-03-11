@@ -138,20 +138,17 @@
   // ---------- Render recent activity list ----------
   function renderRecentActivity() {
     var listEl = document.getElementById('recent-activity-list');
-    var emptyEl = document.getElementById('recent-activity-empty');
     if (!listEl) return;
 
     var items = getActivityList();
     listEl.innerHTML = '';
 
     if (items.length === 0) {
-      if (emptyEl) {
-        var li = document.createElement('li');
-        li.className = 'recent-activity__empty';
-        li.id = 'recent-activity-empty';
-        li.textContent = 'No analysis activity yet.';
-        listEl.appendChild(li);
-      }
+      var li = document.createElement('li');
+      li.className = 'recent-activity__empty';
+      li.id = 'recent-activity-empty';
+      li.textContent = 'No analysis activity yet.';
+      listEl.appendChild(li);
       return;
     }
 

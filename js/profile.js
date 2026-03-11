@@ -550,7 +550,7 @@
     }, 2500);
   }
 
-  /** Show empty state when no table selected (rp2 or error). */
+  /** Show empty state when no table selected (legacy — avoid when paste should stay visible). */
   function showEmptyState() {
     var emptyEl = document.getElementById('pa-encode-empty');
     var tableCard = document.getElementById('pa-table-card');
@@ -573,6 +573,41 @@
     currentTableTitle = '';
     computedRows = [];
     renderOutputPlaceholder();
+    setInterpretationTabsVisibility(false);
+    updateLoadedSummary();
+    onInputChange();
+  }
+
+  /** Show two-group manual state: RP2 with no table selected — paste section + default empty table. */
+  function showTwoGroupManualState() {
+    var emptyEl = document.getElementById('pa-encode-empty');
+    var tableCard = document.getElementById('pa-table-card');
+    var twoGroupSection = document.getElementById('pa-output-section');
+    var titleEl = document.getElementById('pa-table-title');
+    if (emptyEl) {
+      emptyEl.hidden = false;
+      emptyEl.classList.add('pa-manual-hint');
+      var textEl = emptyEl.querySelector('.pa-encode-empty__text');
+      if (textEl) textEl.textContent = 'You may select a predefined table or manually enter your own data.';
+    }
+    if (tableCard) tableCard.hidden = true;
+    if (twoGroupSection) twoGroupSection.hidden = false;
+    if (titleEl) {
+      titleEl.value = '';
+      titleEl.disabled = false;
+      titleEl.placeholder = 'e.g. Respondents as to Age';
+    }
+    currentTableConfig = null;
+    currentTableTitle = '';
+    computedRows = [];
+    currentProject2Table = {
+      id: 'manual',
+      title: '',
+      rows: [{ category: '', heads: { f: 0, pct: 0 }, teachers: { f: 0, pct: 0 } }],
+      totals: { heads: 0, teachers: 0 },
+      type: 'twoGroupPercent'
+    };
+    renderTwoGroupTable(currentProject2Table, { showComputed: false });
     setInterpretationTabsVisibility(false);
     updateLoadedSummary();
     onInputChange();
@@ -632,10 +667,11 @@
     if (!key) {
       if (activeProjectId === 'rp1') {
         showManualTableState();
+        hideTwoGroupSection();
       } else {
-        showEmptyState();
+        showTwoGroupManualState();
+        hideSingleGroupSection();
       }
-      hideTwoGroupSection();
       updateLoadedSummary();
       return;
     }
@@ -656,6 +692,12 @@
       }
       hideSingleGroupSection();
       showTwoGroupSection();
+      var emptyEl = document.getElementById('pa-encode-empty');
+      if (emptyEl) {
+        emptyEl.hidden = false;
+        var textEl = emptyEl.querySelector('.pa-encode-empty__text');
+        if (textEl) textEl.textContent = 'You may select a predefined table or manually enter your own data.';
+      }
       renderTwoGroupTable(currentProject2Table, { showComputed: false });
       var copyBtn = document.getElementById('pa-copy-interpretation');
       var saveTableBtn = document.getElementById('pa-save-table');
@@ -675,10 +717,9 @@
   }
 
   function hideSingleGroupSection() {
-    var emptyEl = document.getElementById('pa-encode-empty');
     var tableCard = document.getElementById('pa-table-card');
-    if (emptyEl) emptyEl.hidden = true;
     if (tableCard) tableCard.hidden = true;
+    /* Keep pa-encode-empty (instruction text) visible for all research options */
   }
 
   function hideTwoGroupSection() {
@@ -1764,10 +1805,15 @@
     var fullHtml = titleHtml + tableHtml + interpHtml;
     var fullPlain = (tableTitle ? tableTitle + '\n\n' : '') + tablePlain + '\n' + interpText;
 
-    copyRichToClipboard(fullHtml, fullPlain);
+    var Clipboard = typeof ClipboardEngine !== 'undefined' ? ClipboardEngine : null;
+    if (Clipboard && Clipboard.copyRichToClipboard) {
+      Clipboard.copyRichToClipboard(fullHtml, fullPlain, showToast);
+    } else {
+      copyRichToClipboardFallback(fullHtml, fullPlain);
+    }
   }
 
-  function copyRichToClipboard(html, plain) {
+  function copyRichToClipboardFallback(html, plain) {
     if (!navigator.clipboard || !navigator.clipboard.write) {
       navigator.clipboard.writeText(plain).then(function () { showToast('Copied as text.'); }).catch(function () { showToast('Copy failed.', true); });
       return;
@@ -2635,7 +2681,6 @@
 
   function init() {
     activeProjectId = 'rp1';
-    showEmptyState();
 
     var projectSelect = document.getElementById('pa-project-select');
     if (projectSelect) {
@@ -2644,7 +2689,7 @@
         var tableSelect = document.getElementById('pa-table-select');
         if (tableSelect) {
           tableSelect.value = '';
-          showEmptyState();
+          loadSelectedTable('');
         }
         setGroupToggleVisibility();
         updateLoadedSummary();

@@ -1105,10 +1105,15 @@
     }
     var plain = parts.join('\n\n---\n\n');
     var html = partsHtml.join('');
-    copyRichToClipboard(html, plain);
+    var Clipboard = typeof ClipboardEngine !== 'undefined' ? ClipboardEngine : null;
+    if (Clipboard && Clipboard.copyRichToClipboard) {
+      Clipboard.copyRichToClipboard(html, plain, showToast);
+    } else {
+      copyRichToClipboardFallback(html, plain);
+    }
   }
 
-  function copyRichToClipboard(html, plain) {
+  function copyRichToClipboardFallback(html, plain) {
     if (!navigator.clipboard || !navigator.clipboard.write) {
       navigator.clipboard.writeText(plain).then(function () { showToast('All sections copied as text.'); }).catch(function () { showToast('Copy failed.', true); });
       return;

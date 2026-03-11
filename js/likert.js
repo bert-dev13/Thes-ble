@@ -3184,22 +3184,26 @@
       return;
     }
     var tbody = document.getElementById('la-output-tbody');
-    // Sync RP1 single-group from DOM (rows + AWM) so Copy All uses on-screen values
+    // Sync RP1 single-group from DOM (rows + AWM) so Copy All uses on-screen values.
+    // Use configIdx to avoid mismatch when placeholder rows are skipped (idx != config row index).
     if (tbody && activeProjectId === 'rp1' && currentLikertConfig && !currentLikertConfig.type && (!currentLikertConfig.rows[0] || !currentLikertConfig.rows[0].sh)) {
       var rowsFromDomRp1 = [];
-      tbody.querySelectorAll('tr').forEach(function (tr, idx) {
+      var configIdx = 0;
+      tbody.querySelectorAll('tr').forEach(function (tr) {
         var placeholder = tr.querySelector('.la-output-empty');
         if (placeholder) return;
         var indInput = tr.querySelector('[data-la-indicator]');
         var wmInput = tr.querySelector('[data-la-wm]');
         var qdInput = tr.querySelector('[data-la-qd]');
         var rankCell = tr.querySelector('[data-la-rank]');
-        var ind = (indInput && indInput.value != null) ? indInput.value.trim() : (currentLikertConfig.rows[idx] && currentLikertConfig.rows[idx].indicator) || '';
-        var wm = wmInput && wmInput.value !== '' ? parseFloat(wmInput.value) : (currentLikertConfig.rows[idx] && typeof currentLikertConfig.rows[idx].wm === 'number') ? currentLikertConfig.rows[idx].wm : 0;
+        var cfg = currentLikertConfig.rows[configIdx];
+        var ind = (indInput && indInput.value != null) ? indInput.value.trim() : (cfg && cfg.indicator) || '';
+        var wm = wmInput && wmInput.value !== '' ? parseFloat(wmInput.value) : (cfg && typeof cfg.wm === 'number') ? cfg.wm : 0;
         if (isNaN(wm)) wm = 0;
-        var qd = (qdInput && qdInput.value) ? qdInput.value.trim() : (currentLikertConfig.rows[idx] && currentLikertConfig.rows[idx].qd) || '';
-        var rank = rankCell && rankCell.textContent && rankCell.textContent !== '—' ? parseFloat(rankCell.textContent) : (currentLikertConfig.rows[idx] && currentLikertConfig.rows[idx].rank != null) ? currentLikertConfig.rows[idx].rank : null;
+        var qd = (qdInput && qdInput.value) ? qdInput.value.trim() : (cfg && cfg.qd) || '';
+        var rank = rankCell && rankCell.textContent && rankCell.textContent !== '—' ? parseFloat(rankCell.textContent) : (cfg && cfg.rank != null) ? cfg.rank : null;
         rowsFromDomRp1.push({ indicator: ind, wm: wm, qd: qd, rank: rank });
+        configIdx++;
       });
       if (rowsFromDomRp1.length > 0) {
         var awmValEl = document.getElementById('la-awm-value');
@@ -3351,10 +3355,15 @@
     var fullHtml = titleHtml + tableHtml + interpHtml;
     var fullPlain = (tableTitle ? tableTitle + '\n\n' : '') + tablePlain + '\n' + interpText;
 
-    copyRichToClipboard(fullHtml, fullPlain);
+    var Clipboard = typeof ClipboardEngine !== 'undefined' ? ClipboardEngine : null;
+    if (Clipboard && Clipboard.copyRichToClipboard) {
+      Clipboard.copyRichToClipboard(fullHtml, fullPlain, showToast);
+    } else {
+      copyRichToClipboardFallback(fullHtml, fullPlain);
+    }
   }
 
-  function copyRichToClipboard(html, plain) {
+  function copyRichToClipboardFallback(html, plain) {
     if (!navigator.clipboard || !navigator.clipboard.write) {
       navigator.clipboard.writeText(plain).then(function () { showToast('Copied as text.'); }).catch(function () { showToast('Copy failed.', true); });
       return;
@@ -3552,6 +3561,19 @@
     });
   }
 
+  /** Keep the shared instruction visible for all research options (rp1, rp2, manual/predefined). */
+  var INSTRUCTION_TEXT = 'You may select a predefined table or manually enter your own data.';
+  function ensureInstructionVisible() {
+    [ 'la-instruction-text', 'la-instruction-text-top' ].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) {
+        el.textContent = INSTRUCTION_TEXT;
+        el.removeAttribute('hidden');
+        el.removeAttribute('aria-hidden');
+      }
+    });
+  }
+
   function renderOutputPlaceholder() {
     var tbody = document.getElementById('la-output-tbody');
     var thead = document.getElementById('la-output-thead');
@@ -3581,7 +3603,7 @@
         '</tr>';
     }
     if (tbody) {
-      tbody.innerHTML = '<tr><td colspan="6" class="la-output-empty">You may select a predefined table or manually enter your own indicators.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="la-output-empty">You may select a predefined table or manually enter your own data.</td></tr>';
     }
   }
 
@@ -3637,6 +3659,7 @@
     var block = document.getElementById('la-interpretation-block');
     if (block) block.textContent = '';
     updateLiveStats(null, null);
+    ensureInstructionVisible();
     onInputChange();
   }
 
@@ -3653,6 +3676,7 @@
     laInterpretationT = '';
     computedData = { indicators: [], awm: 0, awmDesc: '', tableTitle: '', theme: '', scaleMapping: [] };
     renderManualLikertTable();
+    ensureInstructionVisible();
     var block = document.getElementById('la-interpretation-block');
     if (block) block.textContent = '';
     var copyBtn = document.getElementById('la-copy-interpretation');
@@ -3719,6 +3743,7 @@
   }
 
   function init() {
+    ensureInstructionVisible();
     document.body.setAttribute('data-la-project', activeProjectId);
     var saveTableBtn = document.getElementById('la-save-table');
     if (saveTableBtn) saveTableBtn.disabled = true;
@@ -3746,6 +3771,7 @@
             renderManualLikertTable();
           }
         }
+        ensureInstructionVisible();
         updateSelectedTableSummary();
       });
     }
@@ -3756,6 +3782,7 @@
         var id = this.value;
         if (!id) {
           renderManualLikertTable();
+          ensureInstructionVisible();
           updateSelectedTableSummary();
           return;
         }
@@ -3764,6 +3791,7 @@
         } else {
           loadLikertTable(id);
         }
+        ensureInstructionVisible();
         updateSelectedTableSummary();
       });
     }
