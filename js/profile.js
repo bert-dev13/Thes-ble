@@ -1349,14 +1349,17 @@
     }
   };
 
-  /** Build two implication sentences for profile, contextual to dominant category. No "may". */
+  /** Build one short data-driven closing sentence for profile from dominant category. No generic "This indicates that..." filler. */
   function buildProfileImplications(dominantLabels) {
+    var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    if (Utils && Utils.buildImplicationsFromData) {
+      var out = Utils.buildImplicationsFromData('profile', { dominantLabels: dominantLabels || [] });
+      return { first: out.first, second: out.second || '' };
+    }
     if (!dominantLabels || dominantLabels.length === 0) return { first: '', second: '' };
     var catPhrase = dominantLabels.length === 1 ? dominantLabels[0] : joinWithAnd(dominantLabels);
     var catLower = catPhrase.toLowerCase();
-    var first = 'This indicates that the respondent group is largely composed of ' + catLower + ' participants.';
-    var second = 'This further implies that the findings mainly reflect the perspectives of ' + catLower + ' respondents.';
-    return { first: first, second: second };
+    return { first: 'The result reflects that the respondents are largely ' + catLower + '.', second: '' };
   }
 
   function buildTwoGroupProfileInterpretation(table, variantIndex, lastOpener) {
@@ -1449,20 +1452,18 @@
       headsIntro = cfg.headsIntroAlternatives[Math.abs(vi) % cfg.headsIntroAlternatives.length];
     }
 
-    var impliesLead = (Gen && includeImplications) ? (Gen.getSynonym('indicatesLead', vi) || 'This indicates that') : 'This indicates that';
     var teachersTransition = (Gen && includeImplications)
       ? RP2_TEACHERS_TRANSITION_ALTERNATIVES[Math.abs(vi) % RP2_TEACHERS_TRANSITION_ALTERNATIVES.length]
       : 'For the teachers, ';
-    var teachersImpliesLead = (Gen && includeImplications) ? (Gen.getSynonym('furtherLead', vi + 1) || 'This further implies that') : 'This implies that';
 
     var headsParagraph = '';
     if (sumH > 0 && distHeads && headsMajority && includeImplications && headsMeans && headsImplies) {
-      headsParagraph = headsIntro + distHeads + ' ' + headsMajority + ' which means that ' + headsMeans + '. ' + impliesLead + ' ' + headsImplies;
+      headsParagraph = headsIntro + distHeads + ' ' + headsMajority + '. The result reflects that ' + headsImplies;
     }
 
     var teachersParagraph = '';
     if (sumT > 0 && distTeachers && teachersMajority && includeImplications && teachersMeans && teachersImplies) {
-      teachersParagraph = teachersTransition + distTeachers + ' ' + teachersMajority + ' which means that ' + teachersMeans + '. ' + teachersImpliesLead + ' ' + teachersImplies;
+      teachersParagraph = teachersTransition + distTeachers + ' ' + teachersMajority + '. The result reflects that ' + teachersImplies;
     }
 
     var paragraphs = [];
@@ -1564,15 +1565,10 @@
       var sent2 = buildR31MajoritySentence(dominantLabels, rp1Cfg);
 
       var text = sent1 + ' ' + sent2;
-      if (includeImplications && rp1Cfg.indicates) {
-        var lead1 = Gen ? (Gen.getSynonym('indicatesLead', vi) || 'This indicates that') : 'This indicates that';
-        var rest1 = rp1Cfg.indicates.replace(/^This (indicates|suggests|implies) that\s+/i, '');
-        text += ' ' + lead1 + ' ' + rest1;
-      }
-      if (includeImplications && rp1Cfg.implies) {
-        var lead2 = Gen ? (Gen.getSynonym('furtherLead', vi + 1) || 'This further implies that') : 'This further implies that';
-        var rest2 = rp1Cfg.implies.replace(/^This further (implies|suggests|indicates) that\s+/i, '');
-        text += ' ' + lead2 + ' ' + rest2;
+      if (includeImplications) {
+        var impl = buildProfileImplications(dominantLabels);
+        if (impl.first) text += ' ' + impl.first;
+        if (impl.second) text += ' ' + impl.second;
       }
       return text.trim();
     }

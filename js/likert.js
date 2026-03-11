@@ -2580,15 +2580,10 @@
       text = sent1 + ' ' + sent2;
     }
 
-    if (includeImplications && cfg.indicates) {
-      var lead1 = Gen ? (Gen.getSynonym('indicatesLead', vi) || 'This indicates that') : 'This indicates that';
-      var rest1 = cfg.indicates.replace(/^This (indicates|suggests|implies) that\s+/i, '');
-      text += ' ' + lead1 + ' ' + rest1;
-    }
-    if (includeImplications && cfg.implies) {
-      var lead2 = Gen ? (Gen.getSynonym('furtherLead', vi + 1) || 'This further implies that') : 'This further implies that';
-      var rest2 = cfg.implies.replace(/^This further (implies|suggests|indicates) that\s+/i, '');
-      text += ' ' + lead2 + ' ' + rest2;
+    if (includeImplications && UtilsRp1 && UtilsRp1.buildImplicationsFromData) {
+      var themeForImpl = (cfg.theme && String(cfg.theme).trim()) ? cfg.theme : (cfg.awmConstruct || 'the assessed indicators');
+      var impl = UtilsRp1.buildImplicationsFromData('likert', { awm: awm, awmDesc: descRaw || awmDesc, theme: themeForImpl });
+      if (impl.first) text += ' ' + impl.first;
     }
     return text.trim();
   }
@@ -2879,12 +2874,9 @@
       ? 'The average weighted mean of ' + awmStr + ' signifies that ' + groupLabel + ' view ' + themeForAwm + ' as ' + desc + '.'
       : 'The average weighted mean of ' + awmStr + ' signifies that the indicators are generally assessed as ' + desc + '.';
     var text = sent1 + ' ' + sent3;
-    if (includeImplications) {
-      var impl = Gen
-        ? Gen.buildImplicationsWithVariant('likert', vi)
-        : (Utils ? Utils.buildImplications('likert') : { first: '', second: '' });
+    if (includeImplications && Utils && Utils.buildImplicationsFromData) {
+      var impl = Utils.buildImplicationsFromData('likert', { awm: awm, awmDesc: awmDesc || descRaw, theme: theme || themeForAwm });
       if (impl.first) text += ' ' + impl.first;
-      if (impl.second) text += ' ' + impl.second;
     }
     return text;
   }
@@ -2995,17 +2987,17 @@
     var para1Opener = 'Relative to ' + theme + ', the school head respondents ';
     var bodySh = buildTwoGroupPara1Body(rowsSh, descSh);
     laInterpretationSh = para1Opener + bodySh + ' The average weighted mean of ' + awmSh.toFixed(2) + ' signifies that school heads generally view ' + theme + ' as ' + descSh + '.';
-    if (includeImpl && Utils) {
-      var impl = Utils.buildImplications('likert');
-      laInterpretationSh += ' ' + impl.first;
+    if (includeImpl && Utils && Utils.buildImplicationsFromData) {
+      var implSh = Utils.buildImplicationsFromData('likert', { awm: awmSh, awmDesc: awmShDesc, theme: theme });
+      if (implSh.first) laInterpretationSh += ' ' + implSh.first;
     }
 
     var teachersPrefix = 'Meanwhile, teacher respondents ';
     var bodyT = buildTwoGroupPara2Body(rowsT, descT);
     laInterpretationT = teachersPrefix + bodyT + ' The average weighted mean of ' + awmT.toFixed(2) + ' signifies that teachers view ' + theme + ' as ' + descT + '.';
-    if (includeImpl && Utils) {
-      var impl2 = Utils.buildImplications('likert');
-      laInterpretationT += ' ' + impl2.second;
+    if (includeImpl && Utils && Utils.buildImplicationsFromData) {
+      var implT = Utils.buildImplicationsFromData('likert', { awm: awmT, awmDesc: awmTDesc, theme: theme });
+      if (implT.first) laInterpretationT += ' ' + implT.first;
     }
   }
 

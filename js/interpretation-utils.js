@@ -56,40 +56,57 @@
   }
 
   /**
+   * Build one or two short, data-grounded closing sentences for interpretations.
+   * No generic "This indicates that..." / "This further implies that..." filler.
+   * @param {string} context - 'profile' | 'likert' | 'executive' | 'ttest' | 'findings' | 'conclusions'
+   * @param {Object} [data] - Context data for data-driven endings
+   * @param {string[]} [data.dominantLabels] - Profile: dominant category labels (e.g. ['Female'])
+   * @param {number} [data.awm] - Likert: average weighted mean
+   * @param {string} [data.awmDesc] - Likert: qualitative description (e.g. 'Very High', 'VO')
+   * @param {string} [data.theme] - Likert: theme/title for the table (e.g. 'cooperative learning strategies')
+   * @returns {{ first: string, second: string }}
+   */
+  function buildImplicationsFromData(context, data) {
+    data = data || {};
+    var first = '';
+    var second = '';
+
+    if (context === 'profile' && data.dominantLabels && data.dominantLabels.length > 0) {
+      var catPhrase = data.dominantLabels.length === 1
+        ? data.dominantLabels[0]
+        : (data.dominantLabels.slice(0, -1).join(', ') + ' and ' + data.dominantLabels[data.dominantLabels.length - 1]);
+      var catLower = catPhrase.toLowerCase();
+      first = 'The result reflects that the respondents are largely ' + catLower + '.';
+      second = '';
+    } else if (context === 'likert' && (data.awmDesc || data.theme)) {
+      var desc = (data.awmDesc && expandQualitativeDescription(data.awmDesc)) ? expandQualitativeDescription(data.awmDesc) : (data.awmDesc || 'evident');
+      first = 'This result shows that the assessed indicators are ' + desc + '.';
+      second = '';
+    } else if (context === 'ttest') {
+      first = 'The statistical result informs the interpretation of the two groups.';
+      second = '';
+    } else if (context === 'executive' || context === 'findings' || context === 'conclusions') {
+      first = 'The data support the reported pattern.';
+      second = '';
+    } else if (context === 'profile') {
+      first = 'The profile reflects the composition of the respondent group.';
+      second = '';
+    } else if (context === 'likert') {
+      first = 'The result reflects the overall assessment of the indicators.';
+      second = '';
+    }
+
+    return { first: first, second: second };
+  }
+
+  /**
    * Returns two short implication sentences based on context type.
+   * Prefer buildImplicationsFromData(context, data) when data is available.
    * @param {string} context - One of: 'profile' | 'likert' | 'executive' | 'ttest' | 'findings' | 'conclusions'
    * @returns {{ first: string, second: string }}
    */
   function buildImplications(context) {
-    var templates = {
-      profile: {
-        first: 'This indicates that the respondent sample is characterized by a concentration in these categories.',
-        second: 'This further implies that the demographic profile reflects the composition of the study population.'
-      },
-      likert: {
-        first: 'This indicates that respondents consistently rate the indicators within the dominant qualitative description as evident in practice.',
-        second: 'This further implies that the assessed construct is strongly reflected across the measured indicators based on the overall evaluation.'
-      },
-      executive: {
-        first: 'This indicates that the leading domain or factor contributes most to the overall assessment.',
-        second: 'This further implies that the summary reflects the aggregate perception across the measured dimensions.'
-      },
-      ttest: {
-        first: 'This indicates that the statistical result informs the interpretation of group comparisons.',
-        second: 'This further implies that the findings should be considered in light of the test outcome.'
-      },
-      findings: {
-        first: 'This indicates that the data support the reported pattern or assessment.',
-        second: 'This further implies that the findings align with the overall theme of the study.'
-      },
-      conclusions: {
-        first: 'This indicates that the conclusions drawn are supported by the data presented.',
-        second: 'This further implies that the study findings provide a coherent basis for the stated conclusions.'
-      }
-    };
-
-    var t = templates[context] || templates.findings;
-    return { first: t.first, second: t.second };
+    return buildImplicationsFromData(context, {});
   }
 
   /**
@@ -252,6 +269,7 @@
   global.ThesisInterpretationUtils = {
     getVariedOpener: getVariedOpener,
     buildImplications: buildImplications,
+    buildImplicationsFromData: buildImplicationsFromData,
     expandQualitativeDescription: expandQualitativeDescription,
     toQualitativeDescriptionAcronym: toQualitativeDescriptionAcronym,
     toQualitativeDescriptionDisplay: toQualitativeDescriptionDisplay,

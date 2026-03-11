@@ -144,42 +144,23 @@
   }
 
   /**
-   * Build implication pair with variation.
+   * Build implication pair. Prefer ThesisInterpretationUtils.buildImplicationsFromData(context, data) when data is available.
+   * Returns one short data-grounded sentence (second empty) to avoid generic "This indicates that..." filler.
    */
-  function buildImplicationsWithVariant(context, variantIndex) {
-    var base = {
-      profile: {
-        first: 'the respondent sample is characterized by a concentration in these categories.',
-        second: 'the demographic profile reflects the composition of the study population.'
-      },
-      likert: {
-        first: 'respondents consistently rate the indicators within the dominant qualitative description as evident in practice.',
-        second: 'the assessed construct is strongly reflected across the measured indicators based on the overall evaluation.'
-      },
-      executive: {
-        first: 'the leading domain or factor contributes most to the overall assessment.',
-        second: 'the summary reflects the aggregate perception across the measured dimensions.'
-      },
-      ttest: {
-        first: 'the statistical result informs the interpretation of group comparisons.',
-        second: 'the findings should be considered in light of the test outcome.'
-      },
-      findings: {
-        first: 'the data support the reported pattern or assessment.',
-        second: 'the findings align with the overall theme of the study.'
-      },
-      conclusions: {
-        first: 'the conclusions drawn are supported by the data presented.',
-        second: 'the study findings provide a coherent basis for the stated conclusions.'
-      }
+  function buildImplicationsWithVariant(context, variantIndex, data) {
+    var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
+    if (Utils && Utils.buildImplicationsFromData) {
+      return Utils.buildImplicationsFromData(context, data || {});
+    }
+    var fallback = {
+      profile: { first: 'The profile reflects the composition of the respondent group.', second: '' },
+      likert: { first: 'The result reflects the overall assessment of the indicators.', second: '' },
+      executive: { first: 'The data support the reported pattern.', second: '' },
+      ttest: { first: 'The statistical result informs the interpretation of the two groups.', second: '' },
+      findings: { first: 'The data support the reported pattern.', second: '' },
+      conclusions: { first: 'The data support the reported pattern.', second: '' }
     };
-    var b = base[context] || base.findings;
-    var lead1 = getSynonym('indicatesLead', variantIndex);
-    var lead2 = getSynonym('furtherLead', variantIndex + 1);
-    return {
-      first: (lead1 || 'This indicates that') + ' ' + b.first,
-      second: (lead2 || 'This further implies that') + ' ' + b.second
-    };
+    return fallback[context] || { first: 'The data support the reported pattern.', second: '' };
   }
 
   /**
@@ -366,7 +347,7 @@
     var includeImplications = options && options.includeImplications !== false;
 
     var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
-    var impl = Utils && includeImplications ? Utils.buildImplications('ttest') : { first: '', second: '' };
+    var impl = Utils && includeImplications ? Utils.buildImplicationsFromData('ttest', {}) : { first: '', second: '' };
 
     var tVal = parseFloat(String(tValStr).replace(/[^0-9.-]/g, ''));
     var tCrit = parseFloat(String(tCritStr).replace(/[^0-9.-]/g, ''));

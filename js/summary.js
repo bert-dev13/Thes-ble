@@ -371,9 +371,10 @@
     var text = parts.join(' ');
     if (includeImplication) {
       var Utils = typeof ThesisInterpretationUtils !== 'undefined' ? ThesisInterpretationUtils : null;
-      var impl = Utils ? Utils.buildImplications('profile') : { first: '', second: '' };
-      if (impl.first) text += ' ' + impl.first;
-      if (impl.second) text += ' ' + impl.second;
+      if (Utils && Utils.buildImplicationsFromData) {
+        var impl = Utils.buildImplicationsFromData('profile', {});
+        if (impl.first) text += ' ' + impl.first;
+      }
     }
     return text;
   }
@@ -446,20 +447,12 @@
     } else {
       p = 'Regarding the perceptions of school heads and teachers on ' + theme + ', the T-test results show no significant difference between the two groups. The computed t-value did not exceed the t-critical value, leading to the acceptance of the null hypothesis. This indicates that the two groups do not differ significantly in their perceptions.';
     }
-    if (includeImplication) {
-      var impl = Utils ? Utils.buildImplications('ttest') : { first: '', second: '' };
+    if (includeImplication && Utils && Utils.buildImplicationsFromData) {
+      var impl = Utils.buildImplicationsFromData('ttest', {});
       if (impl.first) p += ' ' + impl.first;
-      if (impl.second) p += ' ' + impl.second;
     }
     return p;
   }
-
-  /** Concluding phrases for "This indicates that the respondents are __________." */
-  var RESPONDENT_CONCLUSION_PHRASES = [
-    'experienced educators actively engaged in professional development',
-    'characterized by the demographic and professional profile reflected in the above categories',
-    'predominantly experienced professionals with established roles in the field'
-  ];
 
   function generateRespondentsSummaryWithVariant(variantIndex, lastOpener) {
     var profile = getProfileTables();
@@ -558,13 +551,10 @@
 
     if (parts.length === 0) return '';
 
-    var conclusionPhrase = RESPONDENT_CONCLUSION_PHRASES[vi % RESPONDENT_CONCLUSION_PHRASES.length];
-    var text = parts.join(' ') + ' This indicates that the respondents are ' + conclusionPhrase + '.';
-
-    if (includeImplication) {
-      var impl = Gen ? Gen.buildImplicationsWithVariant('profile', vi) : (Utils ? Utils.buildImplications('profile') : { first: '', second: '' });
+    var text = parts.join(' ');
+    if (includeImplication && Utils && Utils.buildImplicationsFromData) {
+      var impl = Utils.buildImplicationsFromData('profile', {});
       if (impl.first) text += ' ' + impl.first;
-      if (impl.second) text += ' ' + impl.second;
     }
     return text;
   }
@@ -774,17 +764,17 @@
           var themeLower = (t.tableTitle || '').toLowerCase();
           var execTheme = (UtilsEx && UtilsEx.formatThemeForInterpretation) ? UtilsEx.formatThemeForInterpretation(t.tableTitle || 'the theme') : theme;
           var pSh = 'The Executive Summary of ' + execTheme + ' shows that school heads ' + (shFmt.topText || 'rated the domains as reflected in the overall assessment') + shFmt.otherText + ' With an overall average weighted mean described as ' + (shDesc || '—') + ', the findings indicate that school heads perceive the scientific abilities of Grade 3 pupils to be exceptionally strong across domains.';
-          if (includeImplication) {
-            var impl = Utils ? Utils.buildImplications('executive') : { first: '', second: '' };
-            if (impl.first) pSh += ' ' + impl.first;
+          if (includeImplication && Utils && Utils.buildImplicationsFromData) {
+            var implSh = Utils.buildImplicationsFromData('likert', { awmDesc: shDesc, theme: t.tableTitle });
+            if (implSh.first) pSh += ' ' + implSh.first;
           }
           paragraphs.push(pSh);
           openerIdx++;
           var transitionExec = Gen && Gen.getTransitionForVariant ? (Gen.getTransitionForVariant(vi + openerIdx) + ', ') : 'Meanwhile, ';
           var pT = transitionExec + 'teacher respondents ' + (tFmt.topText || 'rated the domains as reflected in the overall assessment') + tFmt.otherText + ' With an overall average weighted mean described as ' + (tDesc || '—') + ', the findings imply that teachers view pupils\' scientific abilities as consistently strong' + (themeLower.indexOf('abilit') !== -1 ? ', with collaboration emerging as their most notable domain' : ' across domains') + '.';
-          if (includeImplication) {
-            var impl2 = Utils ? Utils.buildImplications('executive') : { first: '', second: '' };
-            if (impl2.second) pT += ' ' + impl2.second;
+          if (includeImplication && Utils && Utils.buildImplicationsFromData) {
+            var implT = Utils.buildImplicationsFromData('likert', { awmDesc: tDesc, theme: t.tableTitle });
+            if (implT.first) pT += ' ' + implT.first;
           }
           paragraphs.push(pT);
         } else {
@@ -801,9 +791,9 @@
           if (shIndicators.length > 0) {
             var pSh = opening + theme + ', school head respondents rated the following indicators as ' + shQd + ': ' + shIndicators.join(', ') + '. ';
             pSh += buildAwmSentence(shAwmVal, shQd, t.tableTitle, 'school head respondents');
-            if (includeImplication) {
-              var impl = Utils ? Utils.buildImplications('likert') : { first: '', second: '' };
-              if (impl.first) pSh += ' ' + impl.first;
+            if (includeImplication && Utils && Utils.buildImplicationsFromData) {
+              var implSh = Utils.buildImplicationsFromData('likert', { awm: shAwmVal, awmDesc: shQdRaw, theme: t.tableTitle });
+              if (implSh.first) pSh += ' ' + implSh.first;
             }
             paragraphs.push(pSh);
             openerIdx++;
@@ -812,9 +802,9 @@
             var transitionT = Gen && Gen.getTransitionForVariant ? (Gen.getTransitionForVariant(vi + openerIdx) + ', ') : 'Meanwhile, ';
             var pT = transitionT + 'teacher respondents rated the following indicators as ' + tQd + ': ' + tIndicators.join(', ') + '. ';
             pT += buildAwmSentence(tAwmVal, tQd, t.tableTitle, 'teacher respondents');
-            if (includeImplication) {
-              var impl2 = Utils ? Utils.buildImplications('likert') : { first: '', second: '' };
-              if (impl2.second) pT += ' ' + impl2.second;
+            if (includeImplication && Utils && Utils.buildImplicationsFromData) {
+              var implT = Utils.buildImplicationsFromData('likert', { awm: tAwmVal, awmDesc: tQdRaw, theme: t.tableTitle });
+              if (implT.first) pT += ' ' + implT.first;
             }
             paragraphs.push(pT);
           }
@@ -823,9 +813,9 @@
             if (t.awm.sh) awmParts.push('school heads: ' + (expandQdEx(t.awm.sh.qd || '—') || t.awm.sh.qd || '—'));
             if (t.awm.t) awmParts.push('teachers: ' + (expandQdEx(t.awm.t.qd || '—') || t.awm.t.qd || '—'));
             var p = opening + theme + ', the overall assessment shows ' + awmParts.join('; ') + '.';
-            if (includeImplication) {
-              var impl = Utils ? Utils.buildImplications('likert') : { first: '', second: '' };
-              if (impl.first) p += ' ' + impl.first;
+            if (includeImplication && Utils && Utils.buildImplicationsFromData) {
+              var implA = Utils.buildImplicationsFromData('likert', { awmDesc: t.awm && t.awm.sh ? t.awm.sh.qd : '', theme: t.tableTitle });
+              if (implA.first) p += ' ' + implA.first;
             }
             paragraphs.push(p);
           }
@@ -845,19 +835,17 @@
         var qd = expandQdSg(qdRaw) || qdRaw;
         var p = opening + theme + ', respondents rated the following indicators as ' + qd + ': ' + labels.join(', ') + '. ';
         p += buildAwmSentence(t.awm, t.awmDesc, t.tableTitle);
-        if (includeImplication) {
-          var impl = Utils ? Utils.buildImplications('likert') : { first: '', second: '' };
+        if (includeImplication && Utils && Utils.buildImplicationsFromData) {
+          var impl = Utils.buildImplicationsFromData('likert', { awm: t.awm, awmDesc: t.awmDesc, theme: t.tableTitle });
           if (impl.first) p += ' ' + impl.first;
-          if (impl.second) p += ' ' + impl.second;
         }
         paragraphs.push(p);
       } else {
         var p = opening + theme + ', ';
         p += buildAwmSentence(t.awm, t.awmDesc, t.tableTitle);
-        if (includeImplication) {
-          var impl = Utils ? Utils.buildImplications('likert') : { first: '', second: '' };
+        if (includeImplication && Utils && Utils.buildImplicationsFromData) {
+          var impl = Utils.buildImplicationsFromData('likert', { awm: t.awm, awmDesc: t.awmDesc, theme: t.tableTitle });
           if (impl.first) p += ' ' + impl.first;
-          if (impl.second) p += ' ' + impl.second;
         }
         paragraphs.push(p);
       }
