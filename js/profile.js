@@ -1719,36 +1719,32 @@
         sumH += (r.heads && typeof r.heads.f === 'number') ? r.heads.f : 0;
         sumT += (r.teachers && typeof r.teachers.f === 'number') ? r.teachers.f : 0;
       });
-      var rankMapH = computeDenseRanks(currentProject2Table.rows, function (r) { return r.heads && r.heads.f; });
-      var rankMapT = computeDenseRanks(currentProject2Table.rows, function (r) { return r.teachers && r.teachers.f; });
       var shPctText = (currentProject2Table.type === 'twoGroupPercent' && sumH > 0) || (computeTable9Percent && sumH > 0) ? '100.00' : '—';
       var tPctText = (currentProject2Table.type === 'twoGroupPercent' && sumT > 0) || (computeTable9Percent && sumT > 0) ? '100.00' : '—';
       tableHtml =
         '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">' +
         '<thead><tr><th style="border: 1px solid #000; text-align: center; width: 2em;">No.</th><th style="border: 1px solid #000; text-align: left;">Particulars</th>' +
-        '<th colspan="3" style="border: 1px solid #000; text-align: center;">School Heads</th>' +
-        '<th colspan="3" style="border: 1px solid #000; text-align: center;">Teachers</th></tr>' +
+        '<th colspan="2" style="border: 1px solid #000; text-align: center;">School Heads</th>' +
+        '<th colspan="2" style="border: 1px solid #000; text-align: center;">Teachers</th></tr>' +
         '<tr><th style="border: 1px solid #000;"></th><th style="border: 1px solid #000;"></th>' +
-        '<th style="border: 1px solid #000;">f</th><th style="border: 1px solid #000;">Percentage</th><th style="border: 1px solid #000;">Rank</th>' +
-        '<th style="border: 1px solid #000;">f</th><th style="border: 1px solid #000;">Percentage</th><th style="border: 1px solid #000;">Rank</th></tr></thead><tbody>';
-      tablePlain = 'No.\tParticulars\tSchool Heads (f)\t%\tRank\tTeachers (f)\t%\tRank\n';
+        '<th style="border: 1px solid #000;">f</th><th style="border: 1px solid #000;">Percentage</th>' +
+        '<th style="border: 1px solid #000;">f</th><th style="border: 1px solid #000;">Percentage</th></tr></thead><tbody>';
+      tablePlain = 'No.\tParticulars\tSchool Heads (f)\t%\tTeachers (f)\t%\n';
       currentProject2Table.rows.forEach(function (row, idx) {
         var hF = row.heads && typeof row.heads.f === 'number' ? row.heads.f : 0;
         var tF = row.teachers && typeof row.teachers.f === 'number' ? row.teachers.f : 0;
         var hPct = row.heads && typeof row.heads.pct === 'number' ? row.heads.pct.toFixed(2) : '';
         var tPct = row.teachers && typeof row.teachers.pct === 'number' ? row.teachers.pct.toFixed(2) : '';
-        var hRank = rankMapH[idx] || '';
-        var tRank = rankMapT[idx] || '';
         var no = idx + 1;
         tableHtml += '<tr><td style="border: 1px solid #000; text-align: center;">' + no + '</td><td style="border: 1px solid #000;">' + escapeHtml(row.category) + '</td>' +
-          '<td style="border: 1px solid #000; text-align: right;">' + hF + '</td><td style="border: 1px solid #000; text-align: right;">' + hPct + '</td><td style="border: 1px solid #000; text-align: center;">' + hRank + '</td>' +
-          '<td style="border: 1px solid #000; text-align: right;">' + tF + '</td><td style="border: 1px solid #000; text-align: right;">' + tPct + '</td><td style="border: 1px solid #000; text-align: center;">' + tRank + '</td></tr>';
-        tablePlain += no + '\t' + (row.category || '') + '\t' + hF + '\t' + hPct + '\t' + hRank + '\t' + tF + '\t' + tPct + '\t' + tRank + '\n';
+          '<td style="border: 1px solid #000; text-align: right;">' + hF + '</td><td style="border: 1px solid #000; text-align: right;">' + hPct + '</td>' +
+          '<td style="border: 1px solid #000; text-align: right;">' + tF + '</td><td style="border: 1px solid #000; text-align: right;">' + tPct + '</td></tr>';
+        tablePlain += no + '\t' + (row.category || '') + '\t' + hF + '\t' + hPct + '\t' + tF + '\t' + tPct + '\n';
       });
       tableHtml += '</tbody><tfoot><tr><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"><strong>TOTAL</strong></td>' +
-        '<td style="border: 1px solid #000; text-align: right;"><strong>' + sumH + '</strong></td><td style="border: 1px solid #000;"><strong>' + shPctText + '</strong></td><td style="border: 1px solid #000;"></td>' +
-        '<td style="border: 1px solid #000; text-align: right;"><strong>' + sumT + '</strong></td><td style="border: 1px solid #000;"><strong>' + tPctText + '</strong></td><td style="border: 1px solid #000;"></td></tr></tfoot></table>';
-      tablePlain += '\tTOTAL\t' + sumH + '\t' + shPctText + '\t\t' + sumT + '\t' + tPctText + '\n';
+        '<td style="border: 1px solid #000; text-align: right;"><strong>' + sumH + '</strong></td><td style="border: 1px solid #000;"><strong>' + shPctText + '</strong></td>' +
+        '<td style="border: 1px solid #000; text-align: right;"><strong>' + sumT + '</strong></td><td style="border: 1px solid #000;"><strong>' + tPctText + '</strong></td></tr></tfoot></table>';
+      tablePlain += '\tTOTAL\t' + sumH + '\t' + shPctText + '\t' + sumT + '\t' + tPctText + '\n';
     } else if (activeProjectId === 'rp1') {
       var tbody = document.getElementById('pa-table-tbody');
       var totalFreqEl = document.getElementById('pa-total-freq');
@@ -1980,17 +1976,15 @@
       '<tr class="pa-thesis-table__group-row">' +
         '<th rowspan="2" class="pa-thesis-table__th pa-thesis-table__th--no" scope="col">No.</th>' +
         '<th rowspan="2" class="pa-thesis-table__th pa-thesis-table__th--particulars" scope="col">Particulars</th>' +
-        '<th colspan="3" class="pa-thesis-table__th pa-thesis-table__th--group" scope="colgroup">School Heads</th>' +
-        '<th colspan="3" class="pa-thesis-table__th pa-thesis-table__th--group" scope="colgroup">Teachers</th>' +
+        '<th colspan="2" class="pa-thesis-table__th pa-thesis-table__th--group" scope="colgroup">School Heads</th>' +
+        '<th colspan="2" class="pa-thesis-table__th pa-thesis-table__th--group" scope="colgroup">Teachers</th>' +
         '<th rowspan="2" class="pa-thesis-table__th pa-thesis-table__th--action" scope="col">Remove</th>' +
       '</tr>' +
       '<tr class="pa-thesis-table__subhead-row">' +
         '<th class="pa-thesis-table__th pa-thesis-table__th--f" scope="col">f</th>' +
         '<th class="pa-thesis-table__th pa-thesis-table__th--pct" scope="col">Percentage</th>' +
-        '<th class="pa-thesis-table__th pa-thesis-table__th--rank" scope="col">Rank</th>' +
         '<th class="pa-thesis-table__th pa-thesis-table__th--f" scope="col">f</th>' +
         '<th class="pa-thesis-table__th pa-thesis-table__th--pct" scope="col">Percentage</th>' +
-        '<th class="pa-thesis-table__th pa-thesis-table__th--rank" scope="col">Rank</th>' +
       '</tr>';
 
     tbody.innerHTML = '';
@@ -2004,16 +1998,11 @@
       sumTeachers += tF;
     });
 
-    var rankMapH = showComputed ? computeDenseRanks(table.rows, function (r) { return r.heads && r.heads.f; }) : {};
-    var rankMapT = showComputed ? computeDenseRanks(table.rows, function (r) { return r.teachers && r.teachers.f; }) : {};
-
     table.rows.forEach(function (row, idx) {
       var hF = row.heads && typeof row.heads.f === 'number' ? row.heads.f : 0;
       var tF = row.teachers && typeof row.teachers.f === 'number' ? row.teachers.f : 0;
       var hPct = showComputed && row.heads && typeof row.heads.pct === 'number' ? row.heads.pct.toFixed(2) : '';
       var tPct = showComputed && row.teachers && typeof row.teachers.pct === 'number' ? row.teachers.pct.toFixed(2) : '';
-      var hRank = showComputed ? (rankMapH[idx] || '') : '—';
-      var tRank = showComputed ? (rankMapT[idx] || '') : '—';
       if (!showComputed) { hPct = '—'; tPct = '—'; }
 
       var catVal = (row.category != null ? String(row.category) : '');
@@ -2026,10 +2015,8 @@
         '<td class="pa-thesis-table__td pa-thesis-table__td--particulars"><input type="text" class="pa-thesis-input pa-thesis-input--category" data-pa-category value="' + catAttr + '" placeholder="Particulars"></td>' +
         '<td class="pa-thesis-table__td pa-thesis-table__td--f"><input type="number" class="pa-thesis-input" step="1" min="0" data-pa-h-f value="' + hF + '"></td>' +
         '<td class="pa-thesis-table__td pa-thesis-table__td--pct"><input type="text" class="pa-thesis-input" readonly data-pa-h-pct value="' + (hPct || '—') + '"></td>' +
-        '<td class="pa-thesis-table__td pa-thesis-table__td--rank">' + (hRank || '—') + '</td>' +
         '<td class="pa-thesis-table__td pa-thesis-table__td--f"><input type="number" class="pa-thesis-input" step="1" min="0" data-pa-t-f value="' + tF + '"></td>' +
         '<td class="pa-thesis-table__td pa-thesis-table__td--pct"><input type="text" class="pa-thesis-input" readonly data-pa-t-pct value="' + (tPct || '—') + '"></td>' +
-        '<td class="pa-thesis-table__td pa-thesis-table__td--rank">' + (tRank || '—') + '</td>' +
         '<td class="pa-thesis-table__td pa-thesis-table__td--action"><button type="button" class="pa-row-remove" aria-label="Remove row" data-pa-two-remove>×</button></td>';
       tbody.appendChild(tr);
       var removeBtn = tr.querySelector('[data-pa-two-remove]');
@@ -2085,10 +2072,8 @@
         '<td class="pa-thesis-table__footer-label"><strong>TOTAL</strong></td>' +
         '<td class="pa-thesis-table__footer-value"><strong id="pa-total-heads-f">' + totalHeadsF + '</strong></td>' +
         '<td class="pa-thesis-table__footer-value"><strong id="pa-total-heads-pct">' + shPctText + '</strong></td>' +
-        '<td class="pa-thesis-table__footer-value"></td>' +
         '<td class="pa-thesis-table__footer-value"><strong id="pa-total-teachers-f">' + totalTeachersF + '</strong></td>' +
         '<td class="pa-thesis-table__footer-value"><strong id="pa-total-teachers-pct">' + tPctText + '</strong></td>' +
-        '<td class="pa-thesis-table__footer-value"></td>' +
         '<td class="pa-thesis-table__footer-value"></td>' +
       '</tr>';
 

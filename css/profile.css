@@ -934,18 +934,21 @@ body {
   --thesis-th-color: #fff;
   --thesis-subhead-bg: var(--ocean-mid);
   --thesis-subhead-color: rgba(255, 255, 255, 0.95);
-  --col-no: 56px;
-  --col-action: 72px;
+  /* Column proportions tuned for balanced, full-width layout without horizontal scroll */
+  --col-no: 7%;
+  --col-particulars: 38%;
+  --col-f: 8%;
+  --col-pct: 8%;
+  --col-action: 3%;
 }
 .pa-thesis-table .pa-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9375rem;
   table-layout: fixed;
-  min-width: 760px;
+  min-width: 0;
   font-variant-numeric: tabular-nums;
 }
-.pa-thesis-table--two-group .pa-table { min-width: 980px; }
 .pa-thesis-table .pa-table thead tr:first-child th {
   border-top: none;
 }
@@ -956,6 +959,7 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.15);
   vertical-align: middle;
   box-sizing: border-box;
+  padding: var(--space-xs) var(--space-sm);
 }
 .pa-thesis-table .pa-table thead th:first-child { border-left: none; }
 .pa-thesis-table .pa-table thead th {
@@ -968,25 +972,18 @@ body {
 }
 .pa-thesis-table__th--no {
   width: var(--col-no);
-  min-width: var(--col-no);
-  max-width: var(--col-no);
   text-align: center;
 }
 .pa-thesis-table__th--particulars {
-  min-width: 240px;
-  width: 240px;
+  width: var(--col-particulars);
   text-align: left;
 }
 .pa-thesis-table__th--f {
-  width: 88px;
-  min-width: 88px;
-  max-width: 88px;
+  width: var(--col-f);
   text-align: center;
 }
 .pa-thesis-table__th--pct {
-  width: 100px;
-  min-width: 100px;
-  max-width: 100px;
+  width: var(--col-pct);
   text-align: center;
 }
 .pa-thesis-table__th--rank {
@@ -997,8 +994,6 @@ body {
 }
 .pa-thesis-table__th--action {
   width: var(--col-action);
-  min-width: var(--col-action);
-  max-width: var(--col-action);
   text-align: center;
   font-weight: 500;
   font-size: 0.75rem;
@@ -1020,7 +1015,7 @@ body {
   padding: var(--space-xs) var(--space-sm);
 }
 .pa-thesis-table__td {
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-xs) var(--space-sm);
   border: 1px solid var(--border-subtle);
   vertical-align: middle;
   background: var(--bg-elevated);
@@ -1042,8 +1037,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 .pa-thesis-table__td--particulars {
-  min-width: 240px;
-  width: 240px;
+  width: var(--col-particulars);
   text-align: left;
   white-space: normal;
   word-wrap: break-word;
@@ -1054,8 +1048,8 @@ body {
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
-.pa-thesis-table__td--f { width: 88px; min-width: 88px; }
-.pa-thesis-table__td--pct { width: 100px; min-width: 100px; }
+.pa-thesis-table__td--f { width: var(--col-f); }
+.pa-thesis-table__td--pct { width: var(--col-pct); }
 .pa-thesis-table__td--rank { width: 64px; min-width: 64px; }
 .pa-thesis-table__td--action {
   width: var(--col-action);
@@ -1090,14 +1084,16 @@ body {
 .pa-thesis-input {
   width: 100%;
   max-width: 100%;
-  padding: var(--space-xs) var(--space-sm);
+  padding: 4px 6px;
   font-family: var(--font-sans);
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   text-align: center;
   font-variant-numeric: tabular-nums;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   box-sizing: border-box;
+  height: 2.25rem;
+  line-height: 1.4;
 }
 .pa-thesis-input:focus {
   outline: none;
@@ -1186,6 +1182,34 @@ body {
   border-radius: var(--radius-md);
   background: var(--bg-elevated);
   -webkit-overflow-scrolling: touch;
+}
+
+/* Two-group profile table: keep all columns visible without horizontal scroll on typical viewports */
+#pa-two-group-wrap {
+  overflow-x: visible;
+}
+
+/* Two-group table: compress inside container so all columns are visible without overlap */
+#pa-two-group-wrap .pa-table {
+  width: 100%;
+  max-width: 100%;
+  table-layout: auto;
+}
+
+/* Disable sticky header/first column for two-group table to avoid visual overlap in tight layouts */
+#pa-two-group-wrap.pa-output-table .pa-table thead th {
+  position: static;
+  top: auto;
+  box-shadow: none;
+}
+#pa-two-group-wrap.pa-output-table .pa-table thead tr:nth-child(2) th {
+  top: auto;
+}
+#pa-two-group-wrap.pa-output-table .pa-table th:nth-child(1),
+#pa-two-group-wrap.pa-output-table .pa-table td:nth-child(1) {
+  position: static;
+  left: auto;
+  box-shadow: none;
 }
 .pa-table {
   width: 100%;
