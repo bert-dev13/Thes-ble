@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Thesis Interpretation Assistant — Summary Generator</title>
   <link rel="stylesheet" href="css/summary.css">
+  <link rel="stylesheet" href="css/projects.css">
 </head>
 <body>
   <!-- Top Bar -->
@@ -27,6 +28,7 @@
           <a href="profile-analyzer.html" class="sg-top-bar__link">Profile</a>
           <a href="likert-analyzer.html" class="sg-top-bar__link">Likert</a>
           <a href="summary-generator.html" class="sg-top-bar__link is-active">Summary</a>
+          <a href="projects.html" class="sg-top-bar__link">Projects</a>
         </nav>
         <div class="sg-top-bar__actions">
           <button type="button" class="sg-btn sg-btn--reset sg-btn--sm" id="sg-btn-reset" aria-label="Reset session data">Reset</button>
@@ -43,6 +45,7 @@
       <a href="profile-analyzer.html" class="sg-nav-dropdown__link">Profile</a>
       <a href="likert-analyzer.html" class="sg-nav-dropdown__link">Likert</a>
       <a href="summary-generator.html" class="sg-nav-dropdown__link">Summary</a>
+      <a href="projects.html" class="sg-nav-dropdown__link">Projects</a>
       <button type="button" class="sg-btn sg-btn--reset sg-nav-dropdown__reset" id="sg-btn-reset-mobile">Reset</button>
     </div>
   </header>
@@ -54,6 +57,11 @@
         <h1 id="sg-page-title" class="sg-page-header__title">Summary Generator</h1>
         <p class="sg-page-header__subtitle">Generate respondent summary, findings, conclusions, and recommendations based on saved analyses.</p>
         <span class="sg-badge">Uses saved data from this session</span>
+        <div class="rp-inline" aria-label="Selected research project" style="margin-top: 0.75rem;">
+          <span class="rp-inline__label">Selected project:</span>
+          <span class="rp-inline__value" data-rp-selected-name>—</span>
+          <a class="rp-inline__btn" href="projects.html">Manage</a>
+        </div>
       </div>
     </section>
 
@@ -284,6 +292,7 @@
   <script src="js/text-generator.js"></script>
   <script src="js/TableEngine.js"></script>
   <script src="js/ClipboardEngine.js"></script>
+  <script src="js/research-projects.js"></script>
   <script src="js/summary.js"></script>
 </body>
 </html>

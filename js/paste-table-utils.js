@@ -6,8 +6,8 @@
 (function (global) {
   'use strict';
 
-  var PROFILE_HEADERS = ['particulars', 'frequency', 'f', 'percentage', '%', 'rank'];
-  var LIKERT_HEADERS = ['particulars', 'weighted mean', 'w.m.', 'wm', 'qualitative description', 'q.d.', 'qd', 'rank'];
+  var PROFILE_HEADERS = ['no', 'no.', 'particulars', 'frequency', 'f', 'percentage', '%', 'rank'];
+  var LIKERT_HEADERS = ['no', 'no.', 'particulars', 'weighted mean', 'w.m.', 'wm', 'qualitative description', 'q.d.', 'qd', 'rank'];
   var PROFILE_TWO_GROUP_HEADERS = ['particulars', 'school heads', 'teachers', 'heads', 'f', 'percentage', '%', 'rank'];
   var LIKERT_TWO_GROUP_HEADERS = ['particulars', 'school heads', 'teachers', 'w.m.', 'wm', 'q.d.', 'qd', 'rank'];
   var LIKERT_TTEST_HEADERS = ['particulars', 't-value', 't-critical', 'p-value', 'decision', 'description'];
@@ -163,14 +163,22 @@
     var frequency = [];
     var percentage = [];
     var rank = [];
+    var extras = [];
     for (var i = 0; i < rows.length; i++) {
       var c = rows[i];
-      particulars.push((c[0] != null ? String(c[0]).trim() : '') || '');
-      frequency.push(c[1] != null && String(c[1]).trim() !== '' ? String(c[1]).trim() : '');
-      percentage.push(c[2] != null ? String(c[2]).trim() : '');
-      rank.push(c[3] != null ? String(c[3]).trim() : '');
+      // Support pasted tables that include a leading "No." column
+      var startIdx = 0;
+      var first = c[0] != null ? String(c[0]).trim() : '';
+      var second = c[1] != null ? String(c[1]).trim() : '';
+      if (first !== '' && /^\d+$/.test(first) && second !== '') startIdx = 1;
+
+      particulars.push((c[startIdx] != null ? String(c[startIdx]).trim() : '') || '');
+      frequency.push(c[startIdx + 1] != null && String(c[startIdx + 1]).trim() !== '' ? String(c[startIdx + 1]).trim() : '');
+      percentage.push(c[startIdx + 2] != null ? String(c[startIdx + 2]).trim() : '');
+      rank.push(c[startIdx + 3] != null ? String(c[startIdx + 3]).trim() : '');
+      extras.push(c.slice(startIdx + 4).map(function (x) { return x != null ? String(x).trim() : ''; }));
     }
-    return { particulars: particulars, frequency: frequency, percentage: percentage, rank: rank };
+    return { particulars: particulars, frequency: frequency, percentage: percentage, rank: rank, extras: extras };
   }
 
   /**
@@ -185,14 +193,21 @@
     var wm = [];
     var qd = [];
     var rank = [];
+    var extras = [];
     for (var i = 0; i < rows.length; i++) {
       var c = rows[i];
-      particulars.push((c[0] != null ? String(c[0]).trim() : '') || '');
-      wm.push(c[1] != null ? String(c[1]).trim() : '');
-      qd.push(c[2] != null ? String(c[2]).trim() : '');
-      rank.push(c[3] != null ? String(c[3]).trim() : '');
+      var startIdx = 0;
+      var first = c[0] != null ? String(c[0]).trim() : '';
+      var second = c[1] != null ? String(c[1]).trim() : '';
+      if (first !== '' && /^\d+$/.test(first) && second !== '') startIdx = 1;
+
+      particulars.push((c[startIdx] != null ? String(c[startIdx]).trim() : '') || '');
+      wm.push(c[startIdx + 1] != null ? String(c[startIdx + 1]).trim() : '');
+      qd.push(c[startIdx + 2] != null ? String(c[startIdx + 2]).trim() : '');
+      rank.push(c[startIdx + 3] != null ? String(c[startIdx + 3]).trim() : '');
+      extras.push(c.slice(startIdx + 4).map(function (x) { return x != null ? String(x).trim() : ''; }));
     }
-    return { particulars: particulars, wm: wm, qd: qd, rank: rank };
+    return { particulars: particulars, wm: wm, qd: qd, rank: rank, extras: extras };
   }
 
   /**

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thesis Interpretation Assistant — Projects</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/projects.css" />
+  <link rel="stylesheet" href="css/projects-page.css" />
+</head>
+<body>
+  <header class="top-bar">
+    <div class="top-bar__inner container">
+      <a href="index.html" class="brand">
+        <span class="brand__icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 6h16M4 10h16M4 14h10M4 18h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <div class="brand__text">
+          <span class="brand__name">Thesis Interpretation Assistant</span>
+          <span class="brand__tagline">Tables & interpretation</span>
+        </div>
+      </a>
+      <div class="top-bar__right">
+        <nav class="top-bar__nav" aria-label="Main navigation">
+          <a href="index.html" class="top-bar__link">Dashboard</a>
+          <a href="profile-analyzer.html" class="top-bar__link">Profile</a>
+          <a href="likert-analyzer.html" class="top-bar__link">Likert</a>
+          <a href="summary-generator.html" class="top-bar__link">Summary</a>
+          <a href="projects.html" class="top-bar__link is-active">Projects</a>
+        </nav>
+      </div>
+      <button type="button" class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+        <span class="hamburger__line"></span>
+        <span class="hamburger__line"></span>
+        <span class="hamburger__line"></span>
+      </button>
+    </div>
+    <div class="nav-dropdown" id="nav-dropdown" aria-hidden="true">
+      <a href="index.html" class="nav-dropdown__link">Dashboard</a>
+      <a href="profile-analyzer.html" class="nav-dropdown__link">Profile</a>
+      <a href="likert-analyzer.html" class="nav-dropdown__link">Likert</a>
+      <a href="summary-generator.html" class="nav-dropdown__link">Summary</a>
+      <a href="projects.html" class="nav-dropdown__link">Projects</a>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="hero dashboard-header" aria-labelledby="projects-title">
+      <div class="container dashboard-header__inner">
+        <h1 id="projects-title" class="dashboard-header__title">Projects</h1>
+        <p class="dashboard-header__subtitle">Create research projects and customize their table columns (saved in your browser).</p>
+        <div class="rp-inline" aria-label="Selected research project">
+          <span class="rp-inline__label">Currently selected:</span>
+          <span class="rp-inline__value" data-rp-selected-name>—</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="ppm container ppm-grid" aria-label="Projects management">
+      <!-- SECTION 1 — Project List -->
+      <article class="ppm-card" aria-labelledby="ppm-list-title">
+        <div class="ppm-card__header">
+          <h2 id="ppm-list-title" class="ppm-card__title">Project List</h2>
+          <button type="button" class="btn btn--primary btn--sm" id="ppm-add-project">+ Add New Project</button>
+        </div>
+        <div class="ppm-card__body">
+          <div class="ppm-table" role="table" aria-label="Projects table">
+            <div class="ppm-table__head" role="rowgroup">
+              <div class="ppm-table__row ppm-table__row--head" role="row">
+                <div class="ppm-table__cell ppm-table__cell--name" role="columnheader">Project Name</div>
+                <div class="ppm-table__cell ppm-table__cell--actions" role="columnheader">Actions</div>
+              </div>
+            </div>
+            <div class="ppm-table__body" id="ppm-project-list" role="rowgroup"></div>
+          </div>
+          <p class="ppm-hint">Tip: Select a project on Profile/Likert pages to use its saved columns.</p>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <!-- Add/Edit Project Modal (used for Add New Project) -->
+  <div class="ppm-modal" id="ppm-project-modal" role="dialog" aria-modal="true" aria-labelledby="ppm-modal-title" hidden>
+    <div class="ppm-modal__backdrop" id="ppm-modal-backdrop"></div>
+    <div class="ppm-modal__panel" role="document">
+      <div class="ppm-modal__header">
+        <h2 class="ppm-modal__title" id="ppm-modal-title">New Project</h2>
+        <button type="button" class="btn btn--reset btn--sm" id="ppm-modal-close">Close</button>
+      </div>
+      <div class="ppm-modal__body">
+        <div class="ppm-form">
+          <label class="ppm-label" for="ppm-modal-project-name">Project Name</label>
+          <input type="text" class="ppm-input" id="ppm-modal-project-name" placeholder="Enter project name" />
+        </div>
+
+        <div class="ppm-structure">
+          <div class="ppm-structure__top">
+            <div class="ppm-structure__tabs" role="tablist" aria-label="Column structure type">
+              <button type="button" class="ppm-tab is-active" data-ppm-modal-tab="profile" role="tab" aria-selected="true">Profile Columns</button>
+              <button type="button" class="ppm-tab" data-ppm-modal-tab="likert" role="tab" aria-selected="false">Likert Columns</button>
+            </div>
+            <button type="button" class="btn btn--secondary btn--sm" id="ppm-modal-add-col">+ Add Column</button>
+          </div>
+
+          <div class="ppm-cols" id="ppm-modal-cols"></div>
+
+          <div class="ppm-preview" aria-label="Live preview">
+            <div class="ppm-preview__title">Live Preview</div>
+            <div class="ppm-preview__table" id="ppm-modal-preview"></div>
+          </div>
+        </div>
+
+        <div class="ppm-actions">
+          <button type="button" class="btn btn--primary" id="ppm-modal-save">Save Project</button>
+          <button type="button" class="btn btn--reset" id="ppm-modal-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/research-projects.js"></script>
+  <script src="js/projects-page.js"></script>
+</body>
+</html>
+

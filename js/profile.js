@@ -26,11 +26,91 @@
   var computedRows = [];
   var currentTableTitle = '';
   var currentTableConfig = null;
-  var activeProjectId = 'rp1'; // 'rp1' = Research Paper 1, 'rp2' = Research Paper 2
+  var activeProjectId = 'rp1'; // 'rp2' enables two-group mode; others use single-group mode
   var currentProject2Table = null;
   var autoPercentTwoGroup = true;
   var computeTable9Percent = false;
   var SAMPLE_FLAG = 'profile-sample';
+  var activeProfileColumns = null; // array of {key,label} for single-group
+
+  function isTwoGroupProject(projectId) {
+    return String(projectId || '').toLowerCase() === 'rp2';
+  }
+
+  function getProfileColumnsForActiveProject() {
+    try {
+      if (window.ResearchProjectManager && typeof window.ResearchProjectManager.getProjectColumns === 'function') {
+        var cols = window.ResearchProjectManager.getProjectColumns(activeProjectId, 'profile') || [];
+        return Array.isArray(cols) ? cols : [];
+      }
+    } catch (e) {}
+    return [];
+  }
+
+  function renderProfileTableColumns() {
+    if (isTwoGroupProject(activeProjectId)) return;
+    var table = document.getElementById('pa-unified-table');
+    if (!table) return;
+    var thead = table.querySelector('thead');
+    if (!thead) return;
+
+    var cols = getProfileColumnsForActiveProject();
+    if (!cols.length) return;
+    activeProfileColumns = cols;
+
+    var tr = document.createElement('tr');
+    cols.forEach(function (c) {
+      var th = document.createElement('th');
+      th.className = 'pa-profile-table__th';
+      th.textContent = c.label || c.key;
+      tr.appendChild(th);
+    });
+    thead.innerHTML = '';
+    thead.appendChild(tr);
+  }
+
+  function rebuildSingleGroupTableForNewColumns() {
+    if (isTwoGroupProject(activeProjectId)) return;
+    var tbody = document.getElementById('pa-table-tbody');
+    if (!tbody) return;
+    var existing = tbody.querySelectorAll('tr');
+    if (!existing || existing.length === 0) return;
+
+    var rowsData = [];
+    existing.forEach(function (tr) {
+      var catEl = tr.querySelector('[data-pa-category]');
+      var freqEl = tr.querySelector('[data-pa-freq]');
+      var pctEl = tr.querySelector('[data-pa-pct]');
+      var rankEl = tr.querySelector('[data-pa-rank]');
+      var obj = {
+        particulars: (catEl && catEl.value != null) ? String(catEl.value).trim() : '',
+        frequency: (freqEl && freqEl.value != null) ? (parseInt(String(freqEl.value), 10) || 0) : 0,
+        percentage: (pctEl && pctEl.textContent != null) ? String(pctEl.textContent).trim() : '—',
+        rank: (rankEl && rankEl.textContent != null) ? String(rankEl.textContent).trim() : '—',
+        custom: {}
+      };
+      tr.querySelectorAll('[data-pa-custom]').forEach(function (inp) {
+        var key = inp.getAttribute('data-pa-custom');
+        if (!key) return;
+        obj.custom[key] = (inp.value || '').trim();
+      });
+      rowsData.push(obj);
+    });
+
+    tbody.innerHTML = '';
+    rowsData.forEach(function (r) {
+      var rowRefs = addRow(r.particulars, r.frequency);
+      if (!rowRefs || !rowRefs.tr) return;
+      var pctCell = rowRefs.tr.querySelector('[data-pa-pct]');
+      var rankCell = rowRefs.tr.querySelector('[data-pa-rank]');
+      if (pctCell) pctCell.textContent = r.percentage || '—';
+      if (rankCell) rankCell.textContent = r.rank || '—';
+      Object.keys(r.custom || {}).forEach(function (k) {
+        var el = rowRefs.tr.querySelector('[data-pa-custom="' + k + '"]');
+        if (el) el.value = r.custom[k] || '';
+      });
+    });
+  }
 
   // Predefined profile table structures (Tables 2–9)
   var PROFILE_TABLE_CONFIGS = {
@@ -523,16 +603,16 @@
     if (!tableSelect) return;
     var key = tableSelect.value;
     if (!key) {
-      if (pill) pill.textContent = activeProjectId === 'rp1' ? 'Manual table' : 'None selected';
+      if (pill) pill.textContent = !isTwoGroupProject(activeProjectId) ? 'Manual table' : 'None selected';
       return;
     }
-    var cfg = activeProjectId === 'rp2' ? PROJECT2_TABLES[key] : PROFILE_TABLE_CONFIGS[key];
+    var cfg = isTwoGroupProject(activeProjectId) ? PROJECT2_TABLES[key] : PROFILE_TABLE_CONFIGS[key];
     if (!cfg) {
       if (pill) pill.textContent = 'Unknown table';
       return;
     }
     var count = (cfg.rows ? cfg.rows.length : (cfg.categories ? cfg.categories.length : 0));
-    var mode = activeProjectId === 'rp2' ? 'Two groups' : 'Single group';
+    var mode = isTwoGroupProject(activeProjectId) ? 'Two groups' : 'Single group';
     var shortName = cfg.title ? cfg.title.replace(/^Table \d+\.\s*Respondents as to\s*(?:the\s*)?/i, '').trim() : key;
     var titlePart = (cfg.tableNumber ? 'Table ' + cfg.tableNumber + ' — ' : '') + (shortName || cfg.title || key);
     if (pill) pill.textContent = titlePart + ' • ' + count + ' categories • ' + mode;
@@ -665,7 +745,7 @@
   /** Load table by key. Call on init and when table select changes. */
   function loadSelectedTable(key) {
     if (!key) {
-      if (activeProjectId === 'rp1') {
+      if (!isTwoGroupProject(activeProjectId)) {
         showManualTableState();
         hideTwoGroupSection();
       } else {
@@ -675,7 +755,7 @@
       updateLoadedSummary();
       return;
     }
-    if (activeProjectId === 'rp2') {
+    if (isTwoGroupProject(activeProjectId)) {
       var cfg = PROJECT2_TABLES[key];
       if (!cfg) {
         showEmptyState();
@@ -792,62 +872,82 @@
     var tbody = document.getElementById('pa-table-tbody');
     if (!tbody) return null;
     var tr = document.createElement('tr');
-    var tdNo = document.createElement('td');
-    tdNo.setAttribute('data-pa-no', '');
-    tdNo.textContent = tbody.querySelectorAll('tr').length + 1;
-    tr.appendChild(tdNo);
-    var tdCat = document.createElement('td');
-    var catInput = document.createElement('input');
-    catInput.type = 'text';
-    catInput.className = 'pa-input pa-input--category';
-    catInput.placeholder = 'Category';
-    catInput.setAttribute('data-pa-category', '');
-    catInput.value = initialCategory || '';
-    tdCat.appendChild(catInput);
+    var cols = (activeProfileColumns && activeProfileColumns.length) ? activeProfileColumns : [
+      { key: 'no', label: 'No.' },
+      { key: 'particulars', label: 'Particulars' },
+      { key: 'frequency', label: 'Frequency (f)' },
+      { key: 'percentage', label: 'Percentage' },
+      { key: 'rank', label: 'Rank' },
+      { key: 'remove', label: 'Remove' }
+    ];
 
-    var tdFreq = document.createElement('td');
-    var freqInput = document.createElement('input');
-    freqInput.type = 'number';
-    freqInput.className = 'pa-input pa-input--freq';
-    freqInput.min = '0';
-    freqInput.step = '1';
-    freqInput.placeholder = '0';
-    freqInput.setAttribute('data-pa-freq', '');
-    if (typeof initialFrequency === 'number' && !isNaN(initialFrequency)) {
-      freqInput.value = String(initialFrequency);
-    }
-    tdFreq.appendChild(freqInput);
+    var catInput = null;
+    var freqInput = null;
+    var removeBtn = null;
 
-    var tdPct = document.createElement('td');
-    tdPct.setAttribute('data-pa-pct', '');
-    tdPct.textContent = '—';
+    cols.forEach(function (c) {
+      var key = (c && c.key) ? String(c.key) : '';
+      var td = document.createElement('td');
 
-    var tdRank = document.createElement('td');
-    tdRank.setAttribute('data-pa-rank', '');
-    tdRank.textContent = '—';
+      if (key === 'no') {
+        td.setAttribute('data-pa-no', '');
+        td.textContent = tbody.querySelectorAll('tr').length + 1;
+      } else if (key === 'particulars') {
+        catInput = document.createElement('input');
+        catInput.type = 'text';
+        catInput.className = 'pa-input pa-input--category';
+        catInput.placeholder = 'Category';
+        catInput.setAttribute('data-pa-category', '');
+        catInput.value = initialCategory || '';
+        td.appendChild(catInput);
+      } else if (key === 'frequency') {
+        freqInput = document.createElement('input');
+        freqInput.type = 'number';
+        freqInput.className = 'pa-input pa-input--freq';
+        freqInput.min = '0';
+        freqInput.step = '1';
+        freqInput.placeholder = '0';
+        freqInput.setAttribute('data-pa-freq', '');
+        if (typeof initialFrequency === 'number' && !isNaN(initialFrequency)) {
+          freqInput.value = String(initialFrequency);
+        }
+        td.appendChild(freqInput);
+      } else if (key === 'percentage') {
+        td.setAttribute('data-pa-pct', '');
+        td.textContent = '—';
+      } else if (key === 'rank') {
+        td.setAttribute('data-pa-rank', '');
+        td.textContent = '—';
+      } else if (key === 'remove') {
+        removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'pa-row-remove';
+        removeBtn.setAttribute('aria-label', 'Remove row');
+        removeBtn.setAttribute('data-pa-remove', '');
+        removeBtn.textContent = '×';
+        td.appendChild(removeBtn);
+      } else if (key) {
+        // Custom column: editable text
+        var custom = document.createElement('input');
+        custom.type = 'text';
+        custom.className = 'pa-input pa-input--category';
+        custom.placeholder = c.label || 'Value';
+        custom.setAttribute('data-pa-custom', key);
+        td.appendChild(custom);
+      }
 
-    var tdRemove = document.createElement('td');
-    var removeBtn = document.createElement('button');
-    removeBtn.type = 'button';
-    removeBtn.className = 'pa-row-remove';
-    removeBtn.setAttribute('aria-label', 'Remove row');
-    removeBtn.setAttribute('data-pa-remove', '');
-    removeBtn.textContent = '×';
-    tdRemove.appendChild(removeBtn);
-
-    tr.appendChild(tdCat);
-    tr.appendChild(tdFreq);
-    tr.appendChild(tdPct);
-    tr.appendChild(tdRank);
-    tr.appendChild(tdRemove);
+      tr.appendChild(td);
+    });
 
     tbody.appendChild(tr);
     updateProfileRowNumbers();
-    removeBtn.addEventListener('click', function () {
-      removeRow(tr);
-    });
-    freqInput.addEventListener('input', onInputChange);
-    catInput.addEventListener('input', onInputChange);
+    if (removeBtn) {
+      removeBtn.addEventListener('click', function () {
+        removeRow(tr);
+      });
+    }
+    if (freqInput) freqInput.addEventListener('input', onInputChange);
+    if (catInput) catInput.addEventListener('input', onInputChange);
     onInputChange();
     return {
       tr: tr,
@@ -873,6 +973,12 @@
     var tbody = document.getElementById('pa-table-tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
+    var cols = (activeProfileColumns && activeProfileColumns.length) ? activeProfileColumns : [];
+    var customKeys = cols
+      .map(function (c) { return c && c.key ? String(c.key) : ''; })
+      .filter(function (k) {
+        return k && k !== 'no' && k !== 'remove' && k !== 'particulars' && k !== 'frequency' && k !== 'percentage' && k !== 'rank';
+      });
     for (var i = 0; i < mapped.particulars.length; i++) {
       var cat = mapped.particulars[i] || '';
       var freqVal = mapped.frequency[i];
@@ -883,6 +989,16 @@
         var rankCell = result.tr.querySelector('[data-pa-rank]');
         if (pctCell && mapped.percentage[i]) pctCell.textContent = mapped.percentage[i];
         if (rankCell && mapped.rank[i]) rankCell.textContent = mapped.rank[i];
+
+        // Map extra pasted columns into custom project columns (by order)
+        if (mapped.extras && mapped.extras[i] && customKeys.length) {
+          for (var c = 0; c < customKeys.length; c++) {
+            var key = customKeys[c];
+            var val = mapped.extras[i][c];
+            var inp = result.tr.querySelector('[data-pa-custom="' + key + '"]');
+            if (inp && val != null && String(val).trim() !== '') inp.value = String(val).trim();
+          }
+        }
       }
     }
     updateProfileRowNumbers();
@@ -1037,7 +1153,7 @@
   }
 
   function onInputChange() {
-    if (activeProjectId === 'rp1') {
+    if (!isTwoGroupProject(activeProjectId)) {
       var rows = getInputRows();
       var total = 0;
       rows.forEach(function (r) { total += r.frequency; });
@@ -1070,7 +1186,7 @@
   }
 
   function compute() {
-    if (activeProjectId === 'rp2' && currentProject2Table) {
+    if (isTwoGroupProject(activeProjectId) && currentProject2Table) {
       renderTwoGroupTable(currentProject2Table, { showComputed: true });
       return;
     }
@@ -1712,7 +1828,7 @@
     var tableHtml = '';
     var tablePlain = '';
 
-    if (activeProjectId === 'rp2' && currentProject2Table && currentProject2Table.rows && currentProject2Table.rows.length) {
+    if (isTwoGroupProject(activeProjectId) && currentProject2Table && currentProject2Table.rows && currentProject2Table.rows.length) {
       syncTwoGroupFromDom();
       var sumH = 0, sumT = 0;
       currentProject2Table.rows.forEach(function (r) {
@@ -1745,7 +1861,7 @@
         '<td style="border: 1px solid #000; text-align: right;"><strong>' + sumH + '</strong></td><td style="border: 1px solid #000;"><strong>' + shPctText + '</strong></td>' +
         '<td style="border: 1px solid #000; text-align: right;"><strong>' + sumT + '</strong></td><td style="border: 1px solid #000;"><strong>' + tPctText + '</strong></td></tr></tfoot></table>';
       tablePlain += '\tTOTAL\t' + sumH + '\t' + shPctText + '\t' + sumT + '\t' + tPctText + '\n';
-    } else if (activeProjectId === 'rp1') {
+    } else if (!isTwoGroupProject(activeProjectId)) {
       var tbody = document.getElementById('pa-table-tbody');
       var totalFreqEl = document.getElementById('pa-total-freq');
       var totalPctEl = document.getElementById('pa-total-pct');
@@ -1753,34 +1869,74 @@
         showToast('Please compute and generate the interpretation first before copying.', true);
         return;
       }
+      var cols = (activeProfileColumns && activeProfileColumns.length) ? activeProfileColumns : null;
       var rows = [];
       tbody.querySelectorAll('tr').forEach(function (tr) {
+        var rowObj = {};
         var catEl = tr.querySelector('[data-pa-category]');
         var freqEl = tr.querySelector('[data-pa-freq]');
         var pctEl = tr.querySelector('[data-pa-pct]');
         var rankEl = tr.querySelector('[data-pa-rank]');
-        var category = (catEl && catEl.value != null) ? String(catEl.value).trim() : '';
-        var freq = (freqEl && freqEl.value != null) ? (parseInt(String(freqEl.value), 10) || 0) : 0;
-        var pct = (pctEl && pctEl.textContent != null) ? String(pctEl.textContent).trim() : '—';
-        var rank = (rankEl && rankEl.textContent != null) ? String(rankEl.textContent).trim() : '';
-        rows.push({ category: category, frequency: freq, percentage: pct, rank: rank });
+        rowObj.particulars = (catEl && catEl.value != null) ? String(catEl.value).trim() : '';
+        rowObj.frequency = (freqEl && freqEl.value != null) ? (parseInt(String(freqEl.value), 10) || 0) : 0;
+        rowObj.percentage = (pctEl && pctEl.textContent != null) ? String(pctEl.textContent).trim() : '—';
+        rowObj.rank = (rankEl && rankEl.textContent != null) ? String(rankEl.textContent).trim() : '';
+        // custom cells
+        tr.querySelectorAll('[data-pa-custom]').forEach(function (inp) {
+          var key = inp.getAttribute('data-pa-custom');
+          if (!key) return;
+          rowObj[key] = (inp.value || '').trim();
+        });
+        rows.push(rowObj);
       });
       var total = totalFreqEl ? (parseInt(totalFreqEl.textContent, 10) || 0) : rows.reduce(function (s, r) { return s + (r.frequency || 0); }, 0);
       var totalPct = (totalPctEl && totalPctEl.textContent) ? totalPctEl.textContent.trim() : '100.00';
+      var headerCols = cols && cols.length ? cols : [
+        { key: 'no', label: 'No.' },
+        { key: 'particulars', label: 'Particulars' },
+        { key: 'frequency', label: 'Frequency (f)' },
+        { key: 'percentage', label: 'Percentage' },
+        { key: 'rank', label: 'Rank' }
+      ];
+      // exclude remove from export
+      headerCols = headerCols.filter(function (c) { return c && c.key !== 'remove'; });
+
       tableHtml =
         '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">' +
-        '<thead><tr><th style="border: 1px solid #000; text-align: center; width: 2em;">No.</th><th style="border: 1px solid #000; text-align: left;">Particulars</th>' +
-        '<th style="border: 1px solid #000; text-align: right;">Frequency (f)</th>' +
-        '<th style="border: 1px solid #000; text-align: right;">Percentage</th>' +
-        '<th style="border: 1px solid #000; text-align: center;">Rank</th></tr></thead><tbody>';
-      tablePlain = 'No.\tParticulars\tFrequency (f)\tPercentage\tRank\n';
+        '<thead><tr>' +
+        headerCols.map(function (c, i) {
+          var align = (c.key === 'frequency' || c.key === 'percentage' || c.key === 'rank') ? 'right' : (c.key === 'no' ? 'center' : 'left');
+          var width = c.key === 'no' ? ' width: 2em;' : '';
+          return '<th style="border: 1px solid #000; text-align: ' + align + ';' + width + '">' + escapeHtml(c.label || c.key) + '</th>';
+        }).join('') +
+        '</tr></thead><tbody>';
+
+      tablePlain = headerCols.map(function (c) { return c.label || c.key; }).join('\t') + '\n';
+
       rows.forEach(function (r, idx) {
         var no = idx + 1;
-        tableHtml += '<tr><td style="border: 1px solid #000; text-align: center;">' + no + '</td><td style="border: 1px solid #000;">' + escapeHtml(r.category) + '</td>' +
-          '<td style="border: 1px solid #000; text-align: right;">' + r.frequency + '</td>' +
-          '<td style="border: 1px solid #000; text-align: right;">' + (r.percentage || '—') + '</td>' +
-          '<td style="border: 1px solid #000; text-align: center;">' + (r.rank || '') + '</td></tr>';
-        tablePlain += no + '\t' + (r.category || '') + '\t' + (r.frequency || '') + '\t' + (r.percentage || '') + '\t' + (r.rank || '') + '\n';
+        tableHtml += '<tr>' + headerCols.map(function (c) {
+          var key = c.key;
+          var align = (key === 'frequency' || key === 'percentage' || key === 'rank') ? 'right' : (key === 'no' ? 'center' : 'left');
+          var val = '';
+          if (key === 'no') val = String(no);
+          else if (key === 'particulars') val = r.particulars || '';
+          else if (key === 'frequency') val = (r.frequency != null ? String(r.frequency) : '');
+          else if (key === 'percentage') val = (r.percentage != null ? String(r.percentage) : '—');
+          else if (key === 'rank') val = (r.rank != null ? String(r.rank) : '');
+          else val = (r[key] != null ? String(r[key]) : '');
+          return '<td style="border: 1px solid #000; text-align: ' + align + ';">' + escapeHtml(val) + '</td>';
+        }).join('') + '</tr>';
+
+        tablePlain += headerCols.map(function (c) {
+          var key = c.key;
+          if (key === 'no') return no;
+          if (key === 'particulars') return r.particulars || '';
+          if (key === 'frequency') return r.frequency != null ? r.frequency : '';
+          if (key === 'percentage') return r.percentage != null ? r.percentage : '';
+          if (key === 'rank') return r.rank != null ? r.rank : '';
+          return r[key] != null ? r[key] : '';
+        }).join('\t') + '\n';
       });
       tableHtml += '</tbody><tfoot><tr><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"><strong>TOTAL</strong></td>' +
         '<td style="border: 1px solid #000; text-align: right;"><strong>' + total + '</strong></td>' +
@@ -1846,7 +2002,7 @@
     var tables = getProfileTables();
     var toSave = null;
 
-    if (activeProjectId === 'rp2' && currentProject2Table) {
+    if (isTwoGroupProject(activeProjectId) && currentProject2Table) {
       syncTwoGroupFromDom();
       var sumH = 0, sumT = 0;
       currentProject2Table.rows.forEach(function (r) {
@@ -2170,8 +2326,9 @@
     var selectEl = document.getElementById('pa-table-select');
     var projectSelect = document.getElementById('pa-project-select');
     if (selectEl) selectEl.value = '';
-    if (projectSelect) projectSelect.value = 'rp1';
-    activeProjectId = 'rp1';
+    var nextProject = (localStorage.getItem('selectedResearchProject') || 'rp1').toString();
+    activeProjectId = nextProject || 'rp1';
+    if (projectSelect) projectSelect.value = activeProjectId;
     showEmptyState();
     var block = document.getElementById('pa-interpretation-block');
     if (block) block.textContent = '';
@@ -2508,9 +2665,9 @@
       btnEdit.className = 'pa-btn pa-btn--ghost pa-btn--sm';
       btnEdit.textContent = 'Edit';
       btnEdit.addEventListener('click', function () {
-        activeProjectId = 'rp1';
+        activeProjectId = (t && t.projectId ? String(t.projectId) : (localStorage.getItem('selectedResearchProject') || 'rp1')).toString();
         var projectSelect = document.getElementById('pa-project-select');
-        if (projectSelect) projectSelect.value = 'rp1';
+        if (projectSelect) projectSelect.value = activeProjectId;
         var inputSingle = document.getElementById('pa-input-single-group');
         if (inputSingle) inputSingle.hidden = false;
         setGroupToggleVisibility();
@@ -2645,7 +2802,7 @@
 
   function setGroupToggleVisibility() {
     var wrap = document.getElementById('pa-group-toggle-wrap');
-    if (wrap) wrap.hidden = activeProjectId === 'rp2';
+    if (wrap) wrap.hidden = isTwoGroupProject(activeProjectId);
   }
 
   function setInterpretationTabsVisibility(show) {
@@ -2675,7 +2832,7 @@
   function restoreOriginalValues() {
     var key = document.getElementById('pa-table-select') && document.getElementById('pa-table-select').value;
     if (!key) return;
-    if (activeProjectId === 'rp2' && currentProject2Table) {
+    if (isTwoGroupProject(activeProjectId) && currentProject2Table) {
       currentProject2Table = JSON.parse(JSON.stringify(PROJECT2_TABLES[key]));
       renderTwoGroupTable(currentProject2Table, { showComputed: false });
       showToast('Original values restored.');
@@ -2686,21 +2843,61 @@
   }
 
   function init() {
-    activeProjectId = 'rp1';
+    // Initialize active project from shared selection (falls back to rp1)
+    activeProjectId = (localStorage.getItem('selectedResearchProject') || 'rp1').toString();
 
     var projectSelect = document.getElementById('pa-project-select');
     if (projectSelect) {
+      projectSelect.value = activeProjectId;
       projectSelect.addEventListener('change', function () {
         activeProjectId = this.value || 'rp1';
+        try {
+          if (window.ResearchProjectManager && typeof window.ResearchProjectManager.setSelectedProject === 'function') {
+            window.ResearchProjectManager.setSelectedProject(activeProjectId);
+          } else {
+            localStorage.setItem('selectedResearchProject', activeProjectId);
+          }
+        } catch (e) {}
         var tableSelect = document.getElementById('pa-table-select');
         if (tableSelect) {
           tableSelect.value = '';
           loadSelectedTable('');
         }
+        renderProfileTableColumns();
         setGroupToggleVisibility();
         updateLoadedSummary();
       });
     }
+
+    // If project selection changes elsewhere (modal / other dropdown), reflect it here
+    window.addEventListener('research-project:selected', function (e) {
+      var next = (e && e.detail && e.detail.selectedProjectId) ? e.detail.selectedProjectId : (localStorage.getItem('selectedResearchProject') || 'rp1');
+      if (!next || next === activeProjectId) return;
+      activeProjectId = next;
+      if (projectSelect) projectSelect.value = activeProjectId;
+      var tableSelect = document.getElementById('pa-table-select');
+      if (tableSelect) {
+        tableSelect.value = '';
+        loadSelectedTable('');
+      }
+      renderProfileTableColumns();
+      setGroupToggleVisibility();
+      updateLoadedSummary();
+    });
+
+    window.addEventListener('research-project:structure-updated', function (e) {
+      if (isTwoGroupProject(activeProjectId)) return;
+      renderProfileTableColumns();
+      rebuildSingleGroupTableForNewColumns();
+    });
+
+    // If user edits projects in another tab/page (Projects page), react immediately
+    window.addEventListener('storage', function (ev) {
+      if (!ev || ev.key !== 'researchProjects') return;
+      if (isTwoGroupProject(activeProjectId)) return;
+      renderProfileTableColumns();
+      rebuildSingleGroupTableForNewColumns();
+    });
 
     var implToggle = document.getElementById('pa-include-implications');
     if (implToggle) {
@@ -2726,6 +2923,9 @@
 
     var titleEl = document.getElementById('pa-table-title');
     if (titleEl) titleEl.addEventListener('input', onInputChange);
+
+    // Initial column render for selected project (single-group only)
+    renderProfileTableColumns();
 
     var addRowBtn = document.getElementById('pa-add-row');
     if (addRowBtn) addRowBtn.addEventListener('click', function () { addRow(); });

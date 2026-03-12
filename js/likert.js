@@ -65,6 +65,95 @@
 
   // Active project: rp1 (cooperative learning), rp2 (Science 3 SH vs Teachers)
   var activeProjectId = 'rp1';
+
+  function isTwoGroupProject(projectId) {
+    return String(projectId || '').toLowerCase() === 'rp2';
+  }
+
+  var activeLikertColumns = null; // array of {key,label} for single-group tables
+
+  function getLikertColumnsForActiveProject() {
+    try {
+      if (window.ResearchProjectManager && typeof window.ResearchProjectManager.getProjectColumns === 'function') {
+        var cols = window.ResearchProjectManager.getProjectColumns(activeProjectId, 'likert') || [];
+        return Array.isArray(cols) ? cols : [];
+      }
+    } catch (e) {}
+    return [];
+  }
+
+  function renderLikertTableColumnsSingleGroup() {
+    if (isTwoGroupProject(activeProjectId)) return;
+    var thead = document.getElementById('la-output-thead');
+    if (!thead) return;
+    var cols = getLikertColumnsForActiveProject();
+    if (!cols.length) return;
+    activeLikertColumns = cols;
+    thead.innerHTML = '<tr>' + cols.map(function (c) {
+      var label = escapeHtml(c.label || c.key || '');
+      return '<th class="la-thesis-table__th" scope="col">' + label + '</th>';
+    }).join('') + '</tr>';
+  }
+
+  function rebuildLikertSingleGroupTableForNewColumns() {
+    if (isTwoGroupProject(activeProjectId)) return;
+    var thead = document.getElementById('la-output-thead');
+    var tbody = document.getElementById('la-output-tbody');
+    if (!thead || !tbody) return;
+    if (thead.querySelector('.la-thesis-table__group-row')) return; // two-group header
+
+    var rowsData = [];
+    tbody.querySelectorAll('tr').forEach(function (tr) {
+      var placeholder = tr.querySelector('.la-output-empty');
+      if (placeholder) return;
+      var indInput = tr.querySelector('[data-la-indicator]');
+      var wmInput = tr.querySelector('[data-la-wm]');
+      var qdInput = tr.querySelector('[data-la-qd]');
+      var rankCell = tr.querySelector('[data-la-rank]');
+      var obj = {
+        particulars: (indInput && indInput.value != null) ? (indInput.value || '').trim() : '',
+        wm: wmInput && wmInput.value !== '' ? parseFloat(wmInput.value) : null,
+        qd: (qdInput && qdInput.value != null) ? (qdInput.value || '').trim() : '',
+        rank: (rankCell && rankCell.textContent != null) ? (rankCell.textContent || '').trim() : '—',
+        custom: {}
+      };
+      if (obj.wm != null && isNaN(obj.wm)) obj.wm = null;
+      tr.querySelectorAll('[data-la-custom]').forEach(function (inp) {
+        var key = inp.getAttribute('data-la-custom');
+        if (!key) return;
+        obj.custom[key] = (inp.value || '').trim();
+      });
+      rowsData.push(obj);
+    });
+
+    if (rowsData.length === 0) return;
+
+    renderLikertTableColumnsSingleGroup();
+    tbody.innerHTML = '';
+
+    rowsData.forEach(function (r, idx) {
+      var tr = document.createElement('tr');
+      tr.setAttribute('data-la-row-index', String(idx));
+      var cols = (activeLikertColumns && activeLikertColumns.length) ? activeLikertColumns : null;
+      if (!cols) return;
+      tr.innerHTML = cols.map(function (c) {
+        var key = c && c.key ? String(c.key) : '';
+        if (key === 'no') return '<td class="la-thesis-table__td la-thesis-table__td--no">' + (idx + 1) + '</td>';
+        if (key === 'particulars') return '<td class="la-thesis-table__td la-thesis-table__td--indicator"><textarea class="la-thesis-input la-thesis-input--indicator" data-la-indicator placeholder="Indicator" rows="2">' + escapeHtml(r.particulars || '') + '</textarea></td>';
+        if (key === 'wm') return '<td class="la-thesis-table__td la-thesis-table__td--num"><input type="number" step="0.01" class="la-thesis-input la-thesis-input--wm" data-la-wm value="' + (r.wm != null ? String(r.wm) : '') + '" placeholder="0.00"></td>';
+        if (key === 'qd') return '<td class="la-thesis-table__td la-thesis-table__td--qd"><input type="text" class="la-thesis-input la-thesis-input--qd" data-la-qd value="' + escapeHtml(r.qd || '') + '" placeholder="Q.D."></td>';
+        if (key === 'rank') return '<td class="la-thesis-table__td la-thesis-table__td--rank" data-la-rank>' + escapeHtml(r.rank || '—') + '</td>';
+        if (key === 'remove') return '<td class="la-thesis-table__td la-thesis-table__td--action"><button type="button" class="la-row-remove" aria-label="Remove row" data-la-remove>×</button></td>';
+        return '<td class="la-thesis-table__td"><input type="text" class="la-thesis-input" data-la-custom="' + escapeHtml(key) + '" value="' + escapeHtml((r.custom && r.custom[key]) || '') + '" placeholder="' + escapeHtml(c.label || 'Value') + '"></td>';
+      }).join('');
+      tbody.appendChild(tr);
+      var removeBtn = tr.querySelector('[data-la-remove]');
+      if (removeBtn) removeBtn.addEventListener('click', function () { removeLikertOutputRow(tr); });
+      tr.querySelectorAll('input, textarea').forEach(function (inp) {
+        inp.addEventListener('input', onInputChange);
+      });
+    });
+  }
   // Active table selection and loaded data (single source of truth)
   var activeTableId = '';
   var activeTableData = null;
@@ -1436,16 +1525,8 @@
     if (!tbody || !config) return;
 
     if (tableWrap) tableWrap.classList.remove('la-thesis-table--two-group');
-    if (thead) {
-      thead.innerHTML =
-        '<tr>' +
-          '<th class="la-thesis-table__th la-thesis-table__th--no" scope="col">No.</th>' +
-          '<th class="la-thesis-table__th la-thesis-table__th--particulars" scope="col">Particulars</th>' +
-          '<th class="la-thesis-table__th la-thesis-table__th--num" scope="col" title="Weighted Mean">W.M.</th>' +
-          '<th class="la-thesis-table__th la-thesis-table__th--qd" scope="col" title="Qualitative Description">Q.D.</th>' +
-          '<th class="la-thesis-table__th la-thesis-table__th--rank" scope="col">Rank</th>' +
-          '<th class="la-thesis-table__th la-thesis-table__th--action" scope="col">Remove</th>' +
-        '</tr>';
+    if (thead && !isTwoGroupProject(activeProjectId)) {
+      renderLikertTableColumnsSingleGroup();
     }
     var awmStr = showComputed && config.awm != null ? config.awm.toFixed(2) : '—';
     var awmDescStr = showComputed && (config.awmDesc != null && config.awmDesc !== '') ? qdToDisplay(config.awmDesc) : '—';
@@ -1462,6 +1543,7 @@
     }
 
     tbody.innerHTML = '';
+    var cols = (!isTwoGroupProject(activeProjectId) && activeLikertColumns && activeLikertColumns.length) ? activeLikertColumns : null;
     config.rows.forEach(function (row, idx) {
       var tr = document.createElement('tr');
       tr.setAttribute('data-la-row-index', String(idx));
@@ -1469,13 +1551,26 @@
       var indSafe = escapeHtml(indVal);
       var qdVal = showComputed && row.qd ? escapeHtml(qdToAcronym(row.qd)) : '';
       var rankVal = showComputed && row.rank != null ? (row.rank % 1 === 0 ? row.rank : row.rank.toFixed(1)) : '—';
-      tr.innerHTML =
-        '<td class="la-thesis-table__td la-thesis-table__td--no">' + (idx + 1) + '</td>' +
-        '<td class="la-thesis-table__td la-thesis-table__td--indicator"><textarea class="la-thesis-input la-thesis-input--indicator" data-la-indicator placeholder="Indicator" rows="2">' + indSafe + '</textarea></td>' +
-        '<td class="la-thesis-table__td la-thesis-table__td--num"><input type="number" step="0.01" class="la-thesis-input la-thesis-input--wm" data-la-wm value="' + row.wm.toFixed(2) + '"></td>' +
-        '<td class="la-thesis-table__td la-thesis-table__td--qd"><input type="text" class="la-thesis-input la-thesis-input--qd" data-la-qd value="' + qdVal + '" placeholder="Q.D."></td>' +
-        '<td class="la-thesis-table__td la-thesis-table__td--rank" data-la-rank>' + rankVal + '</td>' +
-        '<td class="la-thesis-table__td la-thesis-table__td--action"><button type="button" class="la-row-remove" aria-label="Remove row" data-la-remove>×</button></td>';
+      if (cols) {
+        tr.innerHTML = cols.map(function (c) {
+          var key = c && c.key ? String(c.key) : '';
+          if (key === 'no') return '<td class="la-thesis-table__td la-thesis-table__td--no">' + (idx + 1) + '</td>';
+          if (key === 'particulars') return '<td class="la-thesis-table__td la-thesis-table__td--indicator"><textarea class="la-thesis-input la-thesis-input--indicator" data-la-indicator placeholder="Indicator" rows="2">' + indSafe + '</textarea></td>';
+          if (key === 'wm') return '<td class="la-thesis-table__td la-thesis-table__td--num"><input type="number" step="0.01" class="la-thesis-input la-thesis-input--wm" data-la-wm value="' + row.wm.toFixed(2) + '"></td>';
+          if (key === 'qd') return '<td class="la-thesis-table__td la-thesis-table__td--qd"><input type="text" class="la-thesis-input la-thesis-input--qd" data-la-qd value="' + qdVal + '" placeholder="Q.D."></td>';
+          if (key === 'rank') return '<td class="la-thesis-table__td la-thesis-table__td--rank" data-la-rank>' + rankVal + '</td>';
+          if (key === 'remove') return '<td class="la-thesis-table__td la-thesis-table__td--action"><button type="button" class="la-row-remove" aria-label="Remove row" data-la-remove>×</button></td>';
+          return '<td class="la-thesis-table__td"><input type="text" class="la-thesis-input" data-la-custom="' + escapeHtml(key) + '" placeholder="' + escapeHtml(c.label || 'Value') + '"></td>';
+        }).join('');
+      } else {
+        tr.innerHTML =
+          '<td class="la-thesis-table__td la-thesis-table__td--no">' + (idx + 1) + '</td>' +
+          '<td class="la-thesis-table__td la-thesis-table__td--indicator"><textarea class="la-thesis-input la-thesis-input--indicator" data-la-indicator placeholder="Indicator" rows="2">' + indSafe + '</textarea></td>' +
+          '<td class="la-thesis-table__td la-thesis-table__td--num"><input type="number" step="0.01" class="la-thesis-input la-thesis-input--wm" data-la-wm value="' + row.wm.toFixed(2) + '"></td>' +
+          '<td class="la-thesis-table__td la-thesis-table__td--qd"><input type="text" class="la-thesis-input la-thesis-input--qd" data-la-qd value="' + qdVal + '" placeholder="Q.D."></td>' +
+          '<td class="la-thesis-table__td la-thesis-table__td--rank" data-la-rank>' + rankVal + '</td>' +
+          '<td class="la-thesis-table__td la-thesis-table__td--action"><button type="button" class="la-row-remove" aria-label="Remove row" data-la-remove>×</button></td>';
+      }
       tbody.appendChild(tr);
       var removeBtn = tr.querySelector('[data-la-remove]');
       if (removeBtn) removeBtn.addEventListener('click', function () { removeLikertOutputRow(tr); });
@@ -1778,13 +1873,27 @@
     var tr = document.createElement('tr');
     var nextIdx = tbody.querySelectorAll('tr').length;
     tr.setAttribute('data-la-row-index', String(nextIdx));
-    tr.innerHTML =
-      '<td class="la-thesis-table__td la-thesis-table__td--no">' + (nextIdx + 1) + '</td>' +
-      '<td class="la-thesis-table__td la-thesis-table__td--indicator"><textarea class="la-thesis-input la-thesis-input--indicator" data-la-indicator placeholder="New indicator" rows="2"></textarea></td>' +
-      '<td class="la-thesis-table__td la-thesis-table__td--num"><input type="number" step="0.01" class="la-thesis-input la-thesis-input--wm" data-la-wm placeholder="0.00"></td>' +
-      '<td class="la-thesis-table__td la-thesis-table__td--qd"><input type="text" class="la-thesis-input la-thesis-input--qd" data-la-qd placeholder="Q.D."></td>' +
-      '<td class="la-thesis-table__td la-thesis-table__td--rank" data-la-rank>—</td>' +
-      '<td class="la-thesis-table__td la-thesis-table__td--action"><button type="button" class="la-row-remove" aria-label="Remove row" data-la-remove>×</button></td>';
+    var cols = (!isTwoGroupProject(activeProjectId) && activeLikertColumns && activeLikertColumns.length) ? activeLikertColumns : null;
+    if (cols) {
+      tr.innerHTML = cols.map(function (c) {
+        var key = c && c.key ? String(c.key) : '';
+        if (key === 'no') return '<td class="la-thesis-table__td la-thesis-table__td--no">' + (nextIdx + 1) + '</td>';
+        if (key === 'particulars') return '<td class="la-thesis-table__td la-thesis-table__td--indicator"><textarea class="la-thesis-input la-thesis-input--indicator" data-la-indicator placeholder="New indicator" rows="2"></textarea></td>';
+        if (key === 'wm') return '<td class="la-thesis-table__td la-thesis-table__td--num"><input type="number" step="0.01" class="la-thesis-input la-thesis-input--wm" data-la-wm placeholder="0.00"></td>';
+        if (key === 'qd') return '<td class="la-thesis-table__td la-thesis-table__td--qd"><input type="text" class="la-thesis-input la-thesis-input--qd" data-la-qd placeholder="Q.D."></td>';
+        if (key === 'rank') return '<td class="la-thesis-table__td la-thesis-table__td--rank" data-la-rank>—</td>';
+        if (key === 'remove') return '<td class="la-thesis-table__td la-thesis-table__td--action"><button type="button" class="la-row-remove" aria-label="Remove row" data-la-remove>×</button></td>';
+        return '<td class="la-thesis-table__td"><input type="text" class="la-thesis-input" data-la-custom="' + escapeHtml(key) + '" placeholder="' + escapeHtml(c.label || 'Value') + '"></td>';
+      }).join('');
+    } else {
+      tr.innerHTML =
+        '<td class="la-thesis-table__td la-thesis-table__td--no">' + (nextIdx + 1) + '</td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--indicator"><textarea class="la-thesis-input la-thesis-input--indicator" data-la-indicator placeholder="New indicator" rows="2"></textarea></td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--num"><input type="number" step="0.01" class="la-thesis-input la-thesis-input--wm" data-la-wm placeholder="0.00"></td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--qd"><input type="text" class="la-thesis-input la-thesis-input--qd" data-la-qd placeholder="Q.D."></td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--rank" data-la-rank>—</td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--action"><button type="button" class="la-row-remove" aria-label="Remove row" data-la-remove>×</button></td>';
+    }
     tbody.appendChild(tr);
     if (currentLikertConfig && currentLikertConfig.rows) {
       currentLikertConfig.rows.push({ indicator: '', wm: 0, qd: '', rank: 0 });
@@ -2199,8 +2308,8 @@
     var tbody = document.getElementById('la-output-tbody');
     if (!tbody) return;
 
-    // RP1: single-group tables
-    if (activeProjectId === 'rp1') {
+    // Single-group tables (all non-rp2 projects)
+    if (!isTwoGroupProject(activeProjectId)) {
       var rows = [];
       tbody.querySelectorAll('tr').forEach(function (tr, idx) {
         var indInput = tr.querySelector('[data-la-indicator]');
@@ -2956,7 +3065,7 @@
     var data = computedData;
     if (!data.indicators.length) return '';
 
-    var tableId = (activeProjectId === 'rp1' && currentLikertConfig) ? currentLikertConfig.id : '';
+    var tableId = (!isTwoGroupProject(activeProjectId) && currentLikertConfig) ? currentLikertConfig.id : '';
     var rp1Cfg = tableId && RP1_LIKERT_INTERPRETATION_CONFIG[tableId];
     if (rp1Cfg) {
       return buildRp1LikertInterpretation(data.indicators, data.awm, data.awmDesc, tableId, variantIndex, lastOpener);
@@ -2981,7 +3090,7 @@
     var tableId = currentLikertConfig.id || '';
 
     // RP2 Tables 10–20: use dynamic thesis-ready format (section title + school heads + teachers)
-    if (activeProjectId === 'rp2' && RP2_LIKERT_INTERPRETATION_CONFIG[tableId]) {
+    if (isTwoGroupProject(activeProjectId) && RP2_LIKERT_INTERPRETATION_CONFIG[tableId]) {
       var rowsSh, rowsT, awmSh, awmT, awmShDesc, awmTDesc;
       if (currentTwoGroupData) {
         rowsSh = currentTwoGroupData.rowsSh;
@@ -3011,7 +3120,7 @@
     }
 
     // RP2 T-test (t21, t22) and other prewritten: use stored paragraphs
-    if (activeProjectId === 'rp2' && currentLikertConfig.prewritten) {
+    if (isTwoGroupProject(activeProjectId) && currentLikertConfig.prewritten) {
       laInterpretationSh = currentLikertConfig.prewritten.sh || '';
       laInterpretationT = currentLikertConfig.prewritten.t || '';
       return;
@@ -3139,7 +3248,7 @@
     // localStorage-based variation is unavailable. For RP2 we bypass the generic
     // validator so the full range of RP2 transitions (e.g., "In contrast", "In turn")
     // are allowed and not collapsed back to a single variant.
-    if (activeProjectId === 'rp2' && isLikertTwoGroup && (currentLikertConfig || currentTwoGroupData)) {
+    if (isTwoGroupProject(activeProjectId) && isLikertTwoGroup && (currentLikertConfig || currentTwoGroupData)) {
       var tableIdRp2 = (currentLikertConfig && (currentLikertConfig.id || currentLikertConfig.title)) || 'likert';
       tableIdRp2 = String(tableIdRp2).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
 
@@ -3281,7 +3390,7 @@
     var tbody = document.getElementById('la-output-tbody');
     // Sync RP1 single-group from DOM (rows + AWM) so Copy All uses on-screen values.
     // Use configIdx to avoid mismatch when placeholder rows are skipped (idx != config row index).
-    if (tbody && activeProjectId === 'rp1' && currentLikertConfig && !currentLikertConfig.type && (!currentLikertConfig.rows[0] || !currentLikertConfig.rows[0].sh)) {
+    if (tbody && !isTwoGroupProject(activeProjectId) && currentLikertConfig && !currentLikertConfig.type && (!currentLikertConfig.rows[0] || !currentLikertConfig.rows[0].sh)) {
       var rowsFromDomRp1 = [];
       var configIdx = 0;
       tbody.querySelectorAll('tr').forEach(function (tr) {
@@ -3427,17 +3536,50 @@
     } else {
       var awm = currentLikertConfig.awm;
       var awmDesc = currentLikertConfig.awmDesc != null ? currentLikertConfig.awmDesc : '—';
+      var cols = (!isTwoGroupProject(activeProjectId) && activeLikertColumns && activeLikertColumns.length) ? activeLikertColumns : [
+        { key: 'no', label: 'No.' },
+        { key: 'particulars', label: 'Particulars' },
+        { key: 'wm', label: 'W.M.' },
+        { key: 'qd', label: 'Q.D.' },
+        { key: 'rank', label: 'Rank' }
+      ];
+      cols = cols.filter(function (c) { return c && c.key !== 'remove'; });
+
       tableHtml =
         '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">' +
-        '<thead><tr><th style="' + styleCenter + '; width: 2em;">No.</th><th style="' + styleLeft + '">Particulars</th><th style="' + styleRight + '">W.M.</th><th style="' + styleLeft + '">Q.D.</th><th style="' + styleCenter + '">Rank</th></tr></thead><tbody>';
-      tablePlain = 'No.\tParticulars\tW.M.\tQ.D.\tRank\n';
+        '<thead><tr>' + cols.map(function (c) {
+          var key = c.key;
+          var style = (key === 'no') ? (styleCenter + '; width: 2em;') : (key === 'wm' ? styleRight : (key === 'rank' ? styleCenter : (key === 'qd' ? styleLeft : styleLeft)));
+          return '<th style="' + style + '">' + escapeHtml(c.label || c.key) + '</th>';
+        }).join('') + '</tr></thead><tbody>';
+
+      tablePlain = cols.map(function (c) { return c.label || c.key; }).join('\t') + '\n';
+
       currentLikertConfig.rows.forEach(function (row, idx) {
         var no = idx + 1;
         var wm = typeof row.wm === 'number' ? row.wm.toFixed(2) : '';
         var rank = row.rank != null ? (row.rank % 1 === 0 ? row.rank : row.rank.toFixed(1)) : '';
-        tableHtml += '<tr><td style="' + styleCenter + '">' + no + '</td><td style="' + styleLeft + '">' + escapeHtml(row.indicator || '') + '</td>' +
-          '<td style="' + styleRight + '">' + wm + '</td><td style="' + styleLeft + '">' + escapeHtml(qdToAcronym(row.qd) || '') + '</td><td style="' + styleCenter + '">' + rank + '</td></tr>';
-        tablePlain += no + '\t' + (row.indicator || '') + '\t' + wm + '\t' + (qdToAcronym(row.qd) || '') + '\t' + rank + '\n';
+        tableHtml += '<tr>' + cols.map(function (c) {
+          var key = c.key;
+          var style = (key === 'no') ? styleCenter : (key === 'wm' ? styleRight : (key === 'rank' ? styleCenter : styleLeft));
+          var val = '';
+          if (key === 'no') val = String(no);
+          else if (key === 'particulars') val = row.indicator || '';
+          else if (key === 'wm') val = wm;
+          else if (key === 'qd') val = qdToAcronym(row.qd) || '';
+          else if (key === 'rank') val = rank;
+          else val = '';
+          return '<td style="' + style + '">' + escapeHtml(val) + '</td>';
+        }).join('') + '</tr>';
+        tablePlain += cols.map(function (c) {
+          var key = c.key;
+          if (key === 'no') return no;
+          if (key === 'particulars') return row.indicator || '';
+          if (key === 'wm') return wm;
+          if (key === 'qd') return qdToAcronym(row.qd) || '';
+          if (key === 'rank') return rank;
+          return '';
+        }).join('\t') + '\n';
       });
       tableHtml += '</tbody><tfoot><tr><td style="' + styleCenter + '"></td><td style="' + styleLeft + '"><strong>AVERAGE WEIGHTED MEAN</strong></td>' +
         '<td style="' + styleRight + '"><strong>' + (typeof awm === 'number' ? awm.toFixed(2) : '—') + '</strong></td>' +
@@ -3512,7 +3654,7 @@
     var tables = getLikertTables();
     var toSave = null;
 
-    if (activeProjectId === 'rp2' && currentLikertConfig && usingPredefinedTable) {
+    if (isTwoGroupProject(activeProjectId) && currentLikertConfig && usingPredefinedTable) {
       var tbody = document.getElementById('la-output-tbody');
       if (!tbody) return;
       if (currentLikertConfig.type === 'tTest') {
@@ -3735,15 +3877,7 @@
     var tableWrap = document.getElementById('la-table-wrap');
     if (!tbody || !thead) return;
     if (tableWrap) tableWrap.classList.remove('la-thesis-table--two-group');
-    thead.innerHTML =
-      '<tr>' +
-        '<th class="la-thesis-table__th la-thesis-table__th--no" scope="col">No.</th>' +
-        '<th class="la-thesis-table__th la-thesis-table__th--particulars" scope="col">Particulars</th>' +
-        '<th class="la-thesis-table__th la-thesis-table__th--num" scope="col" title="Weighted Mean">W.M.</th>' +
-        '<th class="la-thesis-table__th la-thesis-table__th--qd" scope="col" title="Qualitative Description">Q.D.</th>' +
-        '<th class="la-thesis-table__th la-thesis-table__th--rank" scope="col">Rank</th>' +
-        '<th class="la-thesis-table__th la-thesis-table__th--action" scope="col">Remove</th>' +
-      '</tr>';
+    renderLikertTableColumnsSingleGroup();
     tfoot.innerHTML =
       '<tr class="la-thesis-table__footer-row">' +
         '<td class="la-thesis-table__footer-value"></td>' +
@@ -3756,13 +3890,27 @@
     tbody.innerHTML = '';
     var tr = document.createElement('tr');
     tr.setAttribute('data-la-row-index', '0');
-    tr.innerHTML =
-      '<td class="la-thesis-table__td la-thesis-table__td--no">1</td>' +
-      '<td class="la-thesis-table__td la-thesis-table__td--indicator"><textarea class="la-thesis-input la-thesis-input--indicator" data-la-indicator placeholder="New indicator" rows="2"></textarea></td>' +
-      '<td class="la-thesis-table__td la-thesis-table__td--num"><input type="number" step="0.01" class="la-thesis-input la-thesis-input--wm" data-la-wm placeholder="0.00"></td>' +
-      '<td class="la-thesis-table__td la-thesis-table__td--qd"><input type="text" class="la-thesis-input la-thesis-input--qd" data-la-qd placeholder="Q.D."></td>' +
-      '<td class="la-thesis-table__td la-thesis-table__td--rank" data-la-rank>—</td>' +
-      '<td class="la-thesis-table__td la-thesis-table__td--action"><button type="button" class="la-row-remove" aria-label="Remove row" data-la-remove>×</button></td>';
+    var cols = (!isTwoGroupProject(activeProjectId) && activeLikertColumns && activeLikertColumns.length) ? activeLikertColumns : null;
+    if (cols) {
+      tr.innerHTML = cols.map(function (c) {
+        var key = c && c.key ? String(c.key) : '';
+        if (key === 'no') return '<td class="la-thesis-table__td la-thesis-table__td--no">1</td>';
+        if (key === 'particulars') return '<td class="la-thesis-table__td la-thesis-table__td--indicator"><textarea class="la-thesis-input la-thesis-input--indicator" data-la-indicator placeholder="New indicator" rows="2"></textarea></td>';
+        if (key === 'wm') return '<td class="la-thesis-table__td la-thesis-table__td--num"><input type="number" step="0.01" class="la-thesis-input la-thesis-input--wm" data-la-wm placeholder="0.00"></td>';
+        if (key === 'qd') return '<td class="la-thesis-table__td la-thesis-table__td--qd"><input type="text" class="la-thesis-input la-thesis-input--qd" data-la-qd placeholder="Q.D."></td>';
+        if (key === 'rank') return '<td class="la-thesis-table__td la-thesis-table__td--rank" data-la-rank>—</td>';
+        if (key === 'remove') return '<td class="la-thesis-table__td la-thesis-table__td--action"><button type="button" class="la-row-remove" aria-label="Remove row" data-la-remove>×</button></td>';
+        return '<td class="la-thesis-table__td"><input type="text" class="la-thesis-input" data-la-custom="' + escapeHtml(key) + '" placeholder="' + escapeHtml(c.label || 'Value') + '"></td>';
+      }).join('');
+    } else {
+      tr.innerHTML =
+        '<td class="la-thesis-table__td la-thesis-table__td--no">1</td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--indicator"><textarea class="la-thesis-input la-thesis-input--indicator" data-la-indicator placeholder="New indicator" rows="2"></textarea></td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--num"><input type="number" step="0.01" class="la-thesis-input la-thesis-input--wm" data-la-wm placeholder="0.00"></td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--qd"><input type="text" class="la-thesis-input la-thesis-input--qd" data-la-qd placeholder="Q.D."></td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--rank" data-la-rank>—</td>' +
+        '<td class="la-thesis-table__td la-thesis-table__td--action"><button type="button" class="la-row-remove" aria-label="Remove row" data-la-remove>×</button></td>';
+    }
     tbody.appendChild(tr);
     var removeBtn = tr.querySelector('[data-la-remove]');
     if (removeBtn) removeBtn.addEventListener('click', function () { removeLikertOutputRow(tr); });
@@ -3863,6 +4011,9 @@
   }
 
   function init() {
+    // Initialize active project from shared selection (falls back to rp1)
+    activeProjectId = (localStorage.getItem('selectedResearchProject') || activeProjectId || 'rp1').toString();
+    renderLikertTableColumnsSingleGroup();
     ensureInstructionVisible();
     document.body.setAttribute('data-la-project', activeProjectId);
     var saveTableBtn = document.getElementById('la-save-table');
@@ -3872,9 +4023,18 @@
 
     var projectSelect = document.getElementById('la-project-select');
     if (projectSelect) {
+      projectSelect.value = activeProjectId;
       projectSelect.addEventListener('change', function () {
         activeProjectId = this.value || 'rp1';
+        try {
+          if (window.ResearchProjectManager && typeof window.ResearchProjectManager.setSelectedProject === 'function') {
+            window.ResearchProjectManager.setSelectedProject(activeProjectId);
+          } else {
+            localStorage.setItem('selectedResearchProject', activeProjectId);
+          }
+        } catch (e) {}
         document.body.setAttribute('data-la-project', activeProjectId);
+        renderLikertTableColumnsSingleGroup();
         activeTableId = '';
         activeTableData = null;
         currentLikertConfig = null;
@@ -3883,7 +4043,7 @@
         var selectEl = document.getElementById('la-table-select');
         if (selectEl) {
           selectEl.value = '';
-          if (activeProjectId === 'rp2') {
+          if (isTwoGroupProject(activeProjectId)) {
             selectEl.value = 't10';
             loadRp2Table('t10');
           } else {
@@ -3896,6 +4056,48 @@
       });
     }
 
+    // If project selection changes elsewhere (modal / other dropdown), reflect it here
+    window.addEventListener('research-project:selected', function (e) {
+      var next = (e && e.detail && e.detail.selectedProjectId) ? e.detail.selectedProjectId : (localStorage.getItem('selectedResearchProject') || 'rp1');
+      if (!next || next === activeProjectId) return;
+      activeProjectId = next;
+      document.body.setAttribute('data-la-project', activeProjectId);
+      renderLikertTableColumnsSingleGroup();
+      if (projectSelect) projectSelect.value = activeProjectId;
+      activeTableId = '';
+      activeTableData = null;
+      currentLikertConfig = null;
+      usingPredefinedTable = false;
+      computedData = { indicators: [], awm: 0, awmDesc: '', tableTitle: '', theme: '', scaleMapping: getScaleMapping() };
+      var selectEl = document.getElementById('la-table-select');
+      if (selectEl) {
+        selectEl.value = '';
+        if (isTwoGroupProject(activeProjectId)) {
+          selectEl.value = 't10';
+          loadRp2Table('t10');
+        } else {
+          if (titleEl) titleEl.value = '';
+          renderManualLikertTable();
+        }
+      }
+      ensureInstructionVisible();
+      updateSelectedTableSummary();
+    });
+
+    window.addEventListener('research-project:structure-updated', function () {
+      if (isTwoGroupProject(activeProjectId)) return;
+      renderLikertTableColumnsSingleGroup();
+      rebuildLikertSingleGroupTableForNewColumns();
+    });
+
+    // If user edits projects in another tab/page (Projects page), react immediately
+    window.addEventListener('storage', function (ev) {
+      if (!ev || ev.key !== 'researchProjects') return;
+      if (isTwoGroupProject(activeProjectId)) return;
+      renderLikertTableColumnsSingleGroup();
+      rebuildLikertSingleGroupTableForNewColumns();
+    });
+
     var selectEl = document.getElementById('la-table-select');
     if (selectEl) {
       selectEl.addEventListener('change', function () {
@@ -3906,7 +4108,7 @@
           updateSelectedTableSummary();
           return;
         }
-        if (activeProjectId === 'rp2') {
+        if (isTwoGroupProject(activeProjectId)) {
           loadRp2Table(id);
         } else {
           loadLikertTable(id);
@@ -3919,7 +4121,7 @@
     var implToggle = document.getElementById('la-include-implications');
     if (implToggle) {
       implToggle.addEventListener('change', function () {
-        if (activeProjectId === 'rp2' && currentLikertConfig) {
+        if (isTwoGroupProject(activeProjectId) && currentLikertConfig) {
           if (currentLikertConfig.type !== 'tTest' && (currentLikertConfig.rows || currentTwoGroupData)) {
             generateTwoGroupInterpretations(0, '');
             var block = document.getElementById('la-interpretation-block');
@@ -3936,7 +4138,7 @@
               block.textContent = prewrittenText;
             }
           }
-        } else if (activeProjectId === 'rp1' && computedData.indicators.length) {
+        } else if (!isTwoGroupProject(activeProjectId) && computedData.indicators.length) {
           generateInterpretation();
         }
       });
@@ -4011,7 +4213,7 @@
       restoreBtn.addEventListener('click', function () {
         if (currentLikertConfig) {
           var id = currentLikertConfig.id;
-          if (activeProjectId === 'rp2') {
+          if (isTwoGroupProject(activeProjectId)) {
             loadRp2Table(id);
           } else {
             loadLikertTable(id);
@@ -4104,7 +4306,7 @@
     updateSessionProgress();
     renderRecentActivity();
     var tableSelectInit = document.getElementById('la-table-select');
-    if (tableSelectInit && tableSelectInit.value === '' && activeProjectId === 'rp1') {
+    if (tableSelectInit && tableSelectInit.value === '' && !isTwoGroupProject(activeProjectId)) {
       renderManualLikertTable();
     }
     updateSelectedTableSummary();

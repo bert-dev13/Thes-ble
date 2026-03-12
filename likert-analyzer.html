@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Thesis Interpretation Assistant — Likert Analyzer</title>
   <link rel="stylesheet" href="css/likert.css">
+  <link rel="stylesheet" href="css/projects.css">
 </head>
 <body>
   <!-- Top Bar -->
@@ -27,6 +28,7 @@
           <a href="profile-analyzer.html" class="la-top-bar__link">Profile</a>
           <a href="likert-analyzer.html" class="la-top-bar__link is-active">Likert</a>
           <a href="summary-generator.html" class="la-top-bar__link">Summary</a>
+          <a href="projects.html" class="la-top-bar__link">Projects</a>
         </nav>
         <div class="la-top-bar__actions">
           <button type="button" class="la-btn la-btn--reset la-btn--sm" id="la-btn-reset" aria-label="Reset session data">Reset</button>
@@ -43,6 +45,7 @@
       <a href="profile-analyzer.html" class="la-nav-dropdown__link">Profile</a>
       <a href="likert-analyzer.html" class="la-nav-dropdown__link">Likert</a>
       <a href="summary-generator.html" class="la-nav-dropdown__link">Summary</a>
+      <a href="projects.html" class="la-nav-dropdown__link">Projects</a>
       <button type="button" class="la-btn la-btn--reset la-nav-dropdown__reset" id="la-btn-reset-mobile">Reset</button>
     </div>
   </header>
@@ -53,6 +56,11 @@
       <div class="la-content__inner la-page-header__inner">
         <h1 id="la-page-title" class="la-page-header__title">Likert / Weighted Mean Analyzer</h1>
         <p class="la-page-header__subtitle">Manually enter your indicators and ratings. The system computes weighted means, ranks, qualitative descriptions, and thesis-ready interpretations.</p>
+        <div class="rp-inline" aria-label="Selected research project">
+          <span class="rp-inline__label">Selected project:</span>
+          <span class="rp-inline__value" data-rp-selected-name>—</span>
+          <a class="rp-inline__btn" href="projects.html">Manage</a>
+        </div>
       </div>
     </section>
 
@@ -424,6 +432,7 @@
   <script src="js/paste-table-utils.js"></script>
   <script src="js/TableEngine.js"></script>
   <script src="js/ClipboardEngine.js"></script>
+  <script src="js/research-projects.js"></script>
   <script src="js/likert.js"></script>
 </body>
 </html>

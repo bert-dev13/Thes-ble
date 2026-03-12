@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Thesis Interpretation Assistant — Dashboard</title>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/projects.css">
 </head>
 <body>
   <!-- ========== A) Top Bar (sticky) ========== -->
@@ -27,6 +28,7 @@
           <a href="profile-analyzer.html" class="top-bar__link">Profile</a>
           <a href="likert-analyzer.html" class="top-bar__link">Likert</a>
           <a href="summary-generator.html" class="top-bar__link">Summary</a>
+          <a href="projects.html" class="top-bar__link">Projects</a>
         </nav>
         <div class="top-bar__actions">
           <button type="button" class="btn btn--reset btn--sm" id="btn-reset-session" aria-label="Reset session data">Reset</button>
@@ -43,6 +45,7 @@
       <a href="profile-analyzer.html" class="nav-dropdown__link">Profile</a>
       <a href="likert-analyzer.html" class="nav-dropdown__link">Likert</a>
       <a href="summary-generator.html" class="nav-dropdown__link">Summary</a>
+      <a href="projects.html" class="nav-dropdown__link">Projects</a>
       <button type="button" class="btn btn--reset nav-dropdown__reset" id="btn-reset-mobile">Reset</button>
     </div>
   </header>
@@ -53,6 +56,11 @@
       <div class="container dashboard-header__inner">
         <h1 id="hero-title" class="dashboard-header__title">Research Table Analysis System</h1>
         <p class="dashboard-header__subtitle">Automated computation and interpretation for research tables.</p>
+        <div class="rp-inline" aria-label="Selected research project">
+          <span class="rp-inline__label">Selected project:</span>
+          <span class="rp-inline__value" data-rp-selected-name>—</span>
+          <a class="rp-inline__btn" href="projects.html">Manage</a>
+        </div>
         <a href="profile-analyzer.html" class="btn btn--primary dashboard-header__cta">
           <span class="dashboard-header__cta-icon" aria-hidden="true">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -171,6 +179,7 @@
     </div>
   </div>
 
+  <script src="js/research-projects.js"></script>
   <script src="js/dashboard.js"></script>
 </body>
 </html>
