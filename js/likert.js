@@ -2600,7 +2600,7 @@
     return text.trim();
   }
 
-  /** 20 opener prefixes for RP2 paragraph 1. */
+  /** 20 opener prefixes for RP2 paragraph 1 (legacy; two-group prefers LIKERT_TWO_GROUP_OPENING_PHRASES). */
   var LIKERT_PARA1_OPENER_PREFIXES = [
     'Relative to the ', 'In terms of the ', 'With reference to the ', 'Considering the ',
     'Regarding the ', 'Pertaining to the ', 'Concerning the ', 'As to the ',
@@ -2610,51 +2610,89 @@
     'As regards the ', 'Touching on the '
   ];
 
-  /** 20 transition phrases for paragraph 2 (RP2 two-group). */
-  var RP2_LIKERT_TEACHERS_TRANSITION = [
-    'Meanwhile, teacher respondents ', 'On the other hand, teacher respondents ', 'Similarly, teacher respondents ',
-    'In contrast, teacher respondents ', 'By comparison, teacher respondents ', 'Correspondingly, teacher respondents ',
-    'Likewise, teacher respondents ', 'Conversely, teacher respondents ', 'Alternatively, teacher respondents ',
-    'Additionally, teacher respondents ', 'Furthermore, teacher respondents ', 'Moreover, teacher respondents ',
-    'In parallel, teacher respondents ', 'In tandem, teacher respondents ', 'By the same token, teacher respondents ',
-    'In like manner, teacher respondents ', 'Equally, teacher respondents ', 'Concurrently, teacher respondents ',
-    'In turn, teacher respondents ', 'In addition, teacher respondents '
+  /** First paragraph openings (20) — School Heads. Opener + " the " + theme + ", school head respondents ". */
+  var firstParagraphOpeners = [
+    'About the ', 'With regard to the ', 'Concerning the ', 'Regarding the ', 'Pertaining to the ',
+    'In relation to the ', 'On the subject of the ', 'In reference to the ', 'As for the ', 'In connection with the ',
+    'Relative to the ', 'With respect to the ', 'In the context of the ', 'In view of the ',
+    'The table shows the ', 'The table presents the ', 'The table displays the ', 'The table illustrates the ',
+    'The table demonstrates the ', 'The table outlines the '
   ];
 
+  /** Second paragraph openings (20) — Teachers. Full prefix before body (e.g. "rated the following..."). */
+  var secondParagraphOpeners = [
+    'Meanwhile, teacher respondents ', 'On the other hand, teacher respondents ', 'Similarly, teacher respondents ',
+    'In the same manner, teacher respondents ', 'Likewise, teacher respondents ', 'In comparison, teacher respondents ',
+    'By comparison, teacher respondents ', 'In contrast, teacher respondents ', 'Correspondingly, teacher respondents ',
+    "From the teachers' perspective, teacher respondents ", "From the teachers' viewpoint, teacher respondents ",
+    'According to the teachers, teacher respondents ', "Based on the teachers' responses, teacher respondents ",
+    'As reported by the teachers, teacher respondents ', 'As perceived by the teachers, teacher respondents ',
+    'Teachers, on the other hand, ', 'Teachers likewise, ', 'Teachers similarly, ', 'Teachers, meanwhile, ',
+    'The teacher respondents '
+  ];
+
+  /** @deprecated Use firstParagraphOpeners for two-group. Kept for backward compatibility. */
+  var LIKERT_TWO_GROUP_OPENING_PHRASES = firstParagraphOpeners;
+
+  /** @deprecated Use secondParagraphOpeners. Kept for validation and backward compatibility. */
+  var RP2_LIKERT_TEACHERS_TRANSITION = secondParagraphOpeners;
+
   /**
-   * Build paragraph 1 body for two-group Likert (verb phrase only; caller prepends "Relative to the [theme], the school head respondents ").
-   * Locked structure: "rated \"indicator\" with a weighted mean of X as [QD]. Other indicators rated as [QD] include ..."
-   * Never produces "rated the indicators rated as" or "rated the indicators include".
+   * Build QD-grouped body for two-group paragraphs (School Heads and Teachers).
+   * - Single QD: "rated the following indicators as [QD]: [enum]."
+   * - Multiple QD: highest QD first, then "The remaining indicators were rated as [next QD]: [enum]."
+   * - Within each group, indicators in descending weighted mean order. Never uses "led by".
    */
-  function buildTwoGroupPara1Body(rows, qdFull) {
+  function buildTwoGroupQdGroupedBody(rows, defaultQdFull) {
+    if (!rows || !rows.length) return 'did not rate any indicators.';
     var getWm = function (r) { return r.weightedMean != null ? r.weightedMean : (r.wm != null ? r.wm : 0); };
     var getQd = function (r) { return (r.qualitativeDescription || r.qd || '').trim() || '—'; };
-    var sorted = rows.slice().sort(function (a, b) { return getWm(b) - getWm(a); });
-    if (!sorted.length) return 'did not rate any indicators.';
-    var first = sorted[0];
-    var fmtIndP1 = typeof ThesisInterpretationUtils !== 'undefined' && ThesisInterpretationUtils.formatIndicatorForInterpretation
-      ? ThesisInterpretationUtils.formatIndicatorForInterpretation : function (x) { return (x || '').trim(); };
-    var firstInd = '"' + fmtIndP1(first.indicator || '') + '"';
-    var firstWm = getWm(first).toFixed(2);
-    var firstQdRaw = getQd(first);
-    var firstQd = (firstQdRaw && firstQdRaw !== '—') ? expandQdForRows(firstQdRaw) : qdFull;
-    var rest = sorted.slice(1);
-    if (rest.length === 0) {
-      return 'rated ' + firstInd + ' with a weighted mean of ' + firstWm + ' as ' + firstQd + '.';
+    var qdMap = {};
+    rows.forEach(function (r) {
+      var qd = getQd(r);
+      if (!qdMap[qd]) qdMap[qd] = [];
+      qdMap[qd].push(r);
+    });
+    var qdKeys = Object.keys(qdMap).filter(function (k) { return k !== '—'; });
+    qdKeys.sort(function (a, b) {
+      var maxA = Math.max.apply(null, qdMap[a].map(function (r) { return getWm(r); }));
+      var maxB = Math.max.apply(null, qdMap[b].map(function (r) { return getWm(r); }));
+      return maxB - maxA;
+    });
+    if (qdMap['—'] && qdMap['—'].length) qdKeys.push('—');
+    var expandQd = expandQdForRows;
+    var segments = [];
+    for (var i = 0; i < qdKeys.length; i++) {
+      var qdKey = qdKeys[i];
+      var groupRows = qdMap[qdKey];
+      var qdFull = (qdKey && qdKey !== '—') ? expandQd(qdKey) : (defaultQdFull || qdKey || '—');
+      var enumText = formatIndicatorsEnumeration(groupRows);
+      if (qdKeys.length === 1) {
+        return 'rated the following indicators as ' + qdFull + ': ' + enumText + '.';
+      }
+      if (i === 0) {
+        segments.push('rated the following indicators as ' + qdFull + ': ' + enumText);
+      } else {
+        segments.push('The remaining indicators were rated as ' + qdFull + ': ' + enumText);
+      }
     }
-    var restEnum = formatIndicatorsEnumeration(rest);
-    return 'rated ' + firstInd + ' with a weighted mean of ' + firstWm + ' as ' + firstQd + '. Other indicators rated as ' + qdFull + ' include ' + restEnum + '.';
+    return segments.join('. ') + '.';
+  }
+
+  /**
+   * Build paragraph 1 body for two-group Likert (verb phrase only; caller prepends opener + theme + " the school head respondents ").
+   * Uses QD grouping: single QD = one sentence; multiple QD = highest first, then "The remaining indicators were rated as ..."
+   */
+  function buildTwoGroupPara1Body(rows, qdFull) {
+    return buildTwoGroupQdGroupedBody(rows, qdFull);
   }
 
   /**
    * Build paragraph 2 body for two-group Likert (appended after transition, e.g. "Meanwhile, teacher respondents ").
-   * Master prompt: do not repeat table title; enumerate in strict descending order of weighted mean; semicolons; quotation marks.
-   * Structure: "rated the indicators as [QD], led by [enumeration]." to avoid "Indicators rated as [QD] include" duplication.
+   * Same QD grouping as para 1. Never uses "led by".
    */
   function buildTwoGroupPara2Body(rows, qdFull) {
-    if (!rows || !rows.length) return 'rated the indicators as ' + qdFull + '.';
-    var enumText = formatIndicatorsEnumeration(rows);
-    return 'rated the indicators as ' + qdFull + ', led by ' + enumText + '.';
+    return buildTwoGroupQdGroupedBody(rows, qdFull);
   }
 
   function expandQdForRows(abbr) {
@@ -2663,34 +2701,52 @@
   }
 
   /**
-   * Remove duplicated phrases from two-group interpretation text (grammar safety).
-   * Corrects "rated the indicators rated as", "include the following include", etc.
+   * Remove duplicated phrases and "led by" from two-group interpretation text (grammar safety).
+   * Corrects "rated the indicators rated as", "include the following include"; removes "led by" per client request.
    */
   function sanitizeTwoGroupParagraph(text) {
     if (!text || typeof text !== 'string') return text || '';
     var t = text.replace(/rated the indicators rated as /gi, 'rated the indicators as ');
     t = t.replace(/include the following include /gi, 'include the following: ');
+    t = t.replace(/, led by /gi, ': ');
     return t;
+  }
+
+  /** All valid opener prefixes for paragraph 1 (legacy + two-group rotating list). */
+  function getAllValidPara1Openers() {
+    var list = LIKERT_PARA1_OPENER_PREFIXES.slice();
+    LIKERT_TWO_GROUP_OPENING_PHRASES.forEach(function (p) {
+      if (list.indexOf(p) === -1) list.push(p);
+    });
+    return list;
   }
 
   /** Return true if paragraph 1 starts with any valid Likert opener (master prompt list). */
   function para1StartsWithValidOpener(shPara) {
     if (!shPara || typeof shPara !== 'string') return false;
     var trim = shPara.trim();
-    for (var i = 0; i < LIKERT_PARA1_OPENER_PREFIXES.length; i++) {
-      if (trim.indexOf(LIKERT_PARA1_OPENER_PREFIXES[i]) === 0) return true;
+    var openers = getAllValidPara1Openers();
+    for (var i = 0; i < openers.length; i++) {
+      if (trim.indexOf(openers[i]) === 0) return true;
     }
     return false;
   }
 
   /**
-   * Validate two-group interpretation: para 2 starts with Meanwhile/On the other hand/Similarly;
-   * no "rated the indicators rated as"; para 1 starts with one of the master prompt openers.
+   * Validate two-group interpretation: para 2 starts with a valid transition (Meanwhile, On the other hand, Similarly, or any RP2 transition);
+   * no "rated the indicators rated as"; para 1 starts with one of the master prompt openers; both sections present.
    */
   function validateTwoGroupInterpretation(shPara, tPara) {
     if (!shPara || !tPara) return false;
     var tTrim = tPara.trim();
-    if (tTrim.indexOf('Meanwhile,') !== 0 && tTrim.indexOf('On the other hand,') !== 0 && tTrim.indexOf('Similarly,') !== 0) return false;
+    var validTransition = false;
+    if (RP2_LIKERT_TEACHERS_TRANSITION && RP2_LIKERT_TEACHERS_TRANSITION.length) {
+      for (var i = 0; i < RP2_LIKERT_TEACHERS_TRANSITION.length; i++) {
+        if (tTrim.indexOf(RP2_LIKERT_TEACHERS_TRANSITION[i]) === 0) { validTransition = true; break; }
+      }
+    }
+    if (!validTransition && (tTrim.indexOf('Meanwhile,') === 0 || tTrim.indexOf('On the other hand,') === 0 || tTrim.indexOf('Similarly,') === 0)) validTransition = true;
+    if (!validTransition) return false;
     var bad = /rated the indicators rated as/i;
     if (bad.test(shPara) || bad.test(tPara)) return false;
     if (!para1StartsWithValidOpener(shPara)) return false;
@@ -2745,7 +2801,10 @@
       : (themeRaw || 'the theme');
     var themeForOpener = (theme || '').replace(/^\s*the\s+/i, '') || theme || 'theme';
 
-    var openerPrefix = LIKERT_PARA1_OPENER_PREFIXES[Math.abs(vi) % LIKERT_PARA1_OPENER_PREFIXES.length];
+    var openerList = firstParagraphOpeners && firstParagraphOpeners.length
+      ? firstParagraphOpeners
+      : LIKERT_PARA1_OPENER_PREFIXES;
+    var openerPrefix = openerList[Math.floor(Math.random() * openerList.length)];
     var para1Opener = openerPrefix + themeForOpener + ', the school head respondents ';
     var bodySh = buildTwoGroupPara1Body(rowsSh, descSh);
     var awmVerb = Gen ? (Gen.getSynonym('signifies', vi) || 'indicates') : 'indicates';
@@ -2759,7 +2818,7 @@
       shPara += ' ' + leadSh2 + ' ' + cfg.headsImplies;
     }
 
-    var teachersPrefix = RP2_LIKERT_TEACHERS_TRANSITION[Math.abs(vi) % RP2_LIKERT_TEACHERS_TRANSITION.length];
+    var teachersPrefix = secondParagraphOpeners[Math.floor(Math.random() * secondParagraphOpeners.length)];
     var bodyT = buildTwoGroupPara2Body(rowsT, descT);
     var awmVerbT = Gen ? (Gen.getSynonym('signifies', vi + 1) || 'indicates') : 'indicates';
     var tPara = teachersPrefix + bodyT + ' The average weighted mean of ' + awmTStr + ' ' + awmVerbT + ' that teacher respondents view the ' + themeForOpener + ' as ' + descT + '.';
@@ -2994,9 +3053,14 @@
     var theme = (UtilsFmt && UtilsFmt.formatThemeForInterpretation)
       ? UtilsFmt.formatThemeForInterpretation(themeRaw || 'the theme')
       : (themeRaw || 'the theme');
+    var themeForOpener = (theme || '').replace(/^\s*the\s+/i, '') || theme || 'theme';
     var includeImpl = document.getElementById('la-include-implications') && document.getElementById('la-include-implications').checked;
 
-    var para1Opener = 'Relative to ' + theme + ', the school head respondents ';
+    var openerList = firstParagraphOpeners && firstParagraphOpeners.length
+      ? firstParagraphOpeners
+      : LIKERT_PARA1_OPENER_PREFIXES;
+    var openerPrefix = openerList[Math.floor(Math.random() * openerList.length)];
+    var para1Opener = openerPrefix + themeForOpener + ', the school head respondents ';
     var bodySh = buildTwoGroupPara1Body(rowsSh, descSh);
     laInterpretationSh = para1Opener + bodySh + ' The average weighted mean of ' + awmSh.toFixed(2) + ' signifies that school heads generally view ' + theme + ' as ' + descSh + '.';
     if (includeImpl && Utils && Utils.buildImplicationsFromData) {
@@ -3004,7 +3068,7 @@
       if (implSh.first) laInterpretationSh += ' ' + implSh.first;
     }
 
-    var teachersPrefix = 'Meanwhile, teacher respondents ';
+    var teachersPrefix = secondParagraphOpeners[Math.floor(Math.random() * secondParagraphOpeners.length)];
     var bodyT = buildTwoGroupPara2Body(rowsT, descT);
     laInterpretationT = teachersPrefix + bodyT + ' The average weighted mean of ' + awmT.toFixed(2) + ' signifies that teachers view ' + theme + ' as ' + descT + '.';
     if (includeImpl && Utils && Utils.buildImplicationsFromData) {
@@ -3038,7 +3102,8 @@
     }
 
     if (detectedType === 'two-group-likert' && (currentLikertConfig || currentTwoGroupData)) {
-      var viFirst = Math.floor(Math.random() * LIKERT_PARA1_OPENER_PREFIXES.length * 100);
+      var openerLen = (LIKERT_TWO_GROUP_OPENING_PHRASES && LIKERT_TWO_GROUP_OPENING_PHRASES.length) || LIKERT_PARA1_OPENER_PREFIXES.length;
+      var viFirst = Math.floor(Math.random() * (openerLen * 100));
       generateTwoGroupInterpretations(viFirst, '');
       var text = getValidatedTwoGroupInterpretation();
       block.textContent = text;
@@ -3078,7 +3143,9 @@
       var tableIdRp2 = (currentLikertConfig && (currentLikertConfig.id || currentLikertConfig.title)) || 'likert';
       tableIdRp2 = String(tableIdRp2).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
 
-      var viRp2 = nextRp2VariantIndex(tableIdRp2, 'two_group');
+      var counter = nextRp2VariantIndex(tableIdRp2, 'two_group');
+      var openerCount = (LIKERT_TWO_GROUP_OPENING_PHRASES && LIKERT_TWO_GROUP_OPENING_PHRASES.length) || LIKERT_PARA1_OPENER_PREFIXES.length;
+      var viRp2 = counter * (openerCount + 1) + Math.floor(Math.random() * (openerCount + 1));
       generateTwoGroupInterpretations(viRp2, '');
       laInterpTwoGroup = true;
       var shText = (laInterpretationSh || '').trim();
@@ -3114,10 +3181,12 @@
         return (laInterpretationSh || '') + (laInterpretationT ? '\n\n' + laInterpretationT : '');
       };
       if (Gen) {
-        Gen.generateWithVariation(generator, 'likert_rp2', tableId);
+        var viFallback = Math.floor(Math.random() * 10000);
+        generateTwoGroupInterpretations(viFallback, '');
         setFullInterpretation(getValidatedTwoGroupInterpretation());
       } else {
-        var viFallback = Math.floor(Math.random() * 1000);
+        var openerCount = (LIKERT_TWO_GROUP_OPENING_PHRASES && LIKERT_TWO_GROUP_OPENING_PHRASES.length) || 20;
+        var viFallback = Math.floor(Math.random() * (openerCount * 100));
         generateTwoGroupInterpretations(viFallback, '');
         setFullInterpretation(getValidatedTwoGroupInterpretation());
       }
